@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Huawei Challenge: Titan-V Geomorph</title>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #020406; font-family: 'DIN Condensed', 'Roboto Condensed', sans-serif; }
+        
+        /* HUD UI STYLING */
+        #hud {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            background: radial-gradient(circle at center, transparent 0%, #000 120%);
+        }
+        #controls {
+            position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%);
+            width: 500px;
+            background: rgba(10, 16, 20, 0.85);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 4px;
+            padding: 20px;
+            pointer-events: auto;
+            backdrop-filter: blur(8px);
+            box-shadow: 0 0 30px rgba(0, 200, 255, 0.1);
+        }
+        .header {
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+            padding-bottom: 10px; margin-bottom: 15px;
+        }
+        h1 { margin: 0; font-size: 20px; color: #0ff; letter-spacing: 2px; text-transform: uppercase; }
+        .data-tag { font-size: 12px; color: #0ff; opacity: 0.6; font-family: monospace; }
+        
+        /* SLIDER STYLING */
+        input[type=range] {
+            -webkit-appearance: none; width: 100%; background: transparent; margin: 10px 0;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none; height: 16px; width: 16px;
+            border-radius: 50%; background: #0ff; cursor: pointer;
+            box-shadow: 0 0 10px #0ff; margin-top: -6px;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%; height: 4px; cursor: pointer;
+            background: #1a3a4a; border-radius: 2px;
+        }
+        .labels { display: flex; justify-content: space-between; color: #578; font-size: 11px; text-transform: uppercase; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div id="hud"></div>
+
+<div id="controls">
+    <div class="header">
+        <h1>Titan-V Geomorph</h1>
+        <span class="data-tag">PTS: 131,072 | GPU: ONLINE</span>
+    </div>
+    
+    <div class="labels">
+        <span>Planar Projection (2D)</span>
+        <span>Topological Fold</span>
+        <span>Spherical Projection (3D)</span>
+    </div>
+    <input type="range" id="morph" min="0" max="1" step="0.001" value="0">
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://unpkg.com/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+<script>
+    const TEXTURE_URL = 'https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/earth_specular_2048.jpg';
+</script>
+
+<script type="x-shader/x-vertex" id="vertexShader">
+    uniform float uTime;
+    uniform float uMorph; // 0 = Map, 1 = Globe
+    uniform sampler2D uMap;
+
+    varying vec2 vUv;
+    varying float vElevation;
+
+    const float PI = 3.14159265359;
+    const float RADIUS = 40.0;
+
+    void main() {
+        vUv = uv;
+
+        // --- 1. READ REAL GEOGRAPHY ---
+        vec4 texColor = texture2D(uMap, uv);
+        float landMass = texColor.r; // 0.0 to 1.0
+
+        // --- 2. GENERATE GRAPH DATA ---
+        // We simulate a "Network Load" graph.
+        // It's a sine wave that scans across the longitude.
+        float scanLine = smoothstep(0.0, 0.2, sin(uv.x * 10.0 + uTime * 2.0));
+        
+        // Elevation is high only if:
+        // A) It is Land
+        // B) The scan line is passing over it
+        float elevation = landMass * (0.2 + scanLine * 0.8);
+        
+        // Pass to fragment for coloring
+        vElevation = elevation; 
+        
+        // --- 3. CALCULATE POSITIONS ---
+
+        // A. FLAT MAP POSITION (Equirectangular)
+        // Aspect Ratio 2:1 (Width = 2*PI*R, Height = PI*R)
+        float mapWidth = 2.0 * PI * RADIUS;
+        float mapHeight = PI * RADIUS;
+        
+        vec3 posFlat;
+        posFlat.x = (uv.x - 0.5) * mapWidth;
+        posFlat.y = (uv.y - 0.5) * mapHeight;
+        posFlat.z = 0.0;
+
+        // Apply Data Elevation to Flat Map (Z-Up)
+        // We use a "Spike" look (elevation * scale)
+        posFlat.z += elevation * 8.0;
+
+        // B. GLOBE POSITION (Spherical)
+        // Convert UV [0,1] to Angles
+        float phi = (0.5 - uv.y) * PI;       // Latitude (-90 to 90)
+        float theta = (uv.x + 0.5) * 2.0 * PI; // Longitude (0 to 360)
+
+        vec3 posSphere;
+        posSphere.x = RADIUS * sin(phi) * cos(theta);
+        posSphere.y = RADIUS * sin(phi);
+        posSphere.z = RADIUS * cos(phi) * sin(theta);
+
+        // Apply Data Elevation to Globe (Radially Outwards)
+        vec3 sphereNormal = normalize(posSphere);
+        posSphere += sphereNormal * (elevation * 8.0);
+
+        // --- 4. THE PROFESSIONAL MORPH ---
+        // Instead of linear mix, we use a smoothstep for ease-in/out
+        float t = smoothstep(0.0, 1.0, uMorph);
+        
+        vec3 finalPos = mix(posFlat, posSphere, t);
+
+        // --- 5. THE "WEIRD SHAPE" FIX ---
+        // Problem: Linear interpolation cuts through the middle.
+        // Solution: Arc the movement.
+        // When t is 0.5 (halfway), push Z backwards (or forwards) to keep the geometry expanded.
+        // But since we are going from Flat (Z=0) to Sphere (Z=radius), we need to be careful.
+        
+        // We push the "sides" of the map back as they curl.
+        // This simple sine offset creates a "Flying Carpet" effect that rolls into a ball.
+        float arc = sin(t * PI);
+        
+        // While morphing, push everything towards camera slightly to avoid clipping background
+        finalPos.z += arc * 10.0; 
+
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(finalPos, 1.0);
+        
+        // --- 6. PARTICLE SIZING ---
+        // Ocean points are small. Land points with data are huge.
+        float size = 1.5;
+        if(elevation > 0.1) size = 3.0; // Land
+        if(elevation > 0.6) size = 5.0 + sin(uTime * 10.0); // Active Graph Data
+        
+        // Perspective scaling (make closer points bigger)
+        gl_PointSize = size * (200.0 / -modelViewMatrix[3].z);
+    }
+</script>
+
+<script type="x-shader/x-fragment" id="fragmentShader">
+    varying vec2 vUv;
+    varying float vElevation;
+
+    void main() {
+        // 1. SHAPE: Circular particles with soft edges
+        vec2 center = gl_PointCoord - vec2(0.5);
+        float dist = length(center);
+        if(dist > 0.5) discard;
+        float alpha = 1.0 - smoothstep(0.3, 0.5, dist);
+
+        // 2. COLORS
+        vec3 colDeep = vec3(0.05, 0.1, 0.2); // Ocean
+        vec3 colLand = vec3(0.2, 0.6, 0.8);  // Land Base
+        vec3 colHigh = vec3(0.0, 1.0, 1.0);  // Cyan (Data)
+        vec3 colHot  = vec3(1.0, 1.0, 1.0);  // White (Peak)
+
+        vec3 finalColor = colDeep;
+        float finalAlpha = 0.3; // Ocean transparency
+
+        if(vElevation > 0.05) {
+            finalColor = colLand;
+            finalAlpha = 0.8;
+            
+            // Graph coloring
+            if(vElevation > 0.2) {
+                finalColor = mix(colLand, colHigh, vElevation);
+            }
+            if(vElevation > 0.7) {
+                finalColor = colHot;
+            }
+        }
+
+        gl_FragColor = vec4(finalColor, finalAlpha * alpha);
+    }
+</script>
+
+<script>
+    let scene, camera, renderer, material, particles;
+    let uTime = 0;
+
+    function init() {
+        scene = new THREE.Scene();
+        // Add subtle fog to blend the background
+        scene.fog = new THREE.FogExp2(0x020406, 0.002);
+
+        // CAMERA
+        // Positioned specifically to see the whole map flat
+        camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 2000);
+        camera.position.set(0, 0, 220);
+
+        // RENDERER
+        renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        document.body.appendChild(renderer.domElement);
+
+        // CONTROLS
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+
+        // LOAD REAL GEOGRAPHY
+        const loader = new THREE.TextureLoader();
+        loader.load(TEXTURE_URL, (texture) => {
+            createSystem(texture);
+        });
+    }
+
+    function createSystem(mapTexture) {
+        // GEOMETRY
+        // 512 width x 256 height = 131,072 Particles.
+        // This is 1:1 pixel mapping for a low-res texture, giving a perfect "Digital Screen" look.
+        const geometry = new THREE.PlaneBufferGeometry(100, 50, 512, 256);
+
+        // MATERIAL
+        material = new THREE.ShaderMaterial({
+            vertexShader: document.getElementById('vertexShader').textContent,
+            fragmentShader: document.getElementById('fragmentShader').textContent,
+            uniforms: {
+                uTime: { value: 0 },
+                uMorph: { value: 0 },
+                uMap: { value: mapTexture }
+            },
+            transparent: true,
+            blending: THREE.AdditiveBlending, // Makes overlapping dots glow
+            depthWrite: false
+        });
+
+        particles = new THREE.Points(geometry, material);
+        scene.add(particles);
+
+        animate();
+    }
+
+    // UI LISTENER
+    document.getElementById('morph').addEventListener('input', (e) => {
+        if(material) material.uniforms.uMorph.value = parseFloat(e.target.value);
+    });
+
+    // RESIZE
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    function animate() {
+        requestAnimationFrame(animate);
+        uTime += 0.01;
+
+        if (material) {
+            material.uniforms.uTime.value = uTime;
+            
+            // Dynamic Camera Movement
+            // When sphere (morph > 0.8), zoom in slightly automatically
+            const t = material.uniforms.uMorph.value;
+            
+            // Gentle rotation
+            if(particles) particles.rotation.y = uTime * 0.05;
+        }
+
+        renderer.render(scene, camera);
+    }
+
+    init();
+</script>
+</body>
+</html>
