@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Huawei Challenge: Omni-Projection</title>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #050505; font-family: 'Segoe UI', sans-serif; }
+        
+        /* UI OVERLAY */
+        #hud {
+            position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+            width: 500px; padding: 25px;
+            background: rgba(15, 20, 25, 0.9);
+            border: 1px solid #334455;
+            box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
+            border-radius: 12px;
+            color: #fff; text-align: center;
+            backdrop-filter: blur(10px);
+        }
+        h2 { margin: 0 0 15px 0; font-size: 16px; color: #00E5FF; letter-spacing: 2px; text-transform: uppercase; }
+        
+        .control-group { margin-bottom: 15px; text-align: left; }
+        label { display: block; font-size: 11px; color: #8899AA; margin-bottom: 5px; text-transform: uppercase; }
+        
+        /* Custom Select Box */
+        select {
+            width: 100%; padding: 8px; background: #112233; color: white; border: 1px solid #334455; border-radius: 4px;
+            font-family: monospace; text-transform: uppercase;
+        }
+        
+        /* Slider */
+        input[type=range] { width: 100%; accent-color: #00E5FF; cursor: pointer; }
+        
+        .status { font-size: 10px; color: #00E5FF; margin-top: 10px; display: flex; justify-content: space-between; opacity: 0.7; }
+    </style>
+</head>
+<body>
+
+<div id="hud">
+    <h2>Omni-Projection Engine</h2>
+
+    <div class="control-group">
+        <label>Animation Type</label>
+        <select id="animType">
+            <option value="0">Cylindrical Roll (Smart Scroll)</option>
+            <option value="1">Spherical Inflation (Balloon)</option>
+            <option value="2">Polar Collapse (Geodesic)</option>
+        </select>
+    </div>
+
+    <div class="control-group">
+        <label>Transition (2D Map <-> 3D Globe)</label>
+        <input type="range" id="morph" min="0" max="1" step="0.001" value="0">
+    </div>
+
+    <div class="status">
+        <span>PROJECTION: EQUIRECTANGULAR</span>
+        <span>GEOMETRY: 131k POINTS</span>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://unpkg.com/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+<script>
+    const TEXTURE_URL = 'https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/earth_specular_2048.jpg';
+</script>
+
+<script type="x-shader/x-vertex" id="vertexShader">
+    uniform float uTime;
+    uniform float uMorph;     // 0.0 to 1.0
+    uniform int uAnimType;    // 0=Roll, 1=Inflate, 2=Polar
+    uniform sampler2D uMap;
+
+    varying vec2 vUv;
+    varying float vElevation;
+
+    const float PI = 3.14159265359;
+    const float RADIUS = 35.0;
+
+    // Helper: Rotate vector around Y axis
+    vec3 rotateY(vec3 v, float angle) {
+        float c = cos(angle);
+        float s = sin(angle);
+        return vec3(v.x * c + v.z * s, v.y, -v.x * s + v.z * c);
+    }
+
+    void main() {
+        vUv = uv;
+
+        // --- 1. DATA PROCESSING ---
+        // Read the map to find continents
+        vec4 texData = texture2D(uMap, uv);
+        float land = texData.r;
+        
+        // Create the "Graph" pulse effect
+        float pulse = sin(uv.x * 12.0 - uTime * 2.0); // Moving wave
+        pulse = smoothstep(0.0, 0.2, pulse);
+        
+        float elevation = 0.0;
+        if(land > 0.15) {
+            elevation = land * (0.3 + pulse * 1.5);
+        }
+        vElevation = elevation;
+
+        // --- 2. COORDINATE SYSTEMS ---
+        
+        // A. FLAT MAP (Equirectangular Projection)
+        // Standard map ratio is 2:1.
+        float flatWidth = 2.0 * PI * RADIUS;
+        float flatHeight = PI * RADIUS;
+        
+        vec3 posFlat = vec3(
+            (uv.x - 0.5) * flatWidth,
+            (uv.y - 0.5) * flatHeight,
+            0.0
+        );
+        // Add elevation (Z-up)
+        posFlat.z += elevation * 3.0;
+
+        // B. SPHERE (Cartesian from Spherical)
+        // Map UVs directly to Angles
+        float phi = (0.5 - uv.y) * PI;       // Latitude (-90 to 90)
+        float theta = (uv.x + 0.5) * 2.0 * PI; // Longitude (0 to 360)
+        
+        // Offset theta so the "seam" is at the back
+        theta += PI;
+
+        vec3 posSphere;
+        posSphere.x = RADIUS * cos(phi) * cos(theta); // Switch cos/sin for correct orientation
+        posSphere.y = RADIUS * sin(phi);
+        posSphere.z = RADIUS * cos(phi) * sin(theta);
+        
+        // Add elevation (Radial)
+        vec3 sphereNormal = normalize(posSphere);
+        posSphere += sphereNormal * (elevation * 3.0);
+
+
+        // --- 3. MORPH LOGIC (THE "CLEVER" PART) ---
+        vec3 finalPos;
+
+        if (uAnimType == 0) {
+            // --- MODE 0: CYLINDRICAL ROLL (The "Scroll") ---
+            // This rolls the map into a tube, then snaps the poles shut.
+            
+            // Phase 1: Roll X-axis into cylinder
+            float rollFactor = clamp(uMorph * 1.2, 0.0, 1.0); // Finish rolling early
+            
+            // Calculate current cylinder angle
+            float currentAngle = (uv.x - 0.5) * (rollFactor * 2.0 * PI);
+            float currentRadius = RADIUS;
+            if (rollFactor < 0.99) currentRadius = flatWidth / (rollFactor * 2.0 * PI + 0.001);
+
+            vec3 posRoll;
+            // X becomes Angle, Z becomes Depth
+            posRoll.x = sin(currentAngle) * currentRadius;
+            posRoll.y = posFlat.y; 
+            posRoll.z = (cos(currentAngle) - 1.0) * currentRadius; // Offset Z to keep front centered
+
+            // Phase 2: Collapse Y-axis (Poles)
+            // Happens only in the last 20% of the slider
+            float pinchFactor = smoothstep(0.6, 1.0, uMorph);
+            
+            // Mix between Cylinder-Y and Sphere-Y
+            posRoll.y = mix(posRoll.y, posSphere.y, pinchFactor);
+            
+            // Shrink the cylinder rings at the top/bottom as we pinch
+            float ringScale = mix(1.0, cos(phi), pinchFactor);
+            posRoll.x *= ringScale;
+            posRoll.z *= ringScale;
+            
+            // Add normal-based elevation
+            vec3 rollNormal = normalize(vec3(posRoll.x, 0.0, posRoll.z)); // Approx normal
+            if(pinchFactor > 0.5) rollNormal = normalize(posRoll); // True normal at end
+            
+            posRoll += rollNormal * elevation * 3.0;
+            
+            finalPos = posRoll;
+
+        } else if (uAnimType == 1) {
+            // --- MODE 1: INFLATION (The "Balloon") ---
+            // Direct interpolation, but we push Z out to simulate air filling it
+            
+            finalPos = mix(posFlat, posSphere, uMorph);
+            
+            // Add "inflation" curve
+            float bulge = sin(uMorph * PI);
+            finalPos.z += bulge * 20.0;
+        } else {
+             // --- MODE 2: POLAR COLLAPSE (Mathematical) ---
+             // We lerp the coordinates but strictly enforce the polar constraint
+             
+             finalPos = mix(posFlat, posSphere, uMorph);
+             
+             // Force top and bottom rows to converge to single points early
+             if (uv.y > 0.95 || uv.y < 0.05) {
+                 vec3 poleTarget = (uv.y > 0.5) ? vec3(0, RADIUS, 0) : vec3(0, -RADIUS, 0);
+                 finalPos = mix(finalPos, poleTarget, uMorph * uMorph);
+             }
+        }
+
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(finalPos, 1.0);
+
+        // --- 4. POINT SIZE ---
+        float size = 2.0;
+        if(elevation > 0.1) size = 3.0; // Land is thicker
+        if(elevation > 0.8) size = 5.0; // Data spikes are huge
+        
+        // Distance scaling
+        gl_PointSize = size * (250.0 / -modelViewMatrix[3].z);
+    }
+</script>
+
+<script type="x-shader/x-fragment" id="fragmentShader">
+    varying vec2 vUv;
+    varying float vElevation;
+
+    void main() {
+        if (length(gl_PointCoord - vec2(0.5)) > 0.5) discard;
+
+        // COLORS
+        vec3 cOcean = vec3(0.02, 0.05, 0.1);
+        vec3 cLand  = vec3(0.1, 0.4, 0.6);
+        vec3 cData  = vec3(0.0, 1.0, 0.8);
+        vec3 cHot   = vec3(1.0, 1.0, 1.0);
+
+        vec3 color = cOcean;
+        float alpha = 0.3;
+
+        if (vElevation > 0.05) {
+            color = cLand;
+            alpha = 0.8;
+            
+            if (vElevation > 0.5) {
+                // Gradient for high data
+                color = mix(cLand, cData, (vElevation - 0.5) * 2.0);
+            }
+            if (vElevation > 1.0) {
+                color = cHot;
+            }
+        }
+
+        // Add latitude/longitude grid lines for structure
+        float gridX = step(0.98, fract(vUv.x * 24.0));
+        float gridY = step(0.98, fract(vUv.y * 12.0));
+        if (max(gridX, gridY) > 0.5) {
+             color += vec3(0.2);
+             alpha = max(alpha, 0.5);
+        }
+
+        gl_FragColor = vec4(color, alpha);
+    }
+</script>
+
+<script>
+    let scene, camera, renderer, material, points;
+    let uTime = 0;
+
+    function init() {
+        scene = new THREE.Scene();
+        
+        // Initial Camera Position
+        camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 0, 240);
+
+        renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+
+        // Load Real Earth Texture
+        new THREE.TextureLoader().load(TEXTURE_URL, (tex) => {
+            createGlobe(tex);
+        });
+
+        // Event Listeners
+        window.addEventListener('resize', onResize);
+        
+        // Morph Slider
+        document.getElementById('morph').addEventListener('input', (e) => {
+            material.uniforms.uMorph.value = parseFloat(e.target.value);
+        });
+        
+        // Animation Type Dropdown
+        document.getElementById('animType').addEventListener('change', (e) => {
+            material.uniforms.uAnimType.value = parseInt(e.target.value);
+        });
+    }
+
+    function createGlobe(texture) {
+        // High-Density Geometry for Smooth Poles (512x256)
+        const geometry = new THREE.PlaneBufferGeometry(100, 50, 512, 256);
+
+        material = new THREE.ShaderMaterial({
+            vertexShader: document.getElementById('vertexShader').textContent,
+            fragmentShader: document.getElementById('fragmentShader').textContent,
+            uniforms: {
+                uTime: { value: 0 },
+                uMorph: { value: 0 },
+                uAnimType: { value: 0 }, // Default: Cylinder Roll
+                uMap: { value: texture }
+            },
+            transparent: true,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false,
+            side: THREE.DoubleSide
+        });
+
+        points = new THREE.Points(geometry, material);
+        scene.add(points);
+        animate();
+    }
+
+    function onResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    function animate() {
+        requestAnimationFrame(animate);
+        uTime += 0.01;
+        
+        if (material) {
+            material.uniforms.uTime.value = uTime;
+            
+            // Auto-rotate ONLY if it's mostly a globe (morph > 0.5)
+            // This keeps the map steady for reading, but the globe dynamic
+            if(material.uniforms.uMorph.value > 0.5) {
+                points.rotation.y += 0.002;
+            } else {
+                // Gently return to center
+                points.rotation.y *= 0.95;
+            }
+        }
+        
+        renderer.render(scene, camera);
+    }
+
+    init();
+</script>
+</body>
+</html>
