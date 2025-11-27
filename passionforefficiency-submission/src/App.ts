@@ -2,6 +2,9 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { gsap } from 'gsap';
 import GUI from 'lil-gui';
+import { StatisticsOverlay } from './components/StatisticsOverlay';
+import { Legend } from './components/Legend';
+import { STATISTICS } from './data/statistics';
 
 const SPHERE_RADIUS = 50;
 
@@ -104,6 +107,8 @@ export class App {
     private globe: THREE.Mesh | null = null;
     private material: THREE.ShaderMaterial | null = null;
     private gui: GUI | null = null;
+    private statsOverlay: StatisticsOverlay | null = null;
+    private legend: Legend | null = null;
 
     private params = {
         morph: 0,
@@ -111,6 +116,7 @@ export class App {
         sunX: 1,
         sunY: 0.5,
         sunZ: 1,
+        statistic: 'none',
     };
 
     constructor() {
@@ -143,6 +149,7 @@ export class App {
     private async init(): Promise<void> {
         await this.createGlobe();
         this.createStars();
+        this.createStatisticsOverlay();
         this.createGUI();
         this.animate();
 
@@ -152,6 +159,11 @@ export class App {
 
         // Auto-play intro
         setTimeout(() => this.playIntro(), 500);
+    }
+
+    private createStatisticsOverlay(): void {
+        this.statsOverlay = new StatisticsOverlay(this.scene);
+        this.legend = new Legend();
     }
 
     private async createGlobe(): Promise<void> {
@@ -230,6 +242,7 @@ export class App {
             .name('Flat ↔ Globe')
             .onChange((v: number) => {
                 if (this.material) this.material.uniforms.uMorph.value = v;
+                if (this.statsOverlay) this.statsOverlay.setMorph(v);
             });
 
         // Buttons
@@ -240,11 +253,35 @@ export class App {
         // Auto rotate
         this.gui.add(this.params, 'autoRotate').name('Auto Rotate');
 
+        // Statistics folder
+        const statsFolder = this.gui.addFolder('Statistics');
+        const statOptions: { [key: string]: string } = { 'None': 'none' };
+        STATISTICS.forEach(stat => {
+            statOptions[stat.name] = stat.id;
+        });
+        statsFolder.add(this.params, 'statistic', statOptions)
+            .name('Data Layer')
+            .onChange((statId: string) => this.onStatisticChange(statId));
+        statsFolder.open();
+
         // Sun direction folder
         const sunFolder = this.gui.addFolder('Sun Position');
         sunFolder.add(this.params, 'sunX', -1, 1, 0.1).onChange(() => this.updateSun());
         sunFolder.add(this.params, 'sunY', -1, 1, 0.1).onChange(() => this.updateSun());
         sunFolder.add(this.params, 'sunZ', -1, 1, 0.1).onChange(() => this.updateSun());
+    }
+
+    private onStatisticChange(statId: string): void {
+        if (statId === 'none') {
+            if (this.statsOverlay) this.statsOverlay.hide();
+            if (this.legend) this.legend.hide();
+        } else {
+            const stat = STATISTICS.find(s => s.id === statId);
+            if (stat) {
+                if (this.statsOverlay) this.statsOverlay.show(statId);
+                if (this.legend) this.legend.show(stat);
+            }
+        }
     }
 
     private updateSun(): void {
@@ -266,6 +303,10 @@ export class App {
                 if (this.material) {
                     this.material.uniforms.uMorph.value = this.params.morph;
                 }
+                // Sync statistics overlay
+                if (this.statsOverlay) {
+                    this.statsOverlay.setMorph(this.params.morph);
+                }
                 // Update GUI display
                 this.gui?.controllersRecursive().forEach(c => c.updateDisplay());
             }
@@ -276,6 +317,7 @@ export class App {
         // Start flat and zoomed out
         this.params.morph = 0;
         if (this.material) this.material.uniforms.uMorph.value = 0;
+        if (this.statsOverlay) this.statsOverlay.setMorph(0);
 
         gsap.set(this.camera.position, { z: 350 });
 
@@ -313,6 +355,11 @@ export class App {
         // Auto rotation
         if (this.params.autoRotate && this.globe && this.params.morph > 0.8) {
             this.globe.rotation.y += 0.002;
+        }
+
+        // Sync statistics overlay rotation with globe
+        if (this.statsOverlay && this.globe) {
+            this.statsOverlay.syncRotation(this.globe.rotation.y);
         }
 
         this.renderer.render(this.scene, this.camera);
