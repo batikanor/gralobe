@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Huawei Challenge: Seismic Morph</title>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #000; font-family: 'Segoe UI', sans-serif; }
+        #ui-container {
+            position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+            width: 500px; padding: 20px;
+            background: rgba(10, 10, 12, 0.9); border: 1px solid #334455; border-radius: 12px;
+            color: #fff; text-align: center; box-shadow: 0 0 30px rgba(0,0,0,0.8);
+        }
+        h2 { margin: 0 0 10px 0; font-size: 16px; color: #00ffff; letter-spacing: 2px; text-transform: uppercase; }
+        input[type=range] { width: 100%; cursor: pointer; accent-color: #00ffff; margin-top:10px; }
+        .labels { display: flex; justify-content: space-between; font-size: 10px; color: #777; margin-top: 5px; }
+    </style>
+</head>
+<body>
+
+<div id="ui-container">
+    <h2>Seismic Earth Data-Morph</h2>
+    <input type="range" id="morphSlider" min="0" max="1" step="0.005" value="0">
+    <div class="labels">
+        <span>CURVED DISPLAY (2D)</span>
+        <span>:: FOLDING ::</span>
+        <span>GLOBE (3D)</span>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+<script type="x-shader/x-vertex" id="vertexShader">
+    uniform float uTime;
+    uniform float uMorph;
+    uniform sampler2D uTexture; // The Real Earth Map
+
+    varying vec2 vUv;
+    varying float vElevation;
+    varying float vIsLand;
+
+    const float PI = 3.14159265359;
+
+    void main() {
+        vUv = uv;
+
+        // 1. READ THE MAP
+        // We look at the texture. If it's bright, it's land.
+        vec4 texColor = texture2D(uTexture, uv);
+        float landMask = texColor.r; // 0.0 = Ocean, 1.0 = Land
+        vIsLand = landMask;
+
+        // 2. CALCULATE ELEVATION (THE "GRAPH")
+        // We create a "Scan Wave" that moves across the map (Longitude)
+        float scanSpeed = 1.5;
+        float scanWave = sin(uv.x * 10.0 - uTime * scanSpeed); 
+        
+        // Sharpen the wave so it looks like a "Bar" of data
+        scanWave = smoothstep(0.0, 1.0, scanWave);
+        
+        // Only elevate if it is Land AND inside the Scan Wave
+        float elevation = 0.0;
+        if (landMask > 0.2) {
+            elevation = 0.5 + (scanWave * 2.5); // Base height + Wave height
+        }
+        
+        vElevation = elevation; // Pass to fragment for coloring
+
+        // 3. MORPHING GEOMETRY
+
+        // State A: CURVED PLANE (The "Something-Curvation")
+        // We apply a curve along Z based on X distance from center
+        vec3 planePos = position;
+        float curveAmount = 10.0; 
+        // Parabolic curve: z = x^2
+        float distFromCenter = (uv.x - 0.5) * 2.0;
+        planePos.z -= (distFromCenter * distFromCenter) * curveAmount * (1.0 - uMorph);
+        
+        // Add the Data Elevation to the Plane
+        planePos.z += elevation;
+
+        // State B: SPHERE
+        float radius = 30.0;
+        float phi = (0.5 - uv.y) * PI;       // Lat
+        float theta = (uv.x + 0.5) * 2.0 * PI; // Long
+
+        vec3 spherePos;
+        spherePos.x = radius * sin(phi) * cos(theta);
+        spherePos.y = radius * sin(phi);
+        spherePos.z = radius * cos(phi) * sin(theta);
+        
+        // Add the Data Elevation radially to the Sphere
+        vec3 sphereNormal = normalize(spherePos);
+        spherePos += sphereNormal * elevation;
+
+        // Mix based on slider
+        vec3 finalPos = mix(planePos, spherePos, uMorph);
+
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(finalPos, 1.0);
+        
+        // Point size logic
+        gl_PointSize = 2.0;
+        if(vElevation > 1.0) gl_PointSize = 4.0; // Highlights are bigger
+    }
+</script>
+
+<script type="x-shader/x-fragment" id="fragmentShader">
+    uniform float uTime;
+    varying vec2 vUv;
+    varying float vElevation;
+    varying float vIsLand;
+
+    void main() {
+        // Discard pixels to create a "Dot Matrix" look
+        // This makes it look techy rather than just a blurry picture
+        vec2 grid = fract(vUv * vec2(150.0, 75.0));
+        if (length(grid - 0.5) > 0.4) discard;
+
+        // COLORS
+        vec3 oceanColor = vec3(0.05, 0.05, 0.1); // Dark Gray-Blue
+        vec3 landColor = vec3(0.0, 0.3, 0.5);    // Muted Teal
+        vec3 activeColor = vec3(0.0, 1.0, 0.8);  // Bright Cyan (High Data)
+        vec3 hotColor = vec3(1.0, 1.0, 1.0);     // White Hot
+
+        vec3 finalColor = oceanColor;
+
+        // If it's land (based on real map texture)
+        if (vIsLand > 0.2) {
+            finalColor = landColor;
+            
+            // If it's elevated (The Scan Wave)
+            if (vElevation > 0.6) {
+                float intensity = (vElevation - 0.6) / 2.0;
+                finalColor = mix(landColor, activeColor, intensity);
+                
+                // Add glitter/sparkle to active areas
+                if (mod(gl_FragCoord.x + gl_FragCoord.y + uTime * 100.0, 10.0) < 1.0) {
+                    finalColor = hotColor;
+                }
+            }
+        }
+
+        gl_FragColor = vec4(finalColor, 1.0);
+    }
+</script>
+
+<script>
+    // --- 1. THE ASSET: BASE64 EARTH MAP (Low Res for POC) ---
+    // This string represents a black and white map of the earth.
+    // White = Land, Black = Ocean.
+    // I am creating this programmatically via canvas to ensure it works without external files.
+    
+    function generateEarthMap() {
+        const canvas = document.createElement('canvas');
+        canvas.width = 512;
+        canvas.height = 256;
+        const ctx = canvas.getContext('2d');
+        
+        // Background (Ocean)
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(0, 0, 512, 256);
+        
+        // Draw Continents (Rough Shapes for Realism)
+        ctx.fillStyle = '#FFFFFF';
+        
+        // We use path data to draw rough approximations of continents
+        // This ensures "Real Map" feel without CORS issues
+        
+        // North America
+        ctx.beginPath(); ctx.moveTo(60,40); ctx.lineTo(130,40); ctx.lineTo(150,100); ctx.lineTo(110,140); ctx.lineTo(70,100); ctx.fill();
+        // South America
+        ctx.beginPath(); ctx.moveTo(140,150); ctx.lineTo(190,150); ctx.lineTo(180,220); ctx.lineTo(150,200); ctx.fill();
+        // Europe
+        ctx.beginPath(); ctx.moveTo(230,50); ctx.lineTo(280,40); ctx.lineTo(290,90); ctx.lineTo(240,80); ctx.fill();
+        // Africa
+        ctx.beginPath(); ctx.moveTo(230,100); ctx.lineTo(310,100); ctx.lineTo(300,190); ctx.lineTo(250,180); ctx.fill();
+        // Asia
+        ctx.beginPath(); ctx.moveTo(300,40); ctx.lineTo(450,40); ctx.lineTo(440,130); ctx.lineTo(350,150); ctx.lineTo(300,100); ctx.fill();
+        // Australia
+        ctx.beginPath(); ctx.ellipse(420, 190, 30, 25, 0, 0, Math.PI*2); ctx.fill();
+
+        // Apply Noise for jagged coastlines (Realism Pass)
+        const imageData = ctx.getImageData(0,0,512,256);
+        const data = imageData.data;
+        for(let i=0; i<data.length; i+=4) {
+            // If pixel is near the edge of a continent, jitter it
+            if(data[i] > 100) {
+                if(Math.random() > 0.8) data[i] = 0; // Eat away coast
+            } else {
+                 if(Math.random() > 0.995) data[i] = 150; // Islands
+            }
+        }
+        ctx.putImageData(imageData, 0, 0);
+        
+        return new THREE.CanvasTexture(canvas);
+    }
+
+    let scene, camera, renderer, material, points;
+    let uTime = 0;
+
+    function init() {
+        scene = new THREE.Scene();
+        
+        // Camera setup for "Curved Monitor" view
+        camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 0, 100);
+
+        renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // GEOMETRY
+        // High density plane (200x100) to allow for smooth sphere wrapping AND detailed mountains
+        const geometry = new THREE.PlaneBufferGeometry(120, 60, 200, 100);
+
+        // MATERIAL
+        material = new THREE.ShaderMaterial({
+            vertexShader: document.getElementById('vertexShader').textContent,
+            fragmentShader: document.getElementById('fragmentShader').textContent,
+            uniforms: {
+                uTime: { value: 0 },
+                uMorph: { value: 0 },
+                uTexture: { value: generateEarthMap() }
+            },
+            transparent: true,
+            blending: THREE.AdditiveBlending,
+            depthTest: false // Allows dots to stack nicely
+        });
+
+        points = new THREE.Points(geometry, material);
+        scene.add(points);
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+        
+        document.getElementById('morphSlider').addEventListener('input', (e) => {
+            material.uniforms.uMorph.value = parseFloat(e.target.value);
+        });
+    }
+
+    function animate() {
+        requestAnimationFrame(animate);
+        uTime += 0.01;
+        material.uniforms.uTime.value = uTime;
+        
+        // Gentle rotation
+        points.rotation.y = uTime * 0.1;
+
+        renderer.render(scene, camera);
+    }
+
+    init();
+    animate();
+</script>
+</body>
+</html>
+
