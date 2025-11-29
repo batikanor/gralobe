@@ -58,24 +58,53 @@ void main() {
         float edgeB = uv.y;
         float edgeT = 1.0 - uv.y;
 
-        // Curl intensity varies along each edge for organic feel
-        float curlL = pow(1.0 - smoothstep(0.0, 0.15, edgeL), 2.0) * (0.8 + 0.4 * hash(vec2(uv.y * 5.0, 1.0)));
-        float curlR = pow(1.0 - smoothstep(0.0, 0.12, edgeR), 2.0) * (0.7 + 0.5 * hash(vec2(uv.y * 5.0, 2.0)));
-        float curlB = pow(1.0 - smoothstep(0.0, 0.10, edgeB), 2.0) * (0.9 + 0.3 * hash(vec2(uv.x * 5.0, 3.0)));
-        float curlT = pow(1.0 - smoothstep(0.0, 0.08, edgeT), 2.0) * (0.6 + 0.6 * hash(vec2(uv.x * 5.0, 4.0)));
+        // Corner distances for extra dramatic corner curls
+        float cornerBL = length(vec2(edgeL, edgeB));
+        float cornerBR = length(vec2(edgeR, edgeB));
+        float cornerTL = length(vec2(edgeL, edgeT));
+        float cornerTR = length(vec2(edgeR, edgeT));
 
-        // Combined curl - edges curl backwards (negative Z) and slightly inward
-        // uParchment controls the animation of the curl rolling in
-        float totalCurl = (curlL + curlR + curlB + curlT) * uParchment;
-        flatPos.z -= totalCurl * 25.0;
+        // Edge curl - varies organically along each edge
+        float curlL = pow(1.0 - smoothstep(0.0, 0.12, edgeL), 2.0) * (0.7 + 0.4 * hash(vec2(uv.y * 4.0, 1.0)));
+        float curlR = pow(1.0 - smoothstep(0.0, 0.10, edgeR), 2.0) * (0.6 + 0.5 * hash(vec2(uv.y * 4.0, 2.0)));
+        float curlB = pow(1.0 - smoothstep(0.0, 0.08, edgeB), 2.0) * (0.8 + 0.3 * hash(vec2(uv.x * 4.0, 3.0)));
+        float curlT = pow(1.0 - smoothstep(0.0, 0.06, edgeT), 2.0) * (0.5 + 0.6 * hash(vec2(uv.x * 4.0, 4.0)));
 
-        // Slight inward curl on sides
-        flatPos.x += (curlR - curlL) * 8.0 * uParchment;
-        flatPos.y += (curlT - curlB) * 6.0 * uParchment;
+        // Corner curls - more dramatic rolling at corners
+        float cornerCurlBL = pow(1.0 - smoothstep(0.0, 0.20, cornerBL), 2.5) * 1.2;
+        float cornerCurlBR = pow(1.0 - smoothstep(0.0, 0.18, cornerBR), 2.5) * 1.0;
+        float cornerCurlTL = pow(1.0 - smoothstep(0.0, 0.15, cornerTL), 2.5) * 0.9;
+        float cornerCurlTR = pow(1.0 - smoothstep(0.0, 0.22, cornerTR), 2.5) * 1.3;
 
-        // Add subtle waviness across the surface
-        float wave = sin(uv.x * 12.0 + uv.y * 8.0) * 0.5 + sin(uv.y * 15.0) * 0.3;
-        flatPos.z += wave * uParchment * 1.5;
+        // Combine edge and corner curls
+        float edgeCurl = curlL + curlR + curlB + curlT;
+        float cornerCurl = cornerCurlBL + cornerCurlBR + cornerCurlTL + cornerCurlTR;
+        float totalCurl = (edgeCurl * 0.6 + cornerCurl * 0.8) * uParchment;
+
+        // Z displacement - curling backward
+        flatPos.z -= totalCurl * 18.0;
+
+        // Corners curl inward more dramatically
+        float inwardX = (cornerCurlBR + cornerCurlTR - cornerCurlBL - cornerCurlTL) * 5.0;
+        float inwardY = (cornerCurlTL + cornerCurlTR - cornerCurlBL - cornerCurlBR) * 4.0;
+        flatPos.x += inwardX * uParchment;
+        flatPos.y += inwardY * uParchment;
+
+        // Slight edge inward curl
+        flatPos.x += (curlR - curlL) * 4.0 * uParchment;
+        flatPos.y += (curlT - curlB) * 3.0 * uParchment;
+
+        // Subtle surface waviness (old paper wrinkles)
+        float wave1 = sin(uv.x * 15.0 + uv.y * 10.0) * 0.3;
+        float wave2 = sin(uv.y * 18.0 + uv.x * 5.0) * 0.2;
+        float wave3 = sin((uv.x + uv.y) * 25.0) * 0.15;
+        float centerFade = smoothstep(0.0, 0.3, min(min(edgeL, edgeR), min(edgeB, edgeT)));
+        flatPos.z += (wave1 + wave2 + wave3) * uParchment * (0.3 + 0.7 * (1.0 - centerFade));
+
+        // Damaged/torn edge effect - slight irregular displacement
+        float damage = hash(uv * 20.0) * 0.5;
+        float edgeProximity = 1.0 - smoothstep(0.0, 0.05, min(min(edgeL, edgeR), min(edgeB, edgeT)));
+        flatPos.z -= damage * edgeProximity * uParchment * 3.0;
     }
 
     // Smooth morph with easing built into the shader
@@ -172,15 +201,39 @@ void main() {
         float paperNoise = noise(vUv * 200.0) * 0.06 + noise(vUv * 50.0) * 0.04;
         sepia += vec3(paperNoise * 0.7, paperNoise * 0.6, paperNoise * 0.4);
 
-        // Darken edges (vignette) for aged look
-        float edgeDist = min(min(vUv.x, 1.0 - vUv.x), min(vUv.y, 1.0 - vUv.y));
-        float vignette = smoothstep(0.0, 0.12, edgeDist);
-        sepia *= 0.75 + 0.25 * vignette;
+        // Corner distances for dramatic corner aging
+        float cornerBL = length(vUv);
+        float cornerBR = length(vec2(1.0 - vUv.x, vUv.y));
+        float cornerTL = length(vec2(vUv.x, 1.0 - vUv.y));
+        float cornerTR = length(vec2(1.0 - vUv.x, 1.0 - vUv.y));
+        float minCorner = min(min(cornerBL, cornerBR), min(cornerTL, cornerTR));
 
-        // Add some staining/age spots (more subtle)
+        // Edge distances
+        float edgeDistX = min(vUv.x, 1.0 - vUv.x);
+        float edgeDistY = min(vUv.y, 1.0 - vUv.y);
+        float edgeDist = min(edgeDistX, edgeDistY);
+
+        // Vignette - darker at edges and especially corners
+        float edgeVignette = smoothstep(0.0, 0.15, edgeDist);
+        float cornerVignette = smoothstep(0.0, 0.25, minCorner);
+        float vignette = edgeVignette * 0.6 + cornerVignette * 0.4;
+        sepia *= 0.7 + 0.3 * vignette;
+
+        // Burn/damage marks at corners
+        float cornerDamage = pow(1.0 - smoothstep(0.0, 0.18, minCorner), 2.0);
+        float burnNoise = noise(vUv * 30.0 + 10.0);
+        float burn = cornerDamage * burnNoise * 0.4;
+        sepia = mix(sepia, vec3(0.15, 0.1, 0.05), burn);
+
+        // Age spots and foxing (brown spots on old paper)
         float stain = noise(vUv * 8.0 + 42.0);
-        stain = smoothstep(0.65, 0.85, stain) * 0.1;
-        sepia -= vec3(stain * 0.4, stain * 0.3, stain * 0.15);
+        stain = smoothstep(0.6, 0.8, stain) * 0.12;
+        sepia -= vec3(stain * 0.5, stain * 0.4, stain * 0.2);
+
+        // Water damage marks near edges
+        float waterMark = noise(vUv * 4.0 + 100.0);
+        float edgeWater = (1.0 - smoothstep(0.0, 0.12, edgeDist)) * waterMark * 0.15;
+        sepia -= vec3(edgeWater * 0.3, edgeWater * 0.2, edgeWater * 0.05);
 
         // For statistics data: blend less sepia, keep more original color
         // This preserves the color coding while still looking aged
