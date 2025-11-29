@@ -58,53 +58,53 @@ void main() {
         float edgeB = uv.y;
         float edgeT = 1.0 - uv.y;
 
-        // Corner distances for extra dramatic corner curls
-        float cornerBL = length(vec2(edgeL, edgeB));
-        float cornerBR = length(vec2(edgeR, edgeB));
-        float cornerTL = length(vec2(edgeL, edgeT));
-        float cornerTR = length(vec2(edgeR, edgeT));
+        // CRITICAL: Fade out ALL displacement near the very edges to prevent seam artifacts
+        // This keeps the boundary vertices in place while still allowing visible curling
+        float boundaryFade = smoothstep(0.0, 0.025, edgeL) * smoothstep(0.0, 0.025, edgeR)
+                           * smoothstep(0.0, 0.025, edgeB) * smoothstep(0.0, 0.025, edgeT);
 
-        // Edge curl - varies organically along each edge
-        float curlL = pow(1.0 - smoothstep(0.0, 0.12, edgeL), 2.0) * (0.7 + 0.4 * hash(vec2(uv.y * 4.0, 1.0)));
-        float curlR = pow(1.0 - smoothstep(0.0, 0.10, edgeR), 2.0) * (0.6 + 0.5 * hash(vec2(uv.y * 4.0, 2.0)));
-        float curlB = pow(1.0 - smoothstep(0.0, 0.08, edgeB), 2.0) * (0.8 + 0.3 * hash(vec2(uv.x * 4.0, 3.0)));
-        float curlT = pow(1.0 - smoothstep(0.0, 0.06, edgeT), 2.0) * (0.5 + 0.6 * hash(vec2(uv.x * 4.0, 4.0)));
+        // Corner distances for extra dramatic corner curls (starting slightly inward)
+        float cornerBL = length(vec2(max(edgeL - 0.02, 0.0), max(edgeB - 0.02, 0.0)));
+        float cornerBR = length(vec2(max(edgeR - 0.02, 0.0), max(edgeB - 0.02, 0.0)));
+        float cornerTL = length(vec2(max(edgeL - 0.02, 0.0), max(edgeT - 0.02, 0.0)));
+        float cornerTR = length(vec2(max(edgeR - 0.02, 0.0), max(edgeT - 0.02, 0.0)));
+
+        // Edge curl - varies organically along each edge (starting slightly inward)
+        float curlL = pow(1.0 - smoothstep(0.02, 0.14, edgeL), 2.0) * (0.7 + 0.4 * hash(vec2(uv.y * 4.0, 1.0)));
+        float curlR = pow(1.0 - smoothstep(0.02, 0.12, edgeR), 2.0) * (0.6 + 0.5 * hash(vec2(uv.y * 4.0, 2.0)));
+        float curlB = pow(1.0 - smoothstep(0.02, 0.10, edgeB), 2.0) * (0.8 + 0.3 * hash(vec2(uv.x * 4.0, 3.0)));
+        float curlT = pow(1.0 - smoothstep(0.02, 0.08, edgeT), 2.0) * (0.5 + 0.6 * hash(vec2(uv.x * 4.0, 4.0)));
 
         // Corner curls - more dramatic rolling at corners
-        float cornerCurlBL = pow(1.0 - smoothstep(0.0, 0.20, cornerBL), 2.5) * 1.2;
-        float cornerCurlBR = pow(1.0 - smoothstep(0.0, 0.18, cornerBR), 2.5) * 1.0;
-        float cornerCurlTL = pow(1.0 - smoothstep(0.0, 0.15, cornerTL), 2.5) * 0.9;
-        float cornerCurlTR = pow(1.0 - smoothstep(0.0, 0.22, cornerTR), 2.5) * 1.3;
+        float cornerCurlBL = pow(1.0 - smoothstep(0.0, 0.18, cornerBL), 2.5) * 1.2;
+        float cornerCurlBR = pow(1.0 - smoothstep(0.0, 0.16, cornerBR), 2.5) * 1.0;
+        float cornerCurlTL = pow(1.0 - smoothstep(0.0, 0.14, cornerTL), 2.5) * 0.9;
+        float cornerCurlTR = pow(1.0 - smoothstep(0.0, 0.20, cornerTR), 2.5) * 1.3;
 
         // Combine edge and corner curls
         float edgeCurl = curlL + curlR + curlB + curlT;
         float cornerCurl = cornerCurlBL + cornerCurlBR + cornerCurlTL + cornerCurlTR;
-        float totalCurl = (edgeCurl * 0.6 + cornerCurl * 0.8) * uParchment;
+        float totalCurl = (edgeCurl * 0.6 + cornerCurl * 0.8) * uParchment * boundaryFade;
 
         // Z displacement - curling backward
         flatPos.z -= totalCurl * 18.0;
 
         // Corners curl inward more dramatically
-        float inwardX = (cornerCurlBR + cornerCurlTR - cornerCurlBL - cornerCurlTL) * 5.0;
-        float inwardY = (cornerCurlTL + cornerCurlTR - cornerCurlBL - cornerCurlBR) * 4.0;
+        float inwardX = (cornerCurlBR + cornerCurlTR - cornerCurlBL - cornerCurlTL) * 5.0 * boundaryFade;
+        float inwardY = (cornerCurlTL + cornerCurlTR - cornerCurlBL - cornerCurlBR) * 4.0 * boundaryFade;
         flatPos.x += inwardX * uParchment;
         flatPos.y += inwardY * uParchment;
 
         // Slight edge inward curl
-        flatPos.x += (curlR - curlL) * 4.0 * uParchment;
-        flatPos.y += (curlT - curlB) * 3.0 * uParchment;
+        flatPos.x += (curlR - curlL) * 4.0 * uParchment * boundaryFade;
+        flatPos.y += (curlT - curlB) * 3.0 * uParchment * boundaryFade;
 
-        // Subtle surface waviness (old paper wrinkles)
+        // Subtle surface waviness (old paper wrinkles) - only in interior
+        float interiorFade = smoothstep(0.0, 0.08, min(min(edgeL, edgeR), min(edgeB, edgeT)));
         float wave1 = sin(uv.x * 15.0 + uv.y * 10.0) * 0.3;
         float wave2 = sin(uv.y * 18.0 + uv.x * 5.0) * 0.2;
         float wave3 = sin((uv.x + uv.y) * 25.0) * 0.15;
-        float centerFade = smoothstep(0.0, 0.3, min(min(edgeL, edgeR), min(edgeB, edgeT)));
-        flatPos.z += (wave1 + wave2 + wave3) * uParchment * (0.3 + 0.7 * (1.0 - centerFade));
-
-        // Damaged/torn edge effect - slight irregular displacement
-        float damage = hash(uv * 20.0) * 0.5;
-        float edgeProximity = 1.0 - smoothstep(0.0, 0.05, min(min(edgeL, edgeR), min(edgeB, edgeT)));
-        flatPos.z -= damage * edgeProximity * uParchment * 3.0;
+        flatPos.z += (wave1 + wave2 + wave3) * uParchment * interiorFade * 0.8;
     }
 
     // Smooth morph with easing built into the shader

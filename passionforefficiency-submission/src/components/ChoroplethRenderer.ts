@@ -134,14 +134,25 @@ export class ChoroplethRenderer {
 
   private drawPolygon(rings: number[][][]): void {
     this.ctx.beginPath();
-    rings.forEach((ring, ringIndex) => {
+    rings.forEach((ring) => {
+      let prevLon: number | null = null;
       ring.forEach((point, i) => {
-        const [x, y] = this.projectPoint(point[0], point[1]);
+        const lon = point[0];
+        const lat = point[1];
+        const [x, y] = this.projectPoint(lon, lat);
+
+        // Detect antimeridian crossing (large longitude jump)
+        const crossesAntimeridian = prevLon !== null && Math.abs(lon - prevLon) > 180;
+
         if (i === 0) {
+          this.ctx.moveTo(x, y);
+        } else if (crossesAntimeridian) {
+          // Skip drawing line across antimeridian - move instead
           this.ctx.moveTo(x, y);
         } else {
           this.ctx.lineTo(x, y);
         }
+        prevLon = lon;
       });
       this.ctx.closePath();
     });
@@ -151,13 +162,26 @@ export class ChoroplethRenderer {
   private strokePolygon(rings: number[][][]): void {
     rings.forEach(ring => {
       this.ctx.beginPath();
+      let prevLon: number | null = null;
       ring.forEach((point, i) => {
-        const [x, y] = this.projectPoint(point[0], point[1]);
+        const lon = point[0];
+        const lat = point[1];
+        const [x, y] = this.projectPoint(lon, lat);
+
+        // Detect antimeridian crossing (large longitude jump)
+        const crossesAntimeridian = prevLon !== null && Math.abs(lon - prevLon) > 180;
+
         if (i === 0) {
+          this.ctx.moveTo(x, y);
+        } else if (crossesAntimeridian) {
+          // Don't draw line across antimeridian
+          this.ctx.stroke();
+          this.ctx.beginPath();
           this.ctx.moveTo(x, y);
         } else {
           this.ctx.lineTo(x, y);
         }
+        prevLon = lon;
       });
       this.ctx.stroke();
     });
