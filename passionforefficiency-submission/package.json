@@ -9,6 +9,8 @@
     "preview": "vite preview"
   },
   "devDependencies": {
+    "@types/topojson-client": "^3.1.5",
+    "@types/topojson-specification": "^1.0.5",
     "typescript": "~5.9.3",
     "vite": "^7.2.4"
   },
@@ -16,6 +18,8 @@
     "@types/three": "^0.181.0",
     "gsap": "^3.13.0",
     "lil-gui": "^0.21.0",
-    "three": "^0.181.2"
+    "three": "^0.181.2",
+    "topojson-client": "^3.1.0",
+    "world-atlas": "^2.0.2"
   }
 }

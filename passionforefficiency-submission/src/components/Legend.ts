@@ -1,4 +1,4 @@
-import type { StatisticDefinition } from '../data/statistics';
+import type { StatisticDefinition } from '../data/worldStatistics';
 
 /**
  * Legend component for displaying color scales
@@ -93,9 +93,8 @@ export class Legend {
     const [low, mid, high] = stat.colorScale;
     gradientEl.style.background = `linear-gradient(to right, ${low}, ${mid}, ${high})`;
 
-    const [min, max] = stat.domain;
-    minEl.textContent = `${min.toLocaleString()} ${stat.unit}`;
-    maxEl.textContent = `${max.toLocaleString()} ${stat.unit}`;
+    minEl.textContent = stat.format(stat.domain[0]);
+    maxEl.textContent = stat.format(stat.domain[1]);
 
     this.container.classList.add('visible');
     this.visible = true;

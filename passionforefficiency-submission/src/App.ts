@@ -2,9 +2,9 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { gsap } from 'gsap';
 import GUI from 'lil-gui';
-import { StatisticsOverlay } from './components/StatisticsOverlay';
+import { ChoroplethRenderer } from './components/ChoroplethRenderer';
 import { Legend } from './components/Legend';
-import { STATISTICS } from './data/statistics';
+import { STATISTICS, getStatisticById } from './data/worldStatistics';
 
 const SPHERE_RADIUS = 50;
 
@@ -12,6 +12,7 @@ const SPHERE_RADIUS = 50;
 const vertexShader = `
 uniform float uMorph;
 uniform float uTime;
+uniform float uParchment;
 
 varying vec2 vUv;
 varying vec3 vNormal;
@@ -19,6 +20,11 @@ varying vec3 vPosition;
 
 const float PI = 3.14159265359;
 const float RADIUS = ${SPHERE_RADIUS.toFixed(1)};
+
+// Simple noise function for parchment curl variation
+float hash(vec2 p) {
+    return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+}
 
 void main() {
     vUv = uv;
@@ -43,13 +49,42 @@ void main() {
         0.0
     );
 
+    // Parchment curl effect - only when completely flat (morph = 0)
+    // uParchment animates 0->1 to create the rolling effect
+    if (uMorph < 0.01 && uParchment > 0.01) {
+        // Distance from edges (0 at edge, 1 at center)
+        float edgeL = uv.x;
+        float edgeR = 1.0 - uv.x;
+        float edgeB = uv.y;
+        float edgeT = 1.0 - uv.y;
+
+        // Curl intensity varies along each edge for organic feel
+        float curlL = pow(1.0 - smoothstep(0.0, 0.15, edgeL), 2.0) * (0.8 + 0.4 * hash(vec2(uv.y * 5.0, 1.0)));
+        float curlR = pow(1.0 - smoothstep(0.0, 0.12, edgeR), 2.0) * (0.7 + 0.5 * hash(vec2(uv.y * 5.0, 2.0)));
+        float curlB = pow(1.0 - smoothstep(0.0, 0.10, edgeB), 2.0) * (0.9 + 0.3 * hash(vec2(uv.x * 5.0, 3.0)));
+        float curlT = pow(1.0 - smoothstep(0.0, 0.08, edgeT), 2.0) * (0.6 + 0.6 * hash(vec2(uv.x * 5.0, 4.0)));
+
+        // Combined curl - edges curl backwards (negative Z) and slightly inward
+        // uParchment controls the animation of the curl rolling in
+        float totalCurl = (curlL + curlR + curlB + curlT) * uParchment;
+        flatPos.z -= totalCurl * 25.0;
+
+        // Slight inward curl on sides
+        flatPos.x += (curlR - curlL) * 8.0 * uParchment;
+        flatPos.y += (curlT - curlB) * 6.0 * uParchment;
+
+        // Add subtle waviness across the surface
+        float wave = sin(uv.x * 12.0 + uv.y * 8.0) * 0.5 + sin(uv.y * 15.0) * 0.3;
+        flatPos.z += wave * uParchment * 1.5;
+    }
+
     // Smooth morph with easing built into the shader
     float t = uMorph;
     t = t * t * (3.0 - 2.0 * t); // smoothstep easing
 
     vec3 pos = mix(flatPos, spherePos, t);
 
-    // Normal calculation
+    // Normal calculation (simplified - doesn't account for parchment warping)
     vec3 sphereNormal = normalize(spherePos);
     vec3 flatNormal = vec3(0.0, 0.0, 1.0);
     vNormal = normalize(mix(flatNormal, sphereNormal, t));
@@ -60,16 +95,34 @@ void main() {
 }
 `;
 
-// Fragment shader - renders the earth texture with lighting
+// Fragment shader - blends base texture with choropleth overlay
 const fragmentShader = `
 uniform sampler2D uTexture;
-uniform sampler2D uNightTexture;
+uniform sampler2D uDataTexture;
+uniform float uDataOpacity;
 uniform vec3 uSunDir;
 uniform float uMorph;
+uniform float uParchment;
 
 varying vec2 vUv;
 varying vec3 vNormal;
 varying vec3 vPosition;
+
+// Noise for aged paper texture
+float hash(vec2 p) {
+    return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+}
+
+float noise(vec2 p) {
+    vec2 i = floor(p);
+    vec2 f = fract(p);
+    f = f * f * (3.0 - 2.0 * f);
+    float a = hash(i);
+    float b = hash(i + vec2(1.0, 0.0));
+    float c = hash(i + vec2(0.0, 1.0));
+    float d = hash(i + vec2(1.0, 1.0));
+    return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
+}
 
 void main() {
     vec3 normal = normalize(vNormal);
@@ -79,21 +132,70 @@ void main() {
     float sunDot = dot(normal, sunDir);
     float dayFactor = smoothstep(-0.2, 0.4, sunDot);
 
-    // Sample textures
-    vec4 dayColor = texture2D(uTexture, vUv);
-    vec4 nightColor = texture2D(uNightTexture, vUv);
+    // Sample base texture
+    vec4 baseColor = texture2D(uTexture, vUv);
 
-    // Blend day and night
-    vec3 color = mix(nightColor.rgb * 0.8, dayColor.rgb, dayFactor);
+    // Sample data overlay
+    vec4 dataColor = texture2D(uDataTexture, vUv);
 
-    // Add city lights at night
-    float nightLights = nightColor.r * (1.0 - dayFactor) * 1.5;
-    color += vec3(1.0, 0.9, 0.7) * nightLights;
+    // Blend base with data overlay
+    vec3 color = mix(baseColor.rgb, dataColor.rgb, uDataOpacity * dataColor.a);
 
-    // Simple atmosphere rim
+    // Apply lighting
+    color *= (0.4 + 0.6 * dayFactor);
+
+    // Atmosphere rim effect (only for globe)
     float rim = 1.0 - max(dot(normal, vec3(0.0, 0.0, 1.0)), 0.0);
     rim = pow(rim, 3.0) * uMorph;
-    color += vec3(0.3, 0.5, 1.0) * rim * 0.3;
+    color += vec3(0.3, 0.5, 1.0) * rim * 0.2;
+
+    // Parchment/aged effect (only when completely flat)
+    if (uMorph < 0.01 && uParchment > 0.01) {
+        // Check if we have data overlay active
+        float hasData = uDataOpacity * dataColor.a;
+
+        // For areas WITH statistics data: keep colors more saturated
+        // For areas WITHOUT data (base map): apply full sepia
+
+        // Sepia tone for base map areas
+        vec3 sepia = vec3(
+            dot(color, vec3(0.393, 0.769, 0.189)),
+            dot(color, vec3(0.349, 0.686, 0.168)),
+            dot(color, vec3(0.272, 0.534, 0.131))
+        );
+
+        // Warm parchment tint
+        vec3 parchmentTint = vec3(0.96, 0.91, 0.82);
+        sepia = mix(sepia, sepia * parchmentTint, 0.5);
+
+        // Add paper texture noise (subtle)
+        float paperNoise = noise(vUv * 200.0) * 0.06 + noise(vUv * 50.0) * 0.04;
+        sepia += vec3(paperNoise * 0.7, paperNoise * 0.6, paperNoise * 0.4);
+
+        // Darken edges (vignette) for aged look
+        float edgeDist = min(min(vUv.x, 1.0 - vUv.x), min(vUv.y, 1.0 - vUv.y));
+        float vignette = smoothstep(0.0, 0.12, edgeDist);
+        sepia *= 0.75 + 0.25 * vignette;
+
+        // Add some staining/age spots (more subtle)
+        float stain = noise(vUv * 8.0 + 42.0);
+        stain = smoothstep(0.65, 0.85, stain) * 0.1;
+        sepia -= vec3(stain * 0.4, stain * 0.3, stain * 0.15);
+
+        // For statistics data: blend less sepia, keep more original color
+        // This preserves the color coding while still looking aged
+        float sepiaAmount = mix(0.85, 0.35, hasData); // 85% sepia for base, 35% for data
+
+        // Also boost saturation for data areas to make colors pop more
+        if (hasData > 0.1) {
+            // Increase color saturation for data overlay
+            float luminance = dot(color, vec3(0.299, 0.587, 0.114));
+            color = mix(vec3(luminance), color, 1.3); // Boost saturation by 30%
+        }
+
+        // Blend with sepia based on whether it's data or base map
+        color = mix(color, sepia, sepiaAmount * uParchment);
+    }
 
     gl_FragColor = vec4(color, 1.0);
 }
@@ -107,12 +209,14 @@ export class App {
     private globe: THREE.Mesh | null = null;
     private material: THREE.ShaderMaterial | null = null;
     private gui: GUI | null = null;
-    private statsOverlay: StatisticsOverlay | null = null;
+    private choropleth: ChoroplethRenderer | null = null;
     private legend: Legend | null = null;
+    private dataTexture: THREE.CanvasTexture | null = null;
 
     private params = {
         morph: 0,
         autoRotate: false,
+        parchmentStyle: false,
         sunX: 1,
         sunY: 0.5,
         sunZ: 1,
@@ -122,7 +226,7 @@ export class App {
     constructor() {
         // Scene
         this.scene = new THREE.Scene();
-        this.scene.background = new THREE.Color(0x000008);
+        this.scene.background = new THREE.Color(0x000812);
 
         // Camera
         this.camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 1000);
@@ -147,10 +251,17 @@ export class App {
     }
 
     private async init(): Promise<void> {
+        // Initialize choropleth renderer first (needs to load country data)
+        this.choropleth = new ChoroplethRenderer();
+        this.legend = new Legend();
+
         await this.createGlobe();
         this.createStars();
-        this.createStatisticsOverlay();
         this.createGUI();
+
+        // Wait for country boundaries to load
+        await this.choropleth.waitForLoad();
+
         this.animate();
 
         // Hide loading
@@ -161,33 +272,30 @@ export class App {
         setTimeout(() => this.playIntro(), 500);
     }
 
-    private createStatisticsOverlay(): void {
-        this.statsOverlay = new StatisticsOverlay(this.scene);
-        this.legend = new Legend();
-    }
-
     private async createGlobe(): Promise<void> {
         const loader = new THREE.TextureLoader();
 
-        // Load textures
-        const [dayTex, nightTex] = await Promise.all([
-            loader.loadAsync('https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_atmos_2048.jpg'),
-            loader.loadAsync('https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_lights_2048.png'),
-        ]);
+        // Load base earth texture
+        const baseTex = await loader.loadAsync(
+            'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_atmos_2048.jpg'
+        );
 
-        // High quality filtering
-        [dayTex, nightTex].forEach(tex => {
-            tex.anisotropy = this.renderer.capabilities.getMaxAnisotropy();
-            tex.minFilter = THREE.LinearMipmapLinearFilter;
-            tex.magFilter = THREE.LinearFilter;
-        });
+        baseTex.anisotropy = this.renderer.capabilities.getMaxAnisotropy();
+        baseTex.minFilter = THREE.LinearMipmapLinearFilter;
+        baseTex.magFilter = THREE.LinearFilter;
+
+        // Create empty data texture (will be updated when statistic selected)
+        const emptyCanvas = document.createElement('canvas');
+        emptyCanvas.width = 2048;
+        emptyCanvas.height = 1024;
+        this.dataTexture = new THREE.CanvasTexture(emptyCanvas);
 
         // Geometry - high resolution plane
         const geometry = new THREE.PlaneGeometry(
             Math.PI * 2 * SPHERE_RADIUS,
             Math.PI * SPHERE_RADIUS,
-            256, // width segments
-            128  // height segments
+            256,
+            128
         );
 
         // Shader material
@@ -197,8 +305,10 @@ export class App {
             uniforms: {
                 uMorph: { value: 0 },
                 uTime: { value: 0 },
-                uTexture: { value: dayTex },
-                uNightTexture: { value: nightTex },
+                uParchment: { value: 0 },
+                uTexture: { value: baseTex },
+                uDataTexture: { value: this.dataTexture },
+                uDataOpacity: { value: 0 },
                 uSunDir: { value: new THREE.Vector3(1, 0.5, 1).normalize() },
             },
             side: THREE.DoubleSide,
@@ -235,14 +345,13 @@ export class App {
     }
 
     private createGUI(): void {
-        this.gui = new GUI({ title: 'Controls' });
+        this.gui = new GUI({ title: 'Globe Controls' });
 
         // Morph slider
         this.gui.add(this.params, 'morph', 0, 1, 0.01)
             .name('Flat ↔ Globe')
             .onChange((v: number) => {
                 if (this.material) this.material.uniforms.uMorph.value = v;
-                if (this.statsOverlay) this.statsOverlay.setMorph(v);
             });
 
         // Buttons
@@ -253,9 +362,28 @@ export class App {
         // Auto rotate
         this.gui.add(this.params, 'autoRotate').name('Auto Rotate');
 
+        // Parchment style (old map look) - only works when flat
+        this.gui.add(this.params, 'parchmentStyle')
+            .name('Parchment Style')
+            .onChange((enabled: boolean) => {
+                if (this.material) {
+                    // Only animate if we're flat
+                    if (this.params.morph < 0.01) {
+                        gsap.to(this.material.uniforms.uParchment, {
+                            value: enabled ? 1 : 0,
+                            duration: 1.5, // Slower for nice rolling effect
+                            ease: 'power2.out',
+                        });
+                    } else {
+                        // If not flat, just set the value (will apply when flat)
+                        this.material.uniforms.uParchment.value = enabled ? 1 : 0;
+                    }
+                }
+            });
+
         // Statistics folder
-        const statsFolder = this.gui.addFolder('Statistics');
-        const statOptions: { [key: string]: string } = { 'None': 'none' };
+        const statsFolder = this.gui.addFolder('World Statistics');
+        const statOptions: { [key: string]: string } = { 'None (Satellite View)': 'none' };
         STATISTICS.forEach(stat => {
             statOptions[stat.name] = stat.id;
         });
@@ -265,20 +393,40 @@ export class App {
         statsFolder.open();
 
         // Sun direction folder
-        const sunFolder = this.gui.addFolder('Sun Position');
-        sunFolder.add(this.params, 'sunX', -1, 1, 0.1).onChange(() => this.updateSun());
-        sunFolder.add(this.params, 'sunY', -1, 1, 0.1).onChange(() => this.updateSun());
-        sunFolder.add(this.params, 'sunZ', -1, 1, 0.1).onChange(() => this.updateSun());
+        const sunFolder = this.gui.addFolder('Lighting');
+        sunFolder.add(this.params, 'sunX', -1, 1, 0.1).name('Sun X').onChange(() => this.updateSun());
+        sunFolder.add(this.params, 'sunY', -1, 1, 0.1).name('Sun Y').onChange(() => this.updateSun());
+        sunFolder.add(this.params, 'sunZ', -1, 1, 0.1).name('Sun Z').onChange(() => this.updateSun());
     }
 
     private onStatisticChange(statId: string): void {
+        if (!this.material || !this.choropleth) return;
+
         if (statId === 'none') {
-            if (this.statsOverlay) this.statsOverlay.hide();
+            // Fade out data overlay
+            gsap.to(this.material.uniforms.uDataOpacity, {
+                value: 0,
+                duration: 0.5,
+            });
             if (this.legend) this.legend.hide();
         } else {
-            const stat = STATISTICS.find(s => s.id === statId);
+            const stat = getStatisticById(statId);
             if (stat) {
-                if (this.statsOverlay) this.statsOverlay.show(statId);
+                // Render new choropleth texture
+                const canvas = this.choropleth.renderTexture(stat);
+
+                // Update texture
+                if (this.dataTexture) {
+                    this.dataTexture.image = canvas;
+                    this.dataTexture.needsUpdate = true;
+                }
+
+                // Fade in data overlay
+                gsap.to(this.material.uniforms.uDataOpacity, {
+                    value: 0.85,
+                    duration: 0.5,
+                });
+
                 if (this.legend) this.legend.show(stat);
             }
         }
@@ -295,6 +443,80 @@ export class App {
     }
 
     private morphTo(target: number): void {
+        // Calculate zoom distances
+        // Flat map: width = 2π × 50 ≈ 314, need to fit in view
+        // With 50° FOV, z ≈ width / (2 × tan(25°)) ≈ 314 / 0.93 ≈ 340
+        const flatZoom = 350;
+        const globeZoom = 150;
+
+        if (target === 0) {
+            // Going to flat: reset rotation, center camera, zoom out
+            if (this.globe) {
+                gsap.to(this.globe.rotation, {
+                    x: 0,
+                    y: 0,
+                    z: 0,
+                    duration: 2.5,
+                    ease: 'power2.inOut',
+                });
+            }
+            // Center and zoom out camera to show full map
+            gsap.to(this.camera.position, {
+                x: 0,
+                y: 0,
+                z: flatZoom,
+                duration: 2.5,
+                ease: 'power2.inOut',
+            });
+            // Reset controls target to center
+            gsap.to(this.controls.target, {
+                x: 0,
+                y: 0,
+                z: 0,
+                duration: 2.5,
+                ease: 'power2.inOut',
+            });
+        } else {
+            // Going to globe: first unparchment, then zoom in
+            gsap.to(this.camera.position, {
+                z: globeZoom,
+                duration: 2.5,
+                ease: 'power2.inOut',
+            });
+        }
+
+        // Re-enable controls immediately when going to globe
+        if (target === 1) {
+            this.controls.enabled = true;
+        }
+
+        // Handle parchment animation based on direction
+        if (target === 1 && this.params.parchmentStyle && this.material) {
+            // Going to globe with parchment enabled: unparchment FIRST, then morph
+            gsap.to(this.material.uniforms.uParchment, {
+                value: 0,
+                duration: 1.2,
+                ease: 'power2.in',
+                onComplete: () => {
+                    this.startMorphAnimation(target);
+                }
+            });
+        } else if (target === 0) {
+            // Going to flat: morph first, parchment after (handled in onComplete)
+            this.startMorphAnimation(target);
+        } else {
+            // No parchment involved, just morph
+            this.startMorphAnimation(target);
+        }
+    }
+
+    private startMorphAnimation(target: number): void {
+        // Ensure parchment starts at 0 when morphing to flat
+        // (it will animate in after morph completes)
+        if (target === 0 && this.material) {
+            this.material.uniforms.uParchment.value = 0;
+        }
+
         gsap.to(this.params, {
             morph: target,
             duration: 2.5,
@@ -303,36 +525,45 @@ export class App {
                 if (this.material) {
                     this.material.uniforms.uMorph.value = this.params.morph;
                 }
-                // Sync statistics overlay
-                if (this.statsOverlay) {
-                    this.statsOverlay.setMorph(this.params.morph);
-                }
-                // Update GUI display
                 this.gui?.controllersRecursive().forEach(c => c.updateDisplay());
+            },
+            onComplete: () => {
+                // When fully flat, disable controls and apply parchment if enabled
+                if (target === 0) {
+                    this.controls.enabled = false;
+                    // If parchment style is enabled, animate it in now
+                    if (this.params.parchmentStyle && this.material) {
+                        gsap.to(this.material.uniforms.uParchment, {
+                            value: 1,
+                            duration: 1.5,
+                            ease: 'power2.out',
+                        });
+                    }
+                }
             }
         });
     }
 
     private async playIntro(): Promise<void> {
-        // Start flat and zoomed out
+        // Start flat, centered, and zoomed out to show full map
         this.params.morph = 0;
         if (this.material) this.material.uniforms.uMorph.value = 0;
-        if (this.statsOverlay) this.statsOverlay.setMorph(0);
 
-        gsap.set(this.camera.position, { z: 350 });
+        // Reset globe rotation and disable controls while flat
+        if (this.globe) {
+            this.globe.rotation.set(0, 0, 0);
+        }
+        this.controls.enabled = false;
 
-        // Wait a moment
+        // Position camera centered, facing the front of the map (positive Z)
+        gsap.set(this.camera.position, { x: 0, y: 0, z: 350 });
+        gsap.set(this.controls.target, { x: 0, y: 0, z: 0 });
+
+        // Wait a moment to show the flat map
         await new Promise(r => setTimeout(r, 800));
 
-        // Morph to globe
+        // Morph to globe (this also handles zooming in)
         this.morphTo(1);
-
-        // Camera zoom in
-        gsap.to(this.camera.position, {
-            z: 150,
-            duration: 3,
-            ease: 'power2.out',
-        });
 
         // Enable auto rotate after animation
         setTimeout(() => {
@@ -352,14 +583,17 @@ export class App {
 
         this.controls.update();
 
-        // Auto rotation
-        if (this.params.autoRotate && this.globe && this.params.morph > 0.8) {
-            this.globe.rotation.y += 0.002;
+        // Auto rotation - scales with morph level for elegant transition
+        if (this.params.autoRotate && this.globe) {
+            // Rotation speed scales from 0 at flat to full at globe
+            const rotationSpeed = 0.002 * this.params.morph;
+            this.globe.rotation.y += rotationSpeed;
         }
 
-        // Sync statistics overlay rotation with globe
-        if (this.statsOverlay && this.globe) {
-            this.statsOverlay.syncRotation(this.globe.rotation.y);
+        // Update material side based on morph
+        // When flat, only show front; when globe, show both sides
+        if (this.material) {
+            this.material.side = this.params.morph < 0.1 ? THREE.FrontSide : THREE.DoubleSide;
         }
 
         this.renderer.render(this.scene, this.camera);
