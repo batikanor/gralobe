@@ -1,0 +1,15 @@
+{
+  "name": "gralobe-basic-example",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite"
+  },
+  "dependencies": {
+    "gralobe": "^1.0.2",
+    "three": "^0.170.0"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0"
+  }
+}
