@@ -11,6 +11,7 @@ export class Legend {
     this.container = document.createElement('div');
     this.container.id = 'legend';
     this.container.innerHTML = `
+      <div class="legend-hint">Press G to toggle globe/flat</div>
       <div class="legend-title"></div>
       <div class="legend-gradient"></div>
       <div class="legend-labels">
@@ -75,6 +76,14 @@ export class Legend {
         font-size: 11px;
         color: #888;
         font-style: italic;
+      }
+
+      .legend-hint {
+        font-size: 10px;
+        color: #666;
+        margin-bottom: 8px;
+        padding-bottom: 6px;
+        border-bottom: 1px solid rgba(100, 150, 200, 0.2);
       }
     `;
     document.head.appendChild(style);

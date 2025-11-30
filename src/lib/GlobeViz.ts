@@ -335,6 +335,9 @@ export class GlobeViz implements GlobeVizAPI {
     // Handle resize
     window.addEventListener('resize', this.handleResize);
 
+    // Handle keyboard shortcuts
+    window.addEventListener('keydown', this.handleKeydown);
+
     // Start animation loop
     this.animate();
   }
@@ -516,6 +519,18 @@ export class GlobeViz implements GlobeVizAPI {
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(width, height);
     this.countryLabels?.resize(width, height);
+  };
+
+  private handleKeydown = (e: KeyboardEvent): void => {
+    if (this.isDestroyed) return;
+
+    if (e.key === 'g' || e.key === 'G') {
+      if (this.morph > 0.5) {
+        this.toFlat();
+      } else {
+        this.toGlobe();
+      }
+    }
   };
 
   private animate = (): void => {
@@ -755,6 +770,7 @@ export class GlobeViz implements GlobeVizAPI {
     }
 
     window.removeEventListener('resize', this.handleResize);
+    window.removeEventListener('keydown', this.handleKeydown);
 
     this.gui?.destroy();
     this.legend?.dispose();

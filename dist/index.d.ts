@@ -150,6 +150,7 @@ export declare class GlobeViz implements GlobeVizAPI {
     private createStars;
     private createGUI;
     private handleResize;
+    private handleKeydown;
     private animate;
     toGlobe(): void;
     toFlat(): void;

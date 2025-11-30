@@ -6,7 +6,7 @@
     "dev": "vite"
   },
   "dependencies": {
-    "gralobe": "^1.0.3",
+    "gralobe": "^1.0.4",
     "three": "^0.170.0"
   },
   "devDependencies": {
