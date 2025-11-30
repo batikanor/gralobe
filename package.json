@@ -1,0 +1,67 @@
+{
+  "name": "gralobe",
+  "version": "1.0.0",
+  "description": "Interactive 3D globe visualization with statistics, smooth flat map ↔ globe transitions, and country labels",
+  "type": "module",
+  "main": "./dist/gralobe.umd.cjs",
+  "module": "./dist/gralobe.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/gralobe.js",
+      "require": "./dist/gralobe.umd.cjs"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "keywords": [
+    "globe",
+    "3d",
+    "visualization",
+    "map",
+    "statistics",
+    "three.js",
+    "webgl",
+    "choropleth",
+    "earth",
+    "world",
+    "geography",
+    "data-visualization"
+  ],
+  "author": "BATIKAN BORA ORMANCI <batikanor@gmail.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/batikanor/gralobe"
+  },
+  "homepage": "https://github.com/batikanor/gralobe#readme",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "build:lib": "tsc && vite build --mode lib",
+    "preview": "vite preview",
+    "prepublishOnly": "npm run build:lib"
+  },
+  "peerDependencies": {
+    "three": ">=0.150.0"
+  },
+  "devDependencies": {
+    "@types/topojson-client": "^3.1.5",
+    "@types/topojson-specification": "^1.0.5",
+    "typescript": "~5.9.3",
+    "vite": "^7.2.4",
+    "vite-plugin-dts": "^4.5.4"
+  },
+  "dependencies": {
+    "@types/three": "^0.181.0",
+    "gifenc": "^1.0.3",
+    "gsap": "^3.13.0",
+    "lil-gui": "^0.21.0",
+    "three": ">=0.150.0",
+    "topojson-client": "^3.1.0",
+    "world-atlas": "^2.0.2"
+  }
+}
