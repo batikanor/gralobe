@@ -1,11 +1,14 @@
 # Gralobe
 
-> **NPM Package created as part of a submission to [TechArena Finland Hackathon](https://platform.techarena-finland.hackathon.com)**
+> **Open-source NPM package for beautiful 3D globe visualizations**
+>
+> Created as part of a submission to [TechArena Finland Hackathon](https://platform.techarena-finland.hackathon.com). This is a community contribution we're committed to maintaining and improving!
 
-Interactive 3D globe visualization with world statistics, smooth flat map ↔ globe transitions, and country labels.
+Interactive 3D globe visualization with world statistics, smooth flat map ↔ globe transitions, and country labels. **Nothing like this existed before** - and it's 100% useful for data visualization, dashboards, and educational projects!
 
 [![npm version](https://img.shields.io/npm/v/gralobe.svg)](https://www.npmjs.com/package/gralobe)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![npm downloads](https://img.shields.io/npm/dm/gralobe.svg)](https://www.npmjs.com/package/gralobe)
 
 ## Features
 
@@ -18,13 +21,13 @@ Interactive 3D globe visualization with world statistics, smooth flat map ↔ gl
 - Height extrusion based on data values
 - Fully typed TypeScript API
 
-## Demo
+## Live Demo
+
+**[🌐 Try it live at gralobe.vercel.app](https://gralobe.vercel.app)** - A fully configurable version where you can explore different datasets, textures, and visual effects!
 
 [![Gralobe Demo](https://img.youtube.com/vi/0sl-scBeB88/0.jpg)](https://youtu.be/0sl-scBeB88)
 
 **[▶️ Watch the demo on YouTube](https://youtu.be/0sl-scBeB88)**
-
-See also `video_demo_1_compressed.mp4` in this repository.
 
 ## Installation
 

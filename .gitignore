@@ -27,3 +27,4 @@ dist-ssr
 
 # Large video files (keep compressed version only)
 video_demo_1.mov
+.vercel
