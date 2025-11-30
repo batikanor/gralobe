@@ -1,33 +1,5 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Gralobe - Custom Statistics</title>
-  <style>body { margin: 0; } #globe { width: 100vw; height: 100vh; }</style>
-</head>
-<body>
-  <div id="globe"></div>
-  <script type="module">
-    import { GlobeViz } from 'gralobe';
-
-    // You can use country names, ISO alpha-2, alpha-3, or numeric codes
-    const globe = new GlobeViz('#globe', {
-      statistic: {
-        definition: {
-          id: 'sample',
-          name: 'Sample Statistic',
-          unit: '',
-          description: 'Blue (low) to Red (high)',
-          colorScale: ['#3182bd', '#9ecae1', '#de2d26'],
-          domain: [0, 100],
-          format: (v) => v.toFixed(0),
-        },
-        values: {
-          'US': 100,       // USA - red (alpha-2)
-          'Germany': 10,   // Germany - blue (name)
-          'TR': 30,        // Turkey - light blue (alpha-2)
-        },
-      },
-    });
-  </script>
-</body>
-</html>
+using UnityEngine; public class Screenshot : MonoBehaviour { void Update() { if
+(Input.GetKeyDown(KeyCode.P)) { string filename = "screenshot_" +
+System.DateTime.Now.ToString("HHmmss") + ".png";
+ScreenCapture.CaptureScreenshot(filename); Debug.Log("Saved: " + filename); } }
+}

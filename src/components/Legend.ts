@@ -118,6 +118,10 @@ export class Legend {
     return this.visible;
   }
 
+  getContainer(): HTMLElement {
+    return this.container;
+  }
+
   dispose(): void {
     this.container.remove();
   }

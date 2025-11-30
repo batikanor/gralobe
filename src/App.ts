@@ -460,6 +460,38 @@ float fbm(vec2 p) {
     return value;
 }
 
+// Seamless/tileable noise for clouds (tiles at period)
+float seamlessNoise(vec2 p, float period) {
+    // Use modulo to wrap coordinates
+    vec2 p1 = mod(p, period);
+    vec2 p2 = mod(p + vec2(1.0, 0.0), period);
+    vec2 p3 = mod(p + vec2(0.0, 1.0), period);
+    vec2 p4 = mod(p + vec2(1.0, 1.0), period);
+
+    vec2 f = fract(p);
+    f = f * f * (3.0 - 2.0 * f);
+
+    float a = hash(floor(p1));
+    float b = hash(floor(p2));
+    float c = hash(floor(p3));
+    float d = hash(floor(p4));
+
+    return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
+}
+
+// Seamless FBM for clouds
+float seamlessFbm(vec2 p, float period) {
+    float value = 0.0;
+    float amplitude = 0.5;
+    float freq = 1.0;
+    for (int i = 0; i < 5; i++) {
+        value += amplitude * seamlessNoise(p * freq, period * freq);
+        freq *= 2.0;
+        amplitude *= 0.5;
+    }
+    return value;
+}
+
 // Voronoi for cracks
 vec2 voronoi(vec2 p) {
     vec2 n = floor(p);
@@ -568,14 +600,14 @@ void main() {
 
     // === CLOUD LAYER ===
     if (uClouds > 0.01) {
-        // Animated cloud offset
+        // Animated cloud offset - use seamless noise to avoid seams
         vec2 cloudUv = vUv + vec2(uTime * uCloudSpeed * 0.01, 0.0);
-        cloudUv = fract(cloudUv);
 
-        // Procedural clouds using layered noise
-        float cloud1 = fbm(cloudUv * 8.0 + uTime * uCloudSpeed * 0.1);
-        float cloud2 = fbm(cloudUv * 16.0 - uTime * uCloudSpeed * 0.05);
-        float cloud3 = fbm(cloudUv * 4.0 + uTime * uCloudSpeed * 0.02);
+        // Use seamless noise that tiles properly at UV boundaries
+        // Period of 8.0 means the noise repeats every 8 units, matching our scale
+        float cloud1 = seamlessFbm(cloudUv * 8.0 + vec2(uTime * uCloudSpeed * 0.1, 0.0), 8.0);
+        float cloud2 = seamlessFbm(cloudUv * 16.0 + vec2(-uTime * uCloudSpeed * 0.05, 0.0), 16.0);
+        float cloud3 = seamlessFbm(cloudUv * 4.0 + vec2(uTime * uCloudSpeed * 0.02, 0.0), 4.0);
 
         float clouds = cloud1 * 0.5 + cloud2 * 0.3 + cloud3 * 0.2;
         clouds = smoothstep(0.35, 0.7, clouds);
@@ -1428,8 +1460,14 @@ export class App {
     private createGUI(): void {
         this.gui = new GUI({ title: 'Globe Controls', width: 320 });
 
-        // Initialize exporter
+        // Initialize exporter with all overlay elements
         this.exporter = new Exporter(this.renderer, this.scene, this.camera);
+        if (this.legend) {
+            this.exporter.setLegendElement(this.legend.getContainer());
+        }
+        if (this.countryLabels) {
+            this.exporter.setCountryLabels(this.countryLabels);
+        }
 
         // === MAIN CONTROLS ===
         // Morph slider
@@ -1800,37 +1838,48 @@ export class App {
     private async recordAnimationVideo(): Promise<void> {
         if (!this.exporter) return;
 
+        console.log('[Video] Starting video recording sequence...');
         this.showExportNotification('Preparing... going to flat map first');
 
         // First, go to flat map using the actual button behavior
+        console.log('[Video] Step 1: morphTo(0) - going to flat');
         this.morphTo(0);
 
         // Wait for the morph animation to complete (2.5s morph + buffer)
         await new Promise(r => setTimeout(r, 3500));
+        console.log('[Video] Step 2: flat animation complete, starting recorder');
 
         this.showExportNotification('Recording video: flat → globe → flat...');
+
+        // Render a frame first to ensure everything is ready
+        this.renderer.render(this.scene, this.camera);
 
         // Start video recording and wait for it to be ready
         await this.exporter.startVideoRecording();
         this.exportState.isRecordingVideo = true;
+        console.log('[Video] Step 3: recorder started, isRecordingVideo =', this.exportState.isRecordingVideo);
 
-        // Brief pause to capture initial flat state
-        await new Promise(r => setTimeout(r, 500));
+        // Brief pause to capture initial flat state (let a few frames render)
+        await new Promise(r => setTimeout(r, 200));
 
         // Go to globe using actual button behavior
+        console.log('[Video] Step 4: morphTo(1) - going to globe');
         this.morphTo(1);
 
         // Wait for morph to complete
         await new Promise(r => setTimeout(r, 3500));
+        console.log('[Video] Step 5: globe animation complete');
 
         // Brief pause at globe state
         await new Promise(r => setTimeout(r, 500));
 
         // Go back to flat using actual button behavior
+        console.log('[Video] Step 6: morphTo(0) - going back to flat');
         this.morphTo(0);
 
         // Wait for morph to complete
         await new Promise(r => setTimeout(r, 3500));
+        console.log('[Video] Step 7: flat animation complete, stopping recorder');
 
         // Brief pause at end
         await new Promise(r => setTimeout(r, 300));
@@ -1838,6 +1887,7 @@ export class App {
         // Stop recording
         this.exporter.stopVideoRecording();
         this.exportState.isRecordingVideo = false;
+        console.log('[Video] Step 8: recording complete');
 
         this.showExportNotification('Video saved!');
     }
@@ -2371,6 +2421,11 @@ export class App {
             if (this.exportState.gifFrameCount % 3 === 0) {
                 this.exporter.captureGifFrame();
             }
+        }
+
+        // Update video frame if recording (includes legend overlay)
+        if (this.exportState.isRecordingVideo && this.exporter) {
+            this.exporter.updateVideoFrame();
         }
     }
 }

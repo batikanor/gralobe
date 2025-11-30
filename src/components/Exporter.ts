@@ -8,6 +8,7 @@
 import * as THREE from 'three';
 // @ts-ignore - gifenc has no type definitions
 import { GIFEncoder, quantize, applyPalette } from 'gifenc';
+import type { CountryLabels } from './CountryLabels';
 
 interface ExportOptions {
     width?: number;
@@ -34,8 +35,12 @@ export class Exporter {
     private recordedChunks: Blob[] = [];
     private captureCanvas: HTMLCanvasElement;
     private captureCtx: CanvasRenderingContext2D;
+    private compositeCanvas: HTMLCanvasElement;
+    private compositeCtx: CanvasRenderingContext2D;
     private gifWidth: number = 480;
     private gifHeight: number = 270;
+    private legendElement: HTMLElement | null = null;
+    private countryLabels: CountryLabels | null = null;
 
     constructor(renderer: THREE.WebGLRenderer, scene: THREE.Scene, camera: THREE.Camera) {
         this.renderer = renderer;
@@ -45,10 +50,193 @@ export class Exporter {
         // Create a canvas for capturing frames at consistent size
         this.captureCanvas = document.createElement('canvas');
         this.captureCtx = this.captureCanvas.getContext('2d', { willReadFrequently: true })!;
+
+        // Create composite canvas for video recording (includes legend overlay)
+        this.compositeCanvas = document.createElement('canvas');
+        this.compositeCtx = this.compositeCanvas.getContext('2d')!;
     }
 
     /**
-     * Capture a single screenshot
+     * Set the legend element to include in exports
+     */
+    setLegendElement(element: HTMLElement | null): void {
+        this.legendElement = element;
+    }
+
+    /**
+     * Set the country labels component to include in exports
+     */
+    setCountryLabels(labels: CountryLabels | null): void {
+        this.countryLabels = labels;
+    }
+
+    /**
+     * Draw country labels onto canvas
+     */
+    private drawCountryLabelsOnCanvas(ctx: CanvasRenderingContext2D, canvasWidth: number, canvasHeight: number): void {
+        if (!this.countryLabels) return;
+
+        try {
+            const labels = this.countryLabels.getVisibleLabelsForCanvas(this.camera, canvasWidth, canvasHeight);
+
+            labels.forEach(label => {
+                ctx.save();
+                ctx.globalAlpha = label.opacity;
+
+                // Draw text shadow for better visibility
+                ctx.font = 'bold 12px Arial, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+
+                // Shadow/outline
+                ctx.strokeStyle = 'rgba(0, 0, 0, 0.8)';
+                ctx.lineWidth = 3;
+                ctx.strokeText(label.text, label.x, label.y);
+
+                // Main text
+                ctx.fillStyle = '#ffffff';
+                ctx.fillText(label.text, label.x, label.y);
+
+                ctx.restore();
+            });
+        } catch (error) {
+            console.warn('Failed to draw country labels:', error);
+        }
+    }
+
+    /**
+     * Draw all overlays (legend + country labels) onto canvas
+     */
+    private drawOverlaysOnCanvas(ctx: CanvasRenderingContext2D, canvasWidth: number, canvasHeight: number): void {
+        this.drawCountryLabelsOnCanvas(ctx, canvasWidth, canvasHeight);
+        this.drawLegendOnCanvas(ctx, canvasWidth, canvasHeight);
+    }
+
+    /**
+     * Draw legend onto canvas at specified position
+     */
+    private drawLegendOnCanvas(ctx: CanvasRenderingContext2D, canvasWidth: number, canvasHeight: number): void {
+        try {
+            if (!this.legendElement || !this.legendElement.classList.contains('visible')) return;
+
+            const legend = this.legendElement;
+            const title = legend.querySelector('.legend-title') as HTMLElement;
+            const gradient = legend.querySelector('.legend-gradient') as HTMLElement;
+            const minLabel = legend.querySelector('.legend-min') as HTMLElement;
+            const maxLabel = legend.querySelector('.legend-max') as HTMLElement;
+            const description = legend.querySelector('.legend-description') as HTMLElement;
+
+            if (!title || !gradient) return;
+
+            // Fixed size legend - large and readable
+            const legendWidth = 280;
+            const legendHeight = 100;
+            const padding = 20;
+            const x = canvasWidth - legendWidth - padding;
+            const y = canvasHeight - legendHeight - padding;
+            const cornerRadius = 12;
+
+            // Semi-transparent background with border
+            ctx.fillStyle = 'rgba(0, 10, 20, 0.9)';
+            ctx.strokeStyle = 'rgba(100, 170, 255, 0.5)';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            if (ctx.roundRect) {
+                ctx.roundRect(x, y, legendWidth, legendHeight, cornerRadius);
+            } else {
+                ctx.rect(x, y, legendWidth, legendHeight);
+            }
+            ctx.fill();
+            ctx.stroke();
+
+            // Title - cyan color like the original
+            ctx.fillStyle = '#44aaff';
+            ctx.font = 'bold 18px Arial, sans-serif';
+            ctx.fillText(title.textContent || '', x + 16, y + 28);
+
+            // Gradient bar - larger and more visible
+            const barX = x + 16;
+            const barY = y + 40;
+            const barWidth = legendWidth - 32;
+            const barHeight = 20;
+
+            // Get colors by sampling the gradient element's computed style
+            // or parsing the background property more carefully
+            const gradientStyle = gradient.style.background || '';
+            let colors: string[] = [];
+
+            // Try to extract rgb/rgba colors from the gradient
+            const rgbMatches = gradientStyle.match(/rgba?\([^)]+\)/g);
+            if (rgbMatches && rgbMatches.length >= 2) {
+                colors = rgbMatches;
+            } else {
+                // Try hex colors
+                const hexMatches = gradientStyle.match(/#[0-9a-fA-F]{3,8}/g);
+                if (hexMatches && hexMatches.length >= 2) {
+                    colors = hexMatches;
+                }
+            }
+
+            // Draw gradient if we found colors
+            if (colors.length >= 2) {
+                const grd = ctx.createLinearGradient(barX, 0, barX + barWidth, 0);
+                grd.addColorStop(0, colors[0]);
+                if (colors.length >= 3) {
+                    grd.addColorStop(0.5, colors[1]);
+                    grd.addColorStop(1, colors[2]);
+                } else {
+                    grd.addColorStop(1, colors[1]);
+                }
+                ctx.fillStyle = grd;
+
+                // Draw gradient bar with rounded corners
+                ctx.beginPath();
+                if (ctx.roundRect) {
+                    ctx.roundRect(barX, barY, barWidth, barHeight, 4);
+                } else {
+                    ctx.rect(barX, barY, barWidth, barHeight);
+                }
+                ctx.fill();
+            } else {
+                // Fallback: draw a placeholder gradient (orange scale like life expectancy)
+                const grd = ctx.createLinearGradient(barX, 0, barX + barWidth, 0);
+                grd.addColorStop(0, '#cc6600');
+                grd.addColorStop(0.5, '#ffaa44');
+                grd.addColorStop(1, '#ffeecc');
+                ctx.fillStyle = grd;
+                ctx.beginPath();
+                if (ctx.roundRect) {
+                    ctx.roundRect(barX, barY, barWidth, barHeight, 4);
+                } else {
+                    ctx.rect(barX, barY, barWidth, barHeight);
+                }
+                ctx.fill();
+                console.log('Legend gradient style:', gradientStyle);
+            }
+
+            // Min/Max labels - larger text
+            ctx.fillStyle = '#cccccc';
+            ctx.font = '14px Arial, sans-serif';
+            if (minLabel) ctx.fillText(minLabel.textContent || '', barX, y + 78);
+            if (maxLabel) {
+                const maxText = maxLabel.textContent || '';
+                const maxWidth = ctx.measureText(maxText).width;
+                ctx.fillText(maxText, barX + barWidth - maxWidth, y + 78);
+            }
+
+            // Description text if available
+            if (description && description.textContent) {
+                ctx.fillStyle = '#888888';
+                ctx.font = 'italic 12px Arial, sans-serif';
+                ctx.fillText(description.textContent, barX, y + 95);
+            }
+        } catch (error) {
+            console.warn('Failed to draw legend on canvas:', error);
+        }
+    }
+
+    /**
+     * Capture a single screenshot (includes legend if visible)
      */
     screenshot(options: ExportOptions = {}): void {
         const { width = 1920, height = 1080 } = options;
@@ -65,8 +253,14 @@ export class Exporter {
         // Render
         this.renderer.render(this.scene, this.camera);
 
-        // Capture
-        const dataUrl = this.renderer.domElement.toDataURL('image/png');
+        // Create composite with legend
+        this.compositeCanvas.width = width;
+        this.compositeCanvas.height = height;
+        this.compositeCtx.drawImage(this.renderer.domElement, 0, 0);
+        this.drawOverlaysOnCanvas(this.compositeCtx, width, height);
+
+        // Capture from composite
+        const dataUrl = this.compositeCanvas.toDataURL('image/png');
 
         // Restore original size
         this.renderer.setSize(originalWidth, originalHeight);
@@ -79,6 +273,8 @@ export class Exporter {
 
     /**
      * Start recording video using MediaRecorder
+     * Prefers MP4 format when available, falls back to WebM
+     * Includes legend overlay if visible
      * Returns a promise that resolves when recording has started
      */
     startVideoRecording(options: ExportOptions = {}): Promise<void> {
@@ -88,15 +284,49 @@ export class Exporter {
                 return;
             }
 
-            const canvas = this.renderer.domElement;
-            const stream = canvas.captureStream(60);
+            // Set up composite canvas at renderer size for video with legend
+            const rendererCanvas = this.renderer.domElement;
+            this.compositeCanvas.width = rendererCanvas.width;
+            this.compositeCanvas.height = rendererCanvas.height;
+
+            // Draw initial frame to composite canvas before starting stream
+            this.compositeCtx.drawImage(rendererCanvas, 0, 0);
+            this.drawOverlaysOnCanvas(this.compositeCtx, this.compositeCanvas.width, this.compositeCanvas.height);
+
+            // Use composite canvas stream - frames captured at 60fps
+            // updateVideoFrame() must be called each animation frame to keep it updated
+            const stream = this.compositeCanvas.captureStream(60);
+
+            // Try MP4 first (supported in Safari, some Chromium builds)
+            // Then try WebM with H.264 (more compatible), then VP9, then VP8
+            const mimeTypes = [
+                { mime: 'video/mp4;codecs=avc1', ext: 'mp4' },
+                { mime: 'video/mp4', ext: 'mp4' },
+                { mime: 'video/webm;codecs=h264', ext: 'webm' },
+                { mime: 'video/webm;codecs=vp9', ext: 'webm' },
+                { mime: 'video/webm;codecs=vp8', ext: 'webm' },
+                { mime: 'video/webm', ext: 'webm' }
+            ];
+
+            let selectedMime = 'video/webm';
+            let selectedExt = 'webm';
+
+            for (const { mime, ext } of mimeTypes) {
+                if (MediaRecorder.isTypeSupported(mime)) {
+                    selectedMime = mime;
+                    selectedExt = ext;
+                    console.log(`Video recording using: ${mime}`);
+                    break;
+                }
+            }
 
             this.mediaRecorder = new MediaRecorder(stream, {
-                mimeType: 'video/webm;codecs=vp9',
+                mimeType: selectedMime,
                 videoBitsPerSecond: 8000000
             });
 
             this.recordedChunks = [];
+            const fileExtension = selectedExt;
 
             this.mediaRecorder.ondataavailable = (event) => {
                 if (event.data.size > 0) {
@@ -105,19 +335,38 @@ export class Exporter {
             };
 
             this.mediaRecorder.onstop = () => {
-                const blob = new Blob(this.recordedChunks, { type: 'video/webm' });
+                const mimeType = selectedMime.split(';')[0]; // Get base mime type
+                const blob = new Blob(this.recordedChunks, { type: mimeType });
                 const url = URL.createObjectURL(blob);
-                this.downloadFile(url, `globe-${Date.now()}.webm`);
+                this.downloadFile(url, `globe-${Date.now()}.${fileExtension}`);
                 URL.revokeObjectURL(url);
             };
 
             this.mediaRecorder.onstart = () => {
                 this.isRecording = true;
-                resolve();
+                // Wait a tiny bit for the first proper frame to be captured
+                setTimeout(() => resolve(), 50);
             };
 
             this.mediaRecorder.start(100); // Capture in 100ms chunks for better reliability
         });
+    }
+
+    /**
+     * Update video frame - call this in animation loop while recording video
+     * Composites the renderer output with the legend overlay
+     */
+    updateVideoFrame(): void {
+        if (!this.isRecording || !this.mediaRecorder) return;
+
+        const width = this.compositeCanvas.width;
+        const height = this.compositeCanvas.height;
+
+        // Draw renderer to composite canvas
+        this.compositeCtx.drawImage(this.renderer.domElement, 0, 0, width, height);
+
+        // Draw legend overlay
+        this.drawOverlaysOnCanvas(this.compositeCtx, width, height);
     }
 
     /**
@@ -149,7 +398,7 @@ export class Exporter {
 
     /**
      * Capture a single GIF frame (call this in animation loop)
-     * Captures RGBA data directly from canvas
+     * Captures RGBA data directly from canvas, includes legend if visible
      */
     captureGifFrame(): void {
         if (!this.isRecording) return;
@@ -160,6 +409,9 @@ export class Exporter {
 
         // Draw the renderer canvas to our capture canvas (scaled down)
         this.captureCtx.drawImage(canvas, 0, 0, width, height);
+
+        // Draw all overlays (country labels + legend)
+        this.drawOverlaysOnCanvas(this.captureCtx, width, height);
 
         // Get the raw RGBA image data
         const imageData = this.captureCtx.getImageData(0, 0, width, height);

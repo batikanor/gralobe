@@ -467,6 +467,53 @@ export class CountryLabels {
   }
 
   /**
+   * Get visible labels with their screen positions for canvas rendering
+   */
+  getVisibleLabelsForCanvas(camera: THREE.Camera, canvasWidth: number, canvasHeight: number): Array<{
+    text: string;
+    x: number;
+    y: number;
+    opacity: number;
+  }> {
+    if (this.currentStyle === 'none') return [];
+
+    const result: Array<{ text: string; x: number; y: number; opacity: number }> = [];
+    const vector = new THREE.Vector3();
+
+    this.labels.forEach(label => {
+      // Check if label is visible (has opacity > 0)
+      // Empty string means default opacity (visible), so treat as 1
+      const opacityStr = label.element.style.opacity;
+      const opacity = opacityStr === '' ? 1 : (parseFloat(opacityStr) || 0);
+
+      // Also check if label has 'hidden' class
+      if (opacity < 0.1 || label.element.classList.contains('hidden')) return;
+
+      // Get world position of the label
+      label.object.getWorldPosition(vector);
+
+      // Project to screen coordinates
+      vector.project(camera);
+
+      // Convert to canvas coordinates
+      const x = (vector.x * 0.5 + 0.5) * canvasWidth;
+      const y = (-vector.y * 0.5 + 0.5) * canvasHeight;
+
+      // Only include if on screen
+      if (x >= 0 && x <= canvasWidth && y >= 0 && y <= canvasHeight && vector.z < 1) {
+        result.push({
+          text: label.country.name,
+          x,
+          y,
+          opacity
+        });
+      }
+    });
+
+    return result;
+  }
+
+  /**
    * Dispose resources
    */
   dispose(): void {

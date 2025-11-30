@@ -20,7 +20,11 @@ Interactive 3D globe visualization with world statistics, smooth flat map ↔ gl
 
 ## Demo
 
-See `video_demo_1_compressed.mp4` in this repository for a demonstration.
+[![Gralobe Demo](https://img.youtube.com/vi/0sl-scBeB88/0.jpg)](https://youtu.be/0sl-scBeB88)
+
+**[▶️ Watch the demo on YouTube](https://youtu.be/0sl-scBeB88)**
+
+See also `video_demo_1_compressed.mp4` in this repository.
 
 ## Installation
 
