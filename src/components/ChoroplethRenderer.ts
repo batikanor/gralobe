@@ -224,6 +224,56 @@ export class ChoroplethRenderer {
   }
 
   /**
+   * Render a choropleth texture with custom values
+   */
+  renderCustomTexture(
+    values: Record<string, number> | Map<string, number>,
+    colorScale: [string, string, string],
+    domain: [number, number]
+  ): HTMLCanvasElement {
+    // Clear canvas with ocean color
+    this.ctx.fillStyle = '#1a3a5c';
+    this.ctx.fillRect(0, 0, TEXTURE_WIDTH, TEXTURE_HEIGHT);
+
+    if (!this.loaded) {
+      return this.canvas;
+    }
+
+    // Convert Map to object if needed
+    const valuesObj = values instanceof Map
+      ? Object.fromEntries(values)
+      : values;
+
+    // Draw each country
+    this.countries.forEach(country => {
+      const value = valuesObj[country.id];
+
+      if (value !== undefined) {
+        // Normalize value to 0-1 range
+        const normalized = Math.max(0, Math.min(1,
+          (value - domain[0]) / (domain[1] - domain[0])
+        ));
+        const color = this.interpolateColor(colorScale, normalized);
+        this.ctx.fillStyle = color;
+      } else {
+        // Countries without data - dark gray
+        this.ctx.fillStyle = '#2a2a2a';
+      }
+
+      this.drawCountry(country);
+    });
+
+    // Draw country borders
+    this.ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
+    this.ctx.lineWidth = 0.5;
+    this.countries.forEach(country => {
+      this.strokeCountry(country);
+    });
+
+    return this.canvas;
+  }
+
+  /**
    * Get canvas for debugging
    */
   getCanvas(): HTMLCanvasElement {

@@ -321,9 +321,7 @@ export class GlobeViz implements GlobeVizAPI {
     await this.choropleth.waitForLoad();
 
     // Set initial statistic
-    if (typeof this.config.statistic === 'string') {
-      this.setStatistic(this.config.statistic);
-    }
+    this.setStatistic(this.config.statistic);
 
     // Set initial view
     this.morph = this.config.initialView === 'globe' ? 1 : 0;
@@ -652,6 +650,30 @@ export class GlobeViz implements GlobeVizAPI {
       // Update legend
       if (this.legend && internalStat) {
         this.legend.show(internalStat);
+      }
+    } else {
+      // Custom StatisticData object
+      const customStat = id;
+      this.currentStatistic = customStat.definition.id;
+
+      if (this.choropleth) {
+        const canvas = this.choropleth.renderCustomTexture(
+          customStat.values,
+          customStat.definition.colorScale,
+          customStat.definition.domain
+        );
+        if (this.material && canvas) {
+          const texture = new THREE.CanvasTexture(canvas);
+          texture.needsUpdate = true;
+          this.material.uniforms.uDataTexture.value = texture;
+          this.material.uniforms.uDataOverlay.value = 1;
+          this.material.uniforms.uDataOpacity.value = 0.7;
+        }
+      }
+
+      // Update legend with custom stat definition
+      if (this.legend) {
+        this.legend.show(customStat.definition as any);
       }
     }
   }
