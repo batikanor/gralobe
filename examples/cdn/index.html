@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Gralobe - CDN Example</title>
+  <style>body { margin: 0; } #globe { width: 100vw; height: 100vh; }</style>
+
+  <!-- Import map to resolve bare module specifiers -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.170.0/build/three.module.js",
+        "three/examples/jsm/controls/OrbitControls.js": "https://unpkg.com/three@0.170.0/examples/jsm/controls/OrbitControls.js",
+        "gsap": "https://unpkg.com/gsap@3.12.5/index.js",
+        "lil-gui": "https://unpkg.com/lil-gui@0.19.2/dist/lil-gui.esm.js",
+        "topojson-client": "https://unpkg.com/topojson-client@3.1.0/dist/topojson-client.js"
+      }
+    }
+  </script>
+</head>
+<body>
+  <div id="globe"></div>
+
+  <script type="module">
+    // For CDN usage, import directly from unpkg
+    import { GlobeViz } from 'https://unpkg.com/gralobe@1.0.6/dist/gralobe.js';
+
+    const globe = new GlobeViz('#globe');
+  </script>
+</body>
+</html>
