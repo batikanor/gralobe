@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Gralobe - Custom Statistics</title>
+  <style>body { margin: 0; } #globe { width: 100vw; height: 100vh; }</style>
+</head>
+<body>
+  <div id="globe"></div>
+  <script type="module">
+    import { GlobeViz } from 'gralobe';
+
+    // Define your custom statistic
+    const customStat = {
+      definition: {
+        id: 'happiness',
+        name: 'Happiness Index',
+        unit: '/10',
+        description: 'World Happiness Score 2024',
+        colorScale: ['#fee5d9', '#fcae91', '#cb181d'],
+        domain: [0, 10],
+        format: (v) => v.toFixed(1),
+      },
+      values: {
+        '246': 7.8,  // Finland
+        '208': 7.6,  // Denmark
+        '352': 7.5,  // Iceland
+        '756': 7.4,  // Switzerland
+        '528': 7.3,  // Netherlands
+        '578': 7.3,  // Norway
+        '752': 7.2,  // Sweden
+        '840': 6.7,  // USA
+        '826': 6.7,  // UK
+        '276': 6.6,  // Germany
+        '124': 6.9,  // Canada
+        '036': 7.1,  // Australia
+        '392': 6.1,  // Japan
+        '156': 5.8,  // China
+        '356': 4.0,  // India
+        '076': 6.3,  // Brazil
+      },
+    };
+
+    const globe = new GlobeViz('#globe', { statistic: customStat });
+  </script>
+</body>
+</html>

@@ -170,10 +170,11 @@ const DEFAULT_CONFIG: Required<Omit<GlobeVizConfig, 'data' | 'onCountryClick' | 
   statistic: 'lifeExpectancy',
   autoRotate: false,
   initialView: 'globe',
-  showControls: true,
+  showControls: false,
   showLegend: true,
   effects: {
     atmosphereIntensity: 0,
+    atmosphere: false,
     clouds: false,
     starTwinkle: true,
   },
@@ -295,7 +296,9 @@ export class GlobeViz implements GlobeVizAPI {
     // Create globe with shaders
     await this.createGlobe();
     this.createStars();
-    this.createAtmosphere();
+    if (this.config.effects.atmosphere) {
+      this.createAtmosphere();
+    }
 
     // Initialize country labels
     this.countryLabels = new CountryLabels(this.container, SPHERE_RADIUS);
@@ -702,6 +705,16 @@ export class GlobeViz implements GlobeVizAPI {
     if (!this.material) return;
 
     // Apply effects to uniforms
+    if (effects.atmosphere !== undefined) {
+      if (effects.atmosphere && !this.atmosphere) {
+        this.createAtmosphere();
+      } else if (!effects.atmosphere && this.atmosphere) {
+        this.scene.remove(this.atmosphere);
+        this.atmosphere.geometry.dispose();
+        (this.atmosphere.material as THREE.Material).dispose();
+        this.atmosphere = null;
+      }
+    }
     if (effects.clouds !== undefined) {
       this.material.uniforms.uClouds.value = effects.clouds ? 1 : 0;
     }

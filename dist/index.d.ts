@@ -45,6 +45,8 @@ declare interface CountryStatistics {
  * Visual effects configuration
  */
 declare interface EffectsConfig {
+    /** Show atmosphere glow around globe */
+    atmosphere?: boolean;
     /** Show cloud layer */
     clouds?: boolean;
     /** Cloud animation speed (0.1-3) */
