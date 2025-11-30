@@ -277,6 +277,11 @@ export declare interface GlobeVizConfig {
 export declare type LabelStyle = 'none' | 'major' | 'all' | 'capitals' | 'minimal';
 
 /**
+ * Normalize a values object/map to use numeric codes
+ */
+export declare function normalizeCountryValues(values: Record<string, number> | Map<string, number>): Record<string, number>;
+
+/**
  * Complete statistic data ready for visualization
  */
 export declare interface StatisticData {
@@ -322,6 +327,16 @@ export declare interface StatisticDefinition {
  * Available texture presets for the globe
  */
 export declare type TexturePreset = 'satellite' | 'natural' | 'dark' | 'light' | 'night' | 'topographic';
+
+/**
+ * ISO 3166-1 country code mappings
+ * Maps alpha-2, alpha-3, and common names to numeric codes
+ */
+/**
+ * Convert any country identifier to ISO 3166-1 numeric code
+ * Supports: numeric codes, alpha-2, alpha-3, and common names
+ */
+export declare function toNumericCode(input: string): string;
 
 export declare const WORLD_STATISTICS: CountryStatistics[];
 

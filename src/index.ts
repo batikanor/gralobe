@@ -41,3 +41,6 @@ export type { LabelStyle } from './components/CountryLabels';
 
 // Texture presets
 export type { TexturePreset } from './lib/types';
+
+// Country code utilities
+export { toNumericCode, normalizeCountryValues } from './lib/countryCodes';

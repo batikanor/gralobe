@@ -9,6 +9,7 @@
   <script type="module">
     import { GlobeViz } from 'gralobe';
 
+    // You can use country names, ISO alpha-2, alpha-3, or numeric codes
     const globe = new GlobeViz('#globe', {
       statistic: {
         definition: {
@@ -21,9 +22,9 @@
           format: (v) => v.toFixed(0),
         },
         values: {
-          '840': 100,  // USA - red
-          '276': 10,   // Germany - blue
-          '792': 30,   // Turkey - light blue
+          'US': 100,       // USA - red (alpha-2)
+          'Germany': 10,   // Germany - blue (name)
+          'TR': 30,        // Turkey - light blue (alpha-2)
         },
       },
     });

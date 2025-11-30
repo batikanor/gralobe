@@ -219,14 +219,28 @@ const customStat: StatisticData = {
     format: (v) => `${v.toFixed(1)}%`,
   },
   values: {
-    '840': 75.5, // USA (ISO numeric code)
-    '156': 42.3, // China
-    // ... more countries
+    'US': 75.5,      // ISO alpha-2
+    'Germany': 42.3, // Country name
+    'CHN': 60.0,     // ISO alpha-3
+    '826': 55.0,     // ISO numeric
   },
 };
 
 globe.setStatistic(customStat);
 ```
+
+### Supported Country Code Formats
+
+Gralobe accepts multiple country identifier formats:
+
+| Format | Example | Description |
+|--------|---------|-------------|
+| ISO 3166-1 alpha-2 | `US`, `DE`, `TR` | 2-letter country codes |
+| ISO 3166-1 alpha-3 | `USA`, `DEU`, `TUR` | 3-letter country codes |
+| ISO 3166-1 numeric | `840`, `276`, `792` | 3-digit numeric codes |
+| Country name | `Germany`, `Turkey` | Common English names |
+
+All formats are automatically normalized internally.
 
 ## TypeScript Types
 

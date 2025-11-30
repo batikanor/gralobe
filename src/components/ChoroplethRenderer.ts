@@ -2,6 +2,7 @@ import * as topojson from 'topojson-client';
 import type { Topology, GeometryCollection } from 'topojson-specification';
 import type { StatisticDefinition, CountryStatistics } from '../data/worldStatistics';
 import { WORLD_STATISTICS, getNormalizedValue } from '../data/worldStatistics';
+import { normalizeCountryValues } from '../lib/countryCodes';
 
 const TEXTURE_WIDTH = 2048;
 const TEXTURE_HEIGHT = 1024;
@@ -239,10 +240,8 @@ export class ChoroplethRenderer {
       return this.canvas;
     }
 
-    // Convert Map to object if needed
-    const valuesObj = values instanceof Map
-      ? Object.fromEntries(values)
-      : values;
+    // Normalize country codes (supports alpha-2, alpha-3, names)
+    const valuesObj = normalizeCountryValues(values);
 
     // Draw each country
     this.countries.forEach(country => {
