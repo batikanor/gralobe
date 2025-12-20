@@ -1,13 +1,415 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Mercator → Globe Morph</title>
-  </head>
-  <body>
-    <div id="loading">LOADING...</div>
-    <div id="app"></div>
-    <script type="module" src="/src/main.ts"></script>
-  </body>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gralobe - Development Preview</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { 
+      background: #0a0a0f; 
+      font-family: system-ui, -apple-system, sans-serif;
+      color: #fff;
+    }
+    
+    /* Navigation */
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: rgba(10, 10, 15, 0.95);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid #222;
+      padding: 12px 20px;
+      z-index: 1000;
+      display: flex;
+      gap: 20px;
+      align-items: center;
+    }
+    nav a {
+      color: #888;
+      text-decoration: none;
+      font-size: 13px;
+      transition: color 0.2s;
+    }
+    nav a:hover { color: #4af; }
+    nav .logo {
+      font-weight: 700;
+      font-size: 16px;
+      color: #4af;
+      margin-right: auto;
+    }
+    
+    /* Sections */
+    section {
+      min-height: 100vh;
+      padding: 80px 20px 40px;
+      border-bottom: 1px solid #1a1a2e;
+    }
+    section:first-of-type { padding-top: 80px; }
+    
+    .section-header {
+      max-width: 1200px;
+      margin: 0 auto 20px;
+    }
+    .section-title {
+      font-size: 24px;
+      font-weight: 600;
+      color: #4af;
+      margin-bottom: 8px;
+    }
+    .section-desc {
+      color: #666;
+      font-size: 14px;
+    }
+    
+    /* Full width globe */
+    #hero-globe {
+      height: calc(100vh - 140px);
+      max-width: 1400px;
+      margin: 0 auto;
+      position: relative;
+    }
+    
+    /* Grid layouts */
+    .grid { display: grid; gap: 20px; max-width: 1400px; margin: 0 auto; }
+    .grid-2 { grid-template-columns: repeat(2, 1fr); }
+    .grid-3 { grid-template-columns: repeat(3, 1fr); }
+    .grid-4 { grid-template-columns: repeat(4, 1fr); }
+    
+    @media (max-width: 1200px) {
+      .grid-4 { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 900px) {
+      .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 600px) {
+      .grid-4 { grid-template-columns: 1fr; }
+    }
+    
+    /* Variant cards */
+    .variant {
+      background: #111;
+      border: 1px solid #222;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .variant-header {
+      padding: 10px 15px;
+      background: #1a1a2e;
+      border-bottom: 1px solid #222;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .variant-title { font-weight: 600; color: #4af; font-size: 14px; }
+    .variant-meta { font-size: 11px; color: #555; }
+    .variant-container { position: relative; }
+    
+    .height-500 { height: 500px; }
+    .height-350 { height: 350px; }
+    .height-250 { height: 250px; }
+    .height-180 { height: 180px; }
+    
+    /* Status badge */
+    .status {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 500;
+      z-index: 100;
+    }
+    .status.loading { background: #333; color: #888; }
+    .status.ready { background: #143; color: #4f4; }
+    .status.error { background: #411; color: #f44; }
+    
+    /* Custom stat section */
+    .custom-stat-info {
+      background: #1a1a2e;
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 20px;
+      max-width: 1400px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .custom-stat-info code {
+      background: #0d0d15;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 12px;
+      color: #4af;
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <span class="logo">gralobe</span>
+    <a href="#hero">Full Demo</a>
+    <a href="#half">Half Width</a>
+    <a href="#third">Third Width</a>
+    <a href="#tiny">Tiny</a>
+    <a href="#custom">Custom Stats</a>
+    <a href="#flat">Flat View</a>
+  </nav>
+
+  <!-- Section 1: Full Width Hero -->
+  <section id="hero">
+    <div class="section-header">
+      <h2 class="section-title">Full Width Globe</h2>
+      <p class="section-desc">Default configuration with major labels, atmosphere, and clouds. Press G to toggle flat/globe view.</p>
+    </div>
+    <div id="hero-globe">
+      <span class="status loading" id="status-hero">Loading...</span>
+    </div>
+  </section>
+
+  <!-- Section 2: Half Width -->
+  <section id="half">
+    <div class="section-header">
+      <h2 class="section-title">Half Width Variants</h2>
+      <p class="section-desc">Testing label visibility and positioning at 50% container width.</p>
+    </div>
+    <div class="grid grid-2">
+      <div class="variant">
+        <div class="variant-header">
+          <span class="variant-title">Major Labels</span>
+          <span class="variant-meta">labels: "major"</span>
+        </div>
+        <div class="variant-container height-350" id="globe-half1">
+          <span class="status loading" id="status-half1">Loading...</span>
+        </div>
+      </div>
+      <div class="variant">
+        <div class="variant-header">
+          <span class="variant-title">All Labels</span>
+          <span class="variant-meta">labels: "all"</span>
+        </div>
+        <div class="variant-container height-350" id="globe-half2">
+          <span class="status loading" id="status-half2">Loading...</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 3: Third Width -->
+  <section id="third">
+    <div class="section-header">
+      <h2 class="section-title">Third Width Variants</h2>
+      <p class="section-desc">Testing at 33% width - labels should still be correctly positioned.</p>
+    </div>
+    <div class="grid grid-3">
+      <div class="variant">
+        <div class="variant-header">
+          <span class="variant-title">Minimal Labels</span>
+          <span class="variant-meta">labels: "minimal"</span>
+        </div>
+        <div class="variant-container height-250" id="globe-third1">
+          <span class="status loading" id="status-third1">Loading...</span>
+        </div>
+      </div>
+      <div class="variant">
+        <div class="variant-header">
+          <span class="variant-title">No Labels</span>
+          <span class="variant-meta">labels: "none"</span>
+        </div>
+        <div class="variant-container height-250" id="globe-third2">
+          <span class="status loading" id="status-third2">Loading...</span>
+        </div>
+      </div>
+      <div class="variant">
+        <div class="variant-header">
+          <span class="variant-title">No Legend</span>
+          <span class="variant-meta">showLegend: false</span>
+        </div>
+        <div class="variant-container height-250" id="globe-third3">
+          <span class="status loading" id="status-third3">Loading...</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 4: Tiny -->
+  <section id="tiny">
+    <div class="section-header">
+      <h2 class="section-title">Tiny Variants (25%)</h2>
+      <p class="section-desc">Smallest practical size - good for thumbnails or dashboard widgets.</p>
+    </div>
+    <div class="grid grid-4">
+      <div class="variant">
+        <div class="variant-header">
+          <span class="variant-title">Tiny 1</span>
+        </div>
+        <div class="variant-container height-180" id="globe-tiny1">
+          <span class="status loading" id="status-tiny1">Loading...</span>
+        </div>
+      </div>
+      <div class="variant">
+        <div class="variant-header">
+          <span class="variant-title">Tiny 2</span>
+        </div>
+        <div class="variant-container height-180" id="globe-tiny2">
+          <span class="status loading" id="status-tiny2">Loading...</span>
+        </div>
+      </div>
+      <div class="variant">
+        <div class="variant-header">
+          <span class="variant-title">Tiny 3</span>
+        </div>
+        <div class="variant-container height-180" id="globe-tiny3">
+          <span class="status loading" id="status-tiny3">Loading...</span>
+        </div>
+      </div>
+      <div class="variant">
+        <div class="variant-header">
+          <span class="variant-title">Tiny 4</span>
+        </div>
+        <div class="variant-container height-180" id="globe-tiny4">
+          <span class="status loading" id="status-tiny4">Loading...</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 5: Custom Statistics -->
+  <section id="custom">
+    <div class="section-header">
+      <h2 class="section-title">Custom Statistics (No Format Function)</h2>
+      <p class="section-desc">Testing custom StatisticData passed via config - simulates JSON API response without format function.</p>
+    </div>
+    <div class="custom-stat-info">
+      <strong>Test case:</strong> Custom statistic <code>"Coffee Consumption (kg/capita)"</code> with no format function.<br>
+      Legend should show the correct name and auto-generate formatters based on unit.
+    </div>
+    <div class="grid grid-2">
+      <div class="variant">
+        <div class="variant-header">
+          <span class="variant-title">Custom Stat - Half Width</span>
+          <span class="variant-meta">statistic: customData</span>
+        </div>
+        <div class="variant-container height-350" id="globe-custom1">
+          <span class="status loading" id="status-custom1">Loading...</span>
+        </div>
+      </div>
+      <div class="variant">
+        <div class="variant-header">
+          <span class="variant-title">Custom Stat - Set After Init</span>
+          <span class="variant-meta">globe.ready.then(setStatistic)</span>
+        </div>
+        <div class="variant-container height-350" id="globe-custom2">
+          <span class="status loading" id="status-custom2">Loading...</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 6: Flat View -->
+  <section id="flat">
+    <div class="section-header">
+      <h2 class="section-title">Flat Map View</h2>
+      <p class="section-desc">Testing initialView: "flat" - Mercator projection.</p>
+    </div>
+    <div class="grid grid-2">
+      <div class="variant">
+        <div class="variant-header">
+          <span class="variant-title">Flat - Major Labels</span>
+          <span class="variant-meta">initialView: "flat"</span>
+        </div>
+        <div class="variant-container height-350" id="globe-flat1">
+          <span class="status loading" id="status-flat1">Loading...</span>
+        </div>
+      </div>
+      <div class="variant">
+        <div class="variant-header">
+          <span class="variant-title">Flat - No Atmosphere</span>
+          <span class="variant-meta">atmosphere: false</span>
+        </div>
+        <div class="variant-container height-350" id="globe-flat2">
+          <span class="status loading" id="status-flat2">Loading...</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script type="module">
+    import { GlobeViz } from './src/lib/GlobeViz.ts';
+
+    // Custom statistic for testing (no format function - simulates JSON API)
+    const customStatistic = {
+      definition: {
+        id: "coffee_consumption",
+        name: "Coffee Consumption (kg/capita)",
+        unit: "kg",
+        description: "Annual coffee consumption per capita in kilograms",
+        colorScale: ["#f7e6d5", "#c9a87c", "#6f4e37"],
+        domain: [0, 12]
+      },
+      values: {
+        "246": 12.0, "578": 9.9, "208": 8.7, "528": 8.4, "752": 8.2,
+        "756": 7.9, "056": 6.8, "276": 6.5, "124": 6.5, "040": 6.1,
+        "076": 6.1, "380": 5.9, "250": 5.4, "300": 5.7, "620": 4.3,
+        "203": 4.5, "840": 4.2, "348": 3.8, "392": 3.4, "616": 3.2,
+        "036": 3.0, "826": 2.8, "410": 2.7, "642": 2.1, "152": 2.1,
+        "170": 2.0, "858": 1.8, "643": 1.7, "804": 1.4, "484": 1.4,
+        "862": 1.2, "032": 1.0, "792": 0.9, "604": 0.6, "218": 0.5,
+        "682": 0.4, "818": 0.3, "156": 0.1, "356": 0.1
+      }
+    };
+
+    async function createGlobe(containerId, statusId, config, customStat = null, setAfterReady = false) {
+      const status = document.getElementById(statusId);
+      try {
+        const globe = new GlobeViz(`#${containerId}`, config);
+        await globe.ready;
+        
+        if (customStat && setAfterReady) {
+          globe.setStatistic(customStat);
+        }
+        
+        status.textContent = 'Ready';
+        status.className = 'status ready';
+        return globe;
+      } catch (err) {
+        console.error(`Failed: ${containerId}`, err);
+        status.textContent = 'Error';
+        status.className = 'status error';
+      }
+    }
+
+    const base = {
+      autoRotate: true,
+      showControls: false,
+      showLegend: true,
+      effects: { atmosphere: true, clouds: true, cloudSpeed: 0.5 }
+    };
+
+    // Create all globes
+    createGlobe('hero-globe', 'status-hero', { ...base, labels: 'major' });
+    
+    createGlobe('globe-half1', 'status-half1', { ...base, labels: 'major' });
+    createGlobe('globe-half2', 'status-half2', { ...base, labels: 'all' });
+    
+    createGlobe('globe-third1', 'status-third1', { ...base, labels: 'minimal' });
+    createGlobe('globe-third2', 'status-third2', { ...base, labels: 'none' });
+    createGlobe('globe-third3', 'status-third3', { ...base, labels: 'major', showLegend: false });
+    
+    createGlobe('globe-tiny1', 'status-tiny1', { ...base, labels: 'none', showLegend: false });
+    createGlobe('globe-tiny2', 'status-tiny2', { ...base, labels: 'none', showLegend: false });
+    createGlobe('globe-tiny3', 'status-tiny3', { ...base, labels: 'none', showLegend: false });
+    createGlobe('globe-tiny4', 'status-tiny4', { ...base, labels: 'none', showLegend: false });
+    
+    // Custom statistics - one via config, one set after ready
+    createGlobe('globe-custom1', 'status-custom1', { ...base, labels: 'major', statistic: customStatistic });
+    createGlobe('globe-custom2', 'status-custom2', { ...base, labels: 'major' }, customStatistic, true);
+    
+    createGlobe('globe-flat1', 'status-flat1', { ...base, labels: 'major', initialView: 'flat' });
+    createGlobe('globe-flat2', 'status-flat2', { ...base, labels: 'major', initialView: 'flat', effects: { atmosphere: false, clouds: false } });
+  </script>
+</body>
 </html>
