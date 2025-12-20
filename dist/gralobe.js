@@ -5312,44 +5312,48 @@ class ho {
     e.textContent = `
       .country-label {
         font-family: system-ui, -apple-system, sans-serif;
-        font-weight: 400;
-        color: rgba(255, 255, 255, 0.65);
+        font-weight: 500;
+        color: rgba(255, 255, 255, 0.9);
         text-shadow:
-          0 0 2px rgba(0, 0, 0, 0.9),
-          0 0 4px rgba(0, 0, 0, 0.5);
+          0 1px 2px rgba(0, 0, 0, 1),
+          0 0 4px rgba(0, 0, 0, 0.9),
+          0 0 8px rgba(0, 0, 0, 0.7),
+          0 0 12px rgba(0, 0, 0, 0.5);
         white-space: nowrap;
         pointer-events: none;
         user-select: none;
         transform: translateX(-50%);
         transition: opacity 0.3s ease;
-        letter-spacing: 0.5px;
+        letter-spacing: 1px;
         text-transform: uppercase;
       }
 
       /* Size categories - proportional to country size */
       .country-label.size-large {
-        font-size: 9px;
-        font-weight: 500;
-        letter-spacing: 2px;
-        color: rgba(255, 255, 255, 0.7);
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 2.5px;
+        color: rgba(255, 255, 255, 0.95);
       }
 
       .country-label.size-medium {
-        font-size: 7px;
-        letter-spacing: 1px;
-        color: rgba(255, 255, 255, 0.6);
+        font-size: 9px;
+        font-weight: 500;
+        letter-spacing: 1.5px;
+        color: rgba(255, 255, 255, 0.9);
       }
 
       .country-label.size-small {
-        font-size: 6px;
-        letter-spacing: 0.5px;
-        color: rgba(255, 255, 255, 0.5);
+        font-size: 7px;
+        font-weight: 500;
+        letter-spacing: 1px;
+        color: rgba(255, 255, 255, 0.8);
       }
 
       .country-label.size-tiny {
-        font-size: 5px;
-        letter-spacing: 0.3px;
-        color: rgba(255, 255, 255, 0.4);
+        font-size: 6px;
+        letter-spacing: 0.5px;
+        color: rgba(255, 255, 255, 0.7);
       }
 
       .country-label.hidden {
@@ -5357,37 +5361,38 @@ class ho {
         visibility: hidden;
       }
 
-      /* Minimal style - slightly bolder for the 7 largest */
+      /* Minimal style - bold for the 7 largest */
       .label-style-minimal .country-label.size-large {
-        font-size: 10px;
-        font-weight: 600;
+        font-size: 12px;
+        font-weight: 700;
         letter-spacing: 3px;
-        color: rgba(255, 255, 255, 0.75);
+        color: #fff;
       }
 
       /* Major style - balanced visibility */
       .label-style-major .country-label.size-large {
-        font-size: 8px;
+        font-size: 10px;
+        font-weight: 600;
         letter-spacing: 2px;
       }
 
       .label-style-major .country-label.size-medium {
-        font-size: 6px;
+        font-size: 8px;
       }
 
-      /* All style - keep everything subtle */
+      /* All style - slightly more subtle but still readable */
       .label-style-all .country-label {
-        color: rgba(255, 255, 255, 0.5);
+        color: rgba(255, 255, 255, 0.85);
       }
 
       .label-style-all .country-label.size-large {
-        font-size: 8px;
-        color: rgba(255, 255, 255, 0.6);
+        font-size: 9px;
+        color: rgba(255, 255, 255, 0.9);
       }
 
       .label-style-all .country-label.size-tiny {
-        font-size: 4px;
-        color: rgba(255, 255, 255, 0.35);
+        font-size: 5px;
+        color: rgba(255, 255, 255, 0.6);
       }
     `, document.head.appendChild(e);
   }
