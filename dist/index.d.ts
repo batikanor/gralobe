@@ -184,6 +184,7 @@ export declare class GlobeViz implements GlobeVizAPI {
     private createStars;
     private createGUI;
     private handleResize;
+    private handleFullscreenChange;
     private handleKeydown;
     private animate;
     toGlobe(): void;
@@ -199,6 +200,8 @@ export declare class GlobeViz implements GlobeVizAPI {
     recordVideo(options?: ExportOptions): Promise<void>;
     setEffects(effects: Partial<EffectsConfig>): void;
     resize(width: number, height: number): void;
+    toggleFullscreen(): Promise<void>;
+    isFullscreen(): boolean;
     destroy(): void;
 }
 
@@ -234,6 +237,10 @@ export declare interface GlobeVizAPI {
     setEffects(effects: Partial<EffectsConfig>): void;
     /** Resize the visualization */
     resize(width: number, height: number): void;
+    /** Toggle fullscreen mode */
+    toggleFullscreen(): Promise<void>;
+    /** Check if currently fullscreen */
+    isFullscreen(): boolean;
     /** Destroy the instance and clean up */
     destroy(): void;
 }

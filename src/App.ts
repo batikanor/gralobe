@@ -1160,13 +1160,15 @@ export class App {
     private async init(): Promise<void> {
         // Initialize choropleth renderer first (needs to load country data)
         this.choropleth = new ChoroplethRenderer();
-        this.legend = new Legend();
+        
+        // Get container for legend and labels
+        const container = document.getElementById('app')!;
+        this.legend = new Legend(container);
 
         await this.createGlobe();
         this.createStars();
 
         // Initialize country labels
-        const container = document.getElementById('app')!;
         this.countryLabels = new CountryLabels(container, SPHERE_RADIUS);
         this.scene.add(this.countryLabels.getGroup());
 
@@ -1463,7 +1465,7 @@ export class App {
         // Initialize exporter with all overlay elements
         this.exporter = new Exporter(this.renderer, this.scene, this.camera);
         if (this.legend) {
-            this.exporter.setLegendElement(this.legend.getContainer());
+            this.exporter.setLegendElement(this.legend.getElement());
         }
         if (this.countryLabels) {
             this.exporter.setCountryLabels(this.countryLabels);

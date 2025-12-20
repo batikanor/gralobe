@@ -161,6 +161,10 @@ export interface GlobeVizAPI {
   setEffects(effects: Partial<EffectsConfig>): void;
   /** Resize the visualization */
   resize(width: number, height: number): void;
+  /** Toggle fullscreen mode */
+  toggleFullscreen(): Promise<void>;
+  /** Check if currently fullscreen */
+  isFullscreen(): boolean;
   /** Destroy the instance and clean up */
   destroy(): void;
 }
@@ -301,7 +305,7 @@ export class GlobeViz implements GlobeVizAPI {
     this.choropleth = new ChoroplethRenderer();
 
     if (this.config.showLegend) {
-      this.legend = new Legend();
+      this.legend = new Legend(this.container);
     }
 
     // Create globe with shaders
@@ -343,6 +347,9 @@ export class GlobeViz implements GlobeVizAPI {
 
     // Handle resize
     window.addEventListener('resize', this.handleResize);
+
+    // Handle fullscreen changes
+    document.addEventListener('fullscreenchange', this.handleFullscreenChange);
 
     // Handle keyboard shortcuts
     window.addEventListener('keydown', this.handleKeydown);
@@ -533,6 +540,12 @@ export class GlobeViz implements GlobeVizAPI {
     this.countryLabels?.resize(width, height);
   };
 
+  private handleFullscreenChange = (): void => {
+    if (this.isDestroyed) return;
+    // Resize after fullscreen change
+    setTimeout(() => this.handleResize(), 50);
+  };
+
   private handleKeydown = (e: KeyboardEvent): void => {
     if (this.isDestroyed) return;
 
@@ -542,6 +555,10 @@ export class GlobeViz implements GlobeVizAPI {
       } else {
         this.toGlobe();
       }
+    }
+
+    if (e.key === 'f' || e.key === 'F') {
+      this.toggleFullscreen();
     }
   };
 
@@ -798,6 +815,21 @@ export class GlobeViz implements GlobeVizAPI {
     this.handleResize();
   }
 
+  async toggleFullscreen(): Promise<void> {
+    if (!document.fullscreenElement) {
+      await this.container.requestFullscreen();
+      // After entering fullscreen, resize to fill screen
+      setTimeout(() => this.handleResize(), 100);
+    } else {
+      await document.exitFullscreen();
+      setTimeout(() => this.handleResize(), 100);
+    }
+  }
+
+  isFullscreen(): boolean {
+    return document.fullscreenElement === this.container;
+  }
+
   destroy(): void {
     this.isDestroyed = true;
 
@@ -807,6 +839,7 @@ export class GlobeViz implements GlobeVizAPI {
 
     window.removeEventListener('resize', this.handleResize);
     window.removeEventListener('keydown', this.handleKeydown);
+    document.removeEventListener('fullscreenchange', this.handleFullscreenChange);
 
     this.gui?.destroy();
     this.legend?.dispose();
