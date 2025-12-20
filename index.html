@@ -13,7 +13,6 @@
       color: #fff;
     }
     
-    /* Navigation */
     nav {
       position: fixed;
       top: 0;
@@ -44,8 +43,14 @@
       color: #4af;
       margin-right: auto;
     }
+    .webgl-count {
+      font-size: 10px;
+      color: #666;
+      padding: 4px 8px;
+      background: #111;
+      border-radius: 4px;
+    }
     
-    /* Sections */
     section {
       padding: 70px 20px 40px;
       border-bottom: 1px solid #1a1a2e;
@@ -66,7 +71,6 @@
       font-size: 13px;
     }
     
-    /* Full width globe */
     .hero-container {
       max-width: 1400px;
       margin: 0 auto;
@@ -78,7 +82,6 @@
       position: relative;
     }
     
-    /* Grid layouts */
     .grid { display: grid; gap: 16px; max-width: 1400px; margin: 0 auto; }
     .grid-2 { grid-template-columns: repeat(2, 1fr); }
     .grid-3 { grid-template-columns: repeat(3, 1fr); }
@@ -92,7 +95,6 @@
       .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
     }
     
-    /* Variant cards */
     .variant {
       background: #0d0d12;
       border: 1px solid #1a1a2e;
@@ -111,13 +113,11 @@
     .variant-meta { font-size: 10px; color: #444; font-family: monospace; }
     .variant-container { position: relative; }
     
-    .height-600 { height: 600px; }
     .height-400 { height: 400px; }
     .height-320 { height: 320px; }
     .height-250 { height: 250px; }
     .height-180 { height: 180px; }
     
-    /* Status badge */
     .status {
       position: absolute;
       top: 8px;
@@ -130,11 +130,12 @@
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
+    .status.pending { background: #1a1a2e; color: #444; }
     .status.loading { background: #222; color: #666; }
     .status.ready { background: rgba(0, 80, 40, 0.8); color: #4f8; }
     .status.error { background: rgba(80, 0, 0, 0.8); color: #f44; }
+    .status.destroyed { background: #222; color: #444; }
     
-    /* Fullscreen button */
     .fullscreen-btn {
       position: absolute;
       top: 8px;
@@ -152,7 +153,6 @@
     }
     .fullscreen-btn:hover { background: rgba(68, 170, 255, 0.2); color: #4af; border-color: #4af; }
     
-    /* Info boxes */
     .info-box {
       background: #12121a;
       border: 1px solid #1a1a2e;
@@ -174,7 +174,6 @@
     }
     .info-box strong { color: #ccc; }
     
-    /* Statistic gallery */
     .stat-gallery {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -183,7 +182,6 @@
       margin: 0 auto;
     }
     
-    /* Footer */
     footer {
       padding: 40px 20px;
       text-align: center;
@@ -202,48 +200,49 @@
     <a href="#textures">Textures</a>
     <a href="#effects">Effects</a>
     <a href="#custom">Custom</a>
-    <a href="#flat">Flat View</a>
+    <a href="#flat">Flat</a>
     <a href="#tiny">Tiny</a>
+    <span class="webgl-count" id="webgl-count">WebGL: 0</span>
   </nav>
 
-  <!-- Section 1: Hero -->
+  <!-- Hero -->
   <section id="hero">
     <div class="section-header">
       <h2 class="section-title">Interactive Globe Visualization</h2>
-      <p class="section-desc">Press G to toggle globe/flat · Press F for fullscreen · Scroll down for more variants</p>
+      <p class="section-desc">Press G to toggle globe/flat · Press F for fullscreen · Scroll down for more (lazy-loaded)</p>
     </div>
     <div class="hero-container">
-      <div id="hero-globe">
+      <div id="hero-globe" class="globe-container" data-config='{"labels":"major","effects":{"atmosphere":true,"clouds":true}}'>
         <button class="fullscreen-btn" onclick="toggleFullscreen('hero-globe')">⛶ Fullscreen</button>
-        <span class="status loading" id="status-hero">Loading...</span>
+        <span class="status pending" id="status-hero-globe">Pending</span>
       </div>
     </div>
   </section>
 
-  <!-- Section 2: All Statistics -->
+  <!-- Statistics Gallery -->
   <section id="statistics">
     <div class="section-header">
-      <h2 class="section-title">Built-in Statistics Gallery</h2>
-      <p class="section-desc">All 12 built-in statistics with real world data</p>
+      <h2 class="section-title">Built-in Statistics</h2>
+      <p class="section-desc">All 12 statistics - globes load when scrolled into view</p>
     </div>
     <div class="stat-gallery" id="stats-gallery"></div>
   </section>
 
-  <!-- Section 3: Different Sizes -->
+  <!-- Sizes -->
   <section id="sizes">
     <div class="section-header">
-      <h2 class="section-title">Responsive Sizing Test</h2>
-      <p class="section-desc">Testing labels and legend at different container sizes</p>
+      <h2 class="section-title">Responsive Sizing</h2>
+      <p class="section-desc">Legend scales proportionally to container size</p>
     </div>
     <div class="grid grid-2">
       <div class="variant">
         <div class="variant-header">
           <span class="variant-title">Half Width - Large</span>
-          <span class="variant-meta">height: 400px</span>
+          <span class="variant-meta">400px height</span>
         </div>
-        <div class="variant-container height-400" id="globe-size-half">
+        <div class="variant-container height-400 globe-container" id="globe-size-half" data-config='{"labels":"major"}'>
           <button class="fullscreen-btn" onclick="toggleFullscreen('globe-size-half')">⛶</button>
-          <span class="status loading" id="status-size-half">Loading...</span>
+          <span class="status pending">Pending</span>
         </div>
       </div>
       <div class="variant">
@@ -251,9 +250,9 @@
           <span class="variant-title">Half Width - All Labels</span>
           <span class="variant-meta">labels: "all"</span>
         </div>
-        <div class="variant-container height-400" id="globe-size-half2">
+        <div class="variant-container height-400 globe-container" id="globe-size-half2" data-config='{"labels":"all"}'>
           <button class="fullscreen-btn" onclick="toggleFullscreen('globe-size-half2')">⛶</button>
-          <span class="status loading" id="status-size-half2">Loading...</span>
+          <span class="status pending">Pending</span>
         </div>
       </div>
     </div>
@@ -261,11 +260,11 @@
       <div class="variant">
         <div class="variant-header">
           <span class="variant-title">Third Width</span>
-          <span class="variant-meta">height: 320px</span>
+          <span class="variant-meta">320px height</span>
         </div>
-        <div class="variant-container height-320" id="globe-size-third1">
+        <div class="variant-container height-320 globe-container" id="globe-size-third1" data-config='{"labels":"major"}'>
           <button class="fullscreen-btn" onclick="toggleFullscreen('globe-size-third1')">⛶</button>
-          <span class="status loading" id="status-size-third1">Loading...</span>
+          <span class="status pending">Pending</span>
         </div>
       </div>
       <div class="variant">
@@ -273,9 +272,9 @@
           <span class="variant-title">Third - Minimal Labels</span>
           <span class="variant-meta">labels: "minimal"</span>
         </div>
-        <div class="variant-container height-320" id="globe-size-third2">
+        <div class="variant-container height-320 globe-container" id="globe-size-third2" data-config='{"labels":"minimal"}'>
           <button class="fullscreen-btn" onclick="toggleFullscreen('globe-size-third2')">⛶</button>
-          <span class="status loading" id="status-size-third2">Loading...</span>
+          <span class="status pending">Pending</span>
         </div>
       </div>
       <div class="variant">
@@ -283,19 +282,19 @@
           <span class="variant-title">Third - No Legend</span>
           <span class="variant-meta">showLegend: false</span>
         </div>
-        <div class="variant-container height-320" id="globe-size-third3">
+        <div class="variant-container height-320 globe-container" id="globe-size-third3" data-config='{"labels":"major","showLegend":false}'>
           <button class="fullscreen-btn" onclick="toggleFullscreen('globe-size-third3')">⛶</button>
-          <span class="status loading" id="status-size-third3">Loading...</span>
+          <span class="status pending">Pending</span>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Section 4: Textures -->
+  <!-- Textures -->
   <section id="textures">
     <div class="section-header">
       <h2 class="section-title">Earth Textures</h2>
-      <p class="section-desc">All available texture presets</p>
+      <p class="section-desc">All 6 texture presets</p>
     </div>
     <div class="grid grid-3">
       <div class="variant">
@@ -303,9 +302,9 @@
           <span class="variant-title">Satellite</span>
           <span class="variant-meta">texture: "satellite"</span>
         </div>
-        <div class="variant-container height-320" id="globe-tex-satellite">
+        <div class="variant-container height-320 globe-container" id="globe-tex-satellite" data-config='{"texture":"satellite","labels":"none"}'>
           <button class="fullscreen-btn" onclick="toggleFullscreen('globe-tex-satellite')">⛶</button>
-          <span class="status loading" id="status-tex-satellite">Loading...</span>
+          <span class="status pending">Pending</span>
         </div>
       </div>
       <div class="variant">
@@ -313,9 +312,9 @@
           <span class="variant-title">Natural</span>
           <span class="variant-meta">texture: "natural"</span>
         </div>
-        <div class="variant-container height-320" id="globe-tex-natural">
+        <div class="variant-container height-320 globe-container" id="globe-tex-natural" data-config='{"texture":"natural","labels":"none"}'>
           <button class="fullscreen-btn" onclick="toggleFullscreen('globe-tex-natural')">⛶</button>
-          <span class="status loading" id="status-tex-natural">Loading...</span>
+          <span class="status pending">Pending</span>
         </div>
       </div>
       <div class="variant">
@@ -323,9 +322,9 @@
           <span class="variant-title">Night Lights</span>
           <span class="variant-meta">texture: "night"</span>
         </div>
-        <div class="variant-container height-320" id="globe-tex-night">
+        <div class="variant-container height-320 globe-container" id="globe-tex-night" data-config='{"texture":"night","labels":"none"}'>
           <button class="fullscreen-btn" onclick="toggleFullscreen('globe-tex-night')">⛶</button>
-          <span class="status loading" id="status-tex-night">Loading...</span>
+          <span class="status pending">Pending</span>
         </div>
       </div>
       <div class="variant">
@@ -333,9 +332,9 @@
           <span class="variant-title">Topographic</span>
           <span class="variant-meta">texture: "topographic"</span>
         </div>
-        <div class="variant-container height-320" id="globe-tex-topo">
+        <div class="variant-container height-320 globe-container" id="globe-tex-topo" data-config='{"texture":"topographic","labels":"none"}'>
           <button class="fullscreen-btn" onclick="toggleFullscreen('globe-tex-topo')">⛶</button>
-          <span class="status loading" id="status-tex-topo">Loading...</span>
+          <span class="status pending">Pending</span>
         </div>
       </div>
       <div class="variant">
@@ -343,9 +342,9 @@
           <span class="variant-title">Light</span>
           <span class="variant-meta">texture: "light"</span>
         </div>
-        <div class="variant-container height-320" id="globe-tex-light">
+        <div class="variant-container height-320 globe-container" id="globe-tex-light" data-config='{"texture":"light","labels":"none"}'>
           <button class="fullscreen-btn" onclick="toggleFullscreen('globe-tex-light')">⛶</button>
-          <span class="status loading" id="status-tex-light">Loading...</span>
+          <span class="status pending">Pending</span>
         </div>
       </div>
       <div class="variant">
@@ -353,15 +352,15 @@
           <span class="variant-title">Dark</span>
           <span class="variant-meta">texture: "dark"</span>
         </div>
-        <div class="variant-container height-320" id="globe-tex-dark">
+        <div class="variant-container height-320 globe-container" id="globe-tex-dark" data-config='{"texture":"dark","labels":"none"}'>
           <button class="fullscreen-btn" onclick="toggleFullscreen('globe-tex-dark')">⛶</button>
-          <span class="status loading" id="status-tex-dark">Loading...</span>
+          <span class="status pending">Pending</span>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Section 5: Effects -->
+  <!-- Effects -->
   <section id="effects">
     <div class="section-header">
       <h2 class="section-title">Visual Effects</h2>
@@ -373,9 +372,9 @@
           <span class="variant-title">Atmosphere + Clouds</span>
           <span class="variant-meta">Full effects</span>
         </div>
-        <div class="variant-container height-320" id="globe-fx-full">
+        <div class="variant-container height-320 globe-container" id="globe-fx-full" data-config='{"effects":{"atmosphere":true,"clouds":true}}'>
           <button class="fullscreen-btn" onclick="toggleFullscreen('globe-fx-full')">⛶</button>
-          <span class="status loading" id="status-fx-full">Loading...</span>
+          <span class="status pending">Pending</span>
         </div>
       </div>
       <div class="variant">
@@ -383,9 +382,9 @@
           <span class="variant-title">Atmosphere Only</span>
           <span class="variant-meta">clouds: false</span>
         </div>
-        <div class="variant-container height-320" id="globe-fx-atmo">
+        <div class="variant-container height-320 globe-container" id="globe-fx-atmo" data-config='{"effects":{"atmosphere":true,"clouds":false}}'>
           <button class="fullscreen-btn" onclick="toggleFullscreen('globe-fx-atmo')">⛶</button>
-          <span class="status loading" id="status-fx-atmo">Loading...</span>
+          <span class="status pending">Pending</span>
         </div>
       </div>
       <div class="variant">
@@ -393,23 +392,22 @@
           <span class="variant-title">Clean (No Effects)</span>
           <span class="variant-meta">atmosphere: false</span>
         </div>
-        <div class="variant-container height-320" id="globe-fx-clean">
+        <div class="variant-container height-320 globe-container" id="globe-fx-clean" data-config='{"effects":{"atmosphere":false,"clouds":false}}'>
           <button class="fullscreen-btn" onclick="toggleFullscreen('globe-fx-clean')">⛶</button>
-          <span class="status loading" id="status-fx-clean">Loading...</span>
+          <span class="status pending">Pending</span>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Section 6: Custom Statistics -->
+  <!-- Custom Statistics -->
   <section id="custom">
     <div class="section-header">
       <h2 class="section-title">Custom Statistics (API Simulation)</h2>
-      <p class="section-desc">Testing custom StatisticData objects - simulates JSON API responses</p>
+      <p class="section-desc">Custom StatisticData without format function (simulates JSON API)</p>
     </div>
     <div class="info-box">
-      <strong>Test Case:</strong> Custom statistics without <code>format</code> function (lost during JSON serialization).<br>
-      Legend should auto-generate formatters based on <code>unit</code> field.
+      <strong>Test:</strong> Legend auto-generates formatters from <code>unit</code> field when <code>format</code> is missing.
     </div>
     <div class="grid grid-2">
       <div class="variant">
@@ -417,9 +415,9 @@
           <span class="variant-title">Coffee Consumption</span>
           <span class="variant-meta">unit: "kg/capita"</span>
         </div>
-        <div class="variant-container height-400" id="globe-custom-coffee">
+        <div class="variant-container height-400 globe-container" id="globe-custom-coffee" data-config='{"labels":"major"}' data-custom-stat="coffee">
           <button class="fullscreen-btn" onclick="toggleFullscreen('globe-custom-coffee')">⛶</button>
-          <span class="status loading" id="status-custom-coffee">Loading...</span>
+          <span class="status pending">Pending</span>
         </div>
       </div>
       <div class="variant">
@@ -427,19 +425,19 @@
           <span class="variant-title">Happiness Index</span>
           <span class="variant-meta">unit: "score"</span>
         </div>
-        <div class="variant-container height-400" id="globe-custom-happiness">
+        <div class="variant-container height-400 globe-container" id="globe-custom-happiness" data-config='{"labels":"major"}' data-custom-stat="happiness">
           <button class="fullscreen-btn" onclick="toggleFullscreen('globe-custom-happiness')">⛶</button>
-          <span class="status loading" id="status-custom-happiness">Loading...</span>
+          <span class="status pending">Pending</span>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Section 7: Flat View -->
+  <!-- Flat View -->
   <section id="flat">
     <div class="section-header">
-      <h2 class="section-title">Flat Map (Mercator) View</h2>
-      <p class="section-desc">Testing initialView: "flat" - Press G to morph to globe</p>
+      <h2 class="section-title">Flat Map (Mercator)</h2>
+      <p class="section-desc">initialView: "flat" - Press G to morph</p>
     </div>
     <div class="grid grid-2">
       <div class="variant">
@@ -447,9 +445,9 @@
           <span class="variant-title">Flat - Default</span>
           <span class="variant-meta">initialView: "flat"</span>
         </div>
-        <div class="variant-container height-400" id="globe-flat1">
+        <div class="variant-container height-400 globe-container" id="globe-flat1" data-config='{"initialView":"flat","labels":"major"}'>
           <button class="fullscreen-btn" onclick="toggleFullscreen('globe-flat1')">⛶</button>
-          <span class="status loading" id="status-flat1">Loading...</span>
+          <span class="status pending">Pending</span>
         </div>
       </div>
       <div class="variant">
@@ -457,242 +455,264 @@
           <span class="variant-title">Flat - No Effects</span>
           <span class="variant-meta">Clean flat map</span>
         </div>
-        <div class="variant-container height-400" id="globe-flat2">
+        <div class="variant-container height-400 globe-container" id="globe-flat2" data-config='{"initialView":"flat","labels":"none","effects":{"atmosphere":false,"clouds":false}}'>
           <button class="fullscreen-btn" onclick="toggleFullscreen('globe-flat2')">⛶</button>
-          <span class="status loading" id="status-flat2">Loading...</span>
+          <span class="status pending">Pending</span>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Section 8: Tiny Widgets -->
+  <!-- Tiny Widgets -->
   <section id="tiny">
     <div class="section-header">
       <h2 class="section-title">Tiny Widgets</h2>
-      <p class="section-desc">Smallest practical sizes for thumbnails and dashboard cards</p>
+      <p class="section-desc">Legend scales down automatically for small containers</p>
     </div>
     <div class="grid grid-4">
       <div class="variant">
         <div class="variant-header">
-          <span class="variant-title">Widget 1</span>
+          <span class="variant-title">GDP</span>
         </div>
-        <div class="variant-container height-180" id="globe-tiny1">
+        <div class="variant-container height-180 globe-container" id="globe-tiny1" data-config='{"statistic":"gdpPerCapita","labels":"none","effects":{"atmosphere":false,"clouds":false}}'>
           <button class="fullscreen-btn" onclick="toggleFullscreen('globe-tiny1')">⛶</button>
-          <span class="status loading" id="status-tiny1">Loading...</span>
+          <span class="status pending">Pending</span>
         </div>
       </div>
       <div class="variant">
         <div class="variant-header">
-          <span class="variant-title">Widget 2</span>
+          <span class="variant-title">CO2</span>
         </div>
-        <div class="variant-container height-180" id="globe-tiny2">
+        <div class="variant-container height-180 globe-container" id="globe-tiny2" data-config='{"statistic":"co2Emissions","labels":"none","effects":{"atmosphere":false,"clouds":false}}'>
           <button class="fullscreen-btn" onclick="toggleFullscreen('globe-tiny2')">⛶</button>
-          <span class="status loading" id="status-tiny2">Loading...</span>
+          <span class="status pending">Pending</span>
         </div>
       </div>
       <div class="variant">
         <div class="variant-header">
-          <span class="variant-title">Widget 3</span>
+          <span class="variant-title">Internet</span>
         </div>
-        <div class="variant-container height-180" id="globe-tiny3">
+        <div class="variant-container height-180 globe-container" id="globe-tiny3" data-config='{"statistic":"internetUsers","labels":"none","effects":{"atmosphere":false,"clouds":false}}'>
           <button class="fullscreen-btn" onclick="toggleFullscreen('globe-tiny3')">⛶</button>
-          <span class="status loading" id="status-tiny3">Loading...</span>
+          <span class="status pending">Pending</span>
         </div>
       </div>
       <div class="variant">
         <div class="variant-header">
-          <span class="variant-title">Widget 4</span>
+          <span class="variant-title">Forest</span>
         </div>
-        <div class="variant-container height-180" id="globe-tiny4">
+        <div class="variant-container height-180 globe-container" id="globe-tiny4" data-config='{"statistic":"forestArea","labels":"none","effects":{"atmosphere":false,"clouds":false}}'>
           <button class="fullscreen-btn" onclick="toggleFullscreen('globe-tiny4')">⛶</button>
-          <span class="status loading" id="status-tiny4">Loading...</span>
+          <span class="status pending">Pending</span>
         </div>
       </div>
     </div>
   </section>
 
   <footer>
-    <p>gralobe — Interactive Globe Visualization Library</p>
+    <p>gralobe — Interactive Globe Visualization</p>
     <p><a href="https://github.com/batikanor/gralobe">GitHub</a> · <a href="https://npmjs.com/package/gralobe">npm</a></p>
   </footer>
 
   <script type="module">
     import { GlobeViz } from './src/lib/GlobeViz.ts';
 
-    // Store globe instances for fullscreen toggle
-    const globes = {};
+    // Globe instance registry
+    const globes = new Map();
+    const MAX_ACTIVE_GLOBES = 6; // Browser WebGL context limit is ~8-16
 
-    // Fullscreen toggle function
+    // Custom statistics
+    const customStats = {
+      coffee: {
+        definition: {
+          id: "coffee_consumption",
+          name: "Coffee Consumption",
+          unit: "kg/capita",
+          description: "Annual coffee consumption per capita",
+          colorScale: ["#f7e6d5", "#c9a87c", "#3d2314"],
+          domain: [0, 12]
+        },
+        values: {
+          "246": 12.0, "578": 9.9, "208": 8.7, "528": 8.4, "752": 8.2,
+          "756": 7.9, "056": 6.8, "276": 6.5, "124": 6.5, "040": 6.1,
+          "076": 6.1, "380": 5.9, "250": 5.4, "300": 5.7, "620": 4.3,
+          "203": 4.5, "840": 4.2, "348": 3.8, "392": 3.4, "616": 3.2,
+          "036": 3.0, "826": 2.8, "410": 2.7, "642": 2.1, "152": 2.1
+        }
+      },
+      happiness: {
+        definition: {
+          id: "happiness_index",
+          name: "World Happiness",
+          unit: "score",
+          description: "UN Happiness Report 2024",
+          colorScale: ["#fde0dd", "#fa9fb5", "#c51b8a"],
+          domain: [3, 8]
+        },
+        values: {
+          "246": 7.8, "208": 7.6, "352": 7.5, "756": 7.5, "528": 7.4,
+          "578": 7.3, "752": 7.3, "040": 7.2, "036": 7.1, "554": 7.1,
+          "124": 7.0, "826": 6.9, "276": 6.9, "056": 6.8, "840": 6.7,
+          "250": 6.7, "380": 6.4, "724": 6.4, "620": 6.2, "300": 5.9
+        }
+      }
+    };
+
+    // Update WebGL counter display
+    function updateCounter() {
+      document.getElementById('webgl-count').textContent = `WebGL: ${globes.size}`;
+    }
+
+    // Destroy oldest globe if at limit
+    function enforceLimit() {
+      if (globes.size >= MAX_ACTIVE_GLOBES) {
+        // Find globe that's furthest from viewport
+        let furthestId = null;
+        let furthestDistance = -Infinity;
+        
+        for (const [id, globe] of globes) {
+          const container = document.getElementById(id);
+          if (!container) continue;
+          
+          const rect = container.getBoundingClientRect();
+          const viewportCenter = window.innerHeight / 2;
+          const containerCenter = rect.top + rect.height / 2;
+          const distance = Math.abs(containerCenter - viewportCenter);
+          
+          if (distance > furthestDistance) {
+            furthestDistance = distance;
+            furthestId = id;
+          }
+        }
+        
+        if (furthestId) {
+          destroyGlobe(furthestId);
+        }
+      }
+    }
+
+    // Create a globe
+    async function createGlobe(containerId) {
+      const container = document.getElementById(containerId);
+      if (!container || globes.has(containerId)) return;
+      
+      const status = container.querySelector('.status');
+      status.textContent = 'Loading';
+      status.className = 'status loading';
+
+      try {
+        // Enforce WebGL limit
+        enforceLimit();
+
+        // Parse config from data attribute
+        const configStr = container.dataset.config || '{}';
+        const config = JSON.parse(configStr);
+        
+        // Merge with defaults
+        const fullConfig = {
+          autoRotate: true,
+          showControls: false,
+          showLegend: true,
+          labels: 'major',
+          effects: { atmosphere: false, clouds: false },
+          ...config
+        };
+
+        const globe = new GlobeViz(container, fullConfig);
+        globes.set(containerId, globe);
+        updateCounter();
+
+        await globe.ready;
+
+        // Apply custom statistic if specified
+        const customStatKey = container.dataset.customStat;
+        if (customStatKey && customStats[customStatKey]) {
+          globe.setStatistic(customStats[customStatKey]);
+        }
+
+        status.textContent = 'Ready';
+        status.className = 'status ready';
+      } catch (err) {
+        console.error(`Failed: ${containerId}`, err);
+        status.textContent = 'Error';
+        status.className = 'status error';
+      }
+    }
+
+    // Destroy a globe
+    function destroyGlobe(containerId) {
+      const globe = globes.get(containerId);
+      if (!globe) return;
+
+      globe.destroy();
+      globes.delete(containerId);
+      updateCounter();
+
+      const container = document.getElementById(containerId);
+      if (container) {
+        const status = container.querySelector('.status');
+        status.textContent = 'Pending';
+        status.className = 'status pending';
+      }
+    }
+
+    // Fullscreen toggle
     window.toggleFullscreen = async (containerId) => {
-      const globe = globes[containerId];
+      // Create globe if not exists
+      if (!globes.has(containerId)) {
+        await createGlobe(containerId);
+      }
+      const globe = globes.get(containerId);
       if (globe) {
         await globe.toggleFullscreen();
       }
     };
 
-    // Custom statistics (simulating JSON API without format function)
-    const coffeeData = {
-      definition: {
-        id: "coffee_consumption",
-        name: "Coffee Consumption",
-        unit: "kg/capita",
-        description: "Annual coffee consumption per capita",
-        colorScale: ["#f7e6d5", "#c9a87c", "#3d2314"],
-        domain: [0, 12]
-      },
-      values: {
-        "246": 12.0, "578": 9.9, "208": 8.7, "528": 8.4, "752": 8.2,
-        "756": 7.9, "056": 6.8, "276": 6.5, "124": 6.5, "040": 6.1,
-        "076": 6.1, "380": 5.9, "250": 5.4, "300": 5.7, "620": 4.3,
-        "203": 4.5, "840": 4.2, "348": 3.8, "392": 3.4, "616": 3.2,
-        "036": 3.0, "826": 2.8, "410": 2.7, "642": 2.1, "152": 2.1,
-        "170": 2.0, "858": 1.8, "643": 1.7, "804": 1.4, "484": 1.4
-      }
-    };
-
-    const happinessData = {
-      definition: {
-        id: "happiness_index",
-        name: "World Happiness Index",
-        unit: "score",
-        description: "UN World Happiness Report 2024 score",
-        colorScale: ["#fde0dd", "#fa9fb5", "#c51b8a"],
-        domain: [3, 8]
-      },
-      values: {
-        "246": 7.8, "208": 7.6, "352": 7.5, "756": 7.5, "528": 7.4,
-        "578": 7.3, "752": 7.3, "040": 7.2, "036": 7.1, "554": 7.1,
-        "124": 7.0, "826": 6.9, "276": 6.9, "056": 6.8, "840": 6.7,
-        "250": 6.7, "380": 6.4, "724": 6.4, "620": 6.2, "300": 5.9,
-        "392": 5.9, "616": 5.8, "410": 5.8, "076": 5.4, "156": 5.2,
-        "643": 5.0, "356": 4.0, "566": 4.5, "818": 4.3, "586": 4.8
-      }
-    };
-
-    async function createGlobe(containerId, statusId, config, customStat = null) {
-      const container = document.getElementById(containerId);
-      const status = document.getElementById(statusId);
-      
-      if (!container) {
-        console.error(`Container not found: ${containerId}`);
-        return null;
-      }
-
-      try {
-        const globe = new GlobeViz(container, config);
-        globes[containerId] = globe;
-        
-        await globe.ready;
-        
-        if (customStat) {
-          globe.setStatistic(customStat);
+    // Intersection Observer for lazy loading
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        const id = entry.target.id;
+        if (entry.isIntersecting) {
+          // Create globe when visible
+          if (!globes.has(id)) {
+            createGlobe(id);
+          }
         }
-        
-        status.textContent = 'Ready';
-        status.className = 'status ready';
-        return globe;
-      } catch (err) {
-        console.error(`Failed: ${containerId}`, err);
-        status.textContent = 'Error';
-        status.className = 'status error';
-        return null;
-      }
-    }
+      });
+    }, {
+      rootMargin: '100px', // Start loading slightly before visible
+      threshold: 0.1
+    });
 
-    // Base configurations
-    const baseConfig = {
-      autoRotate: true,
-      showControls: false,
-      showLegend: true,
-      labels: 'major',
-      effects: { atmosphere: true, clouds: true }
-    };
-
-    const minimalConfig = {
-      autoRotate: true,
-      showControls: false,
-      showLegend: false,
-      labels: 'none',
-      effects: { atmosphere: false, clouds: false }
-    };
-
-    // All built-in statistics
+    // Generate statistics gallery
     const allStats = [
       'lifeExpectancy', 'humanDevIndex', 'gdpPerCapita', 'co2Emissions',
       'renewableEnergy', 'internetUsers', 'urbanPopulation', 'healthExpenditure',
       'forestArea', 'population', 'accessElectricity', 'educationExpenditure'
     ];
 
-    // Create statistics gallery dynamically
     const gallery = document.getElementById('stats-gallery');
-    allStats.forEach((statId, i) => {
-      const variantHtml = `
+    allStats.forEach(statId => {
+      const html = `
         <div class="variant">
           <div class="variant-header">
             <span class="variant-title">${statId}</span>
-            <span class="variant-meta">statistic: "${statId}"</span>
+            <span class="variant-meta">"${statId}"</span>
           </div>
-          <div class="variant-container height-250" id="globe-stat-${statId}">
+          <div class="variant-container height-250 globe-container" id="globe-stat-${statId}" 
+               data-config='{"statistic":"${statId}","labels":"none","effects":{"atmosphere":false,"clouds":false}}'>
             <button class="fullscreen-btn" onclick="toggleFullscreen('globe-stat-${statId}')">⛶</button>
-            <span class="status loading" id="status-stat-${statId}">Loading...</span>
+            <span class="status pending">Pending</span>
           </div>
         </div>
       `;
-      gallery.insertAdjacentHTML('beforeend', variantHtml);
+      gallery.insertAdjacentHTML('beforeend', html);
     });
 
-    // Initialize all globes (staggered to avoid overwhelming the browser)
-    async function initAll() {
-      // Hero
-      await createGlobe('hero-globe', 'status-hero', { ...baseConfig });
-
-      // Stats gallery (staggered)
-      for (const statId of allStats) {
-        await createGlobe(`globe-stat-${statId}`, `status-stat-${statId}`, {
-          ...baseConfig,
-          statistic: statId,
-          labels: 'none',
-          effects: { atmosphere: false, clouds: false }
-        });
-        await new Promise(r => setTimeout(r, 100)); // Small delay between each
-      }
-
-      // Sizes
-      createGlobe('globe-size-half', 'status-size-half', { ...baseConfig });
-      createGlobe('globe-size-half2', 'status-size-half2', { ...baseConfig, labels: 'all' });
-      createGlobe('globe-size-third1', 'status-size-third1', { ...baseConfig });
-      createGlobe('globe-size-third2', 'status-size-third2', { ...baseConfig, labels: 'minimal' });
-      createGlobe('globe-size-third3', 'status-size-third3', { ...baseConfig, showLegend: false });
-
-      // Textures
-      createGlobe('globe-tex-satellite', 'status-tex-satellite', { ...baseConfig, texture: 'satellite' });
-      createGlobe('globe-tex-natural', 'status-tex-natural', { ...baseConfig, texture: 'natural' });
-      createGlobe('globe-tex-night', 'status-tex-night', { ...baseConfig, texture: 'night' });
-      createGlobe('globe-tex-topo', 'status-tex-topo', { ...baseConfig, texture: 'topographic' });
-      createGlobe('globe-tex-light', 'status-tex-light', { ...baseConfig, texture: 'light' });
-      createGlobe('globe-tex-dark', 'status-tex-dark', { ...baseConfig, texture: 'dark' });
-
-      // Effects
-      createGlobe('globe-fx-full', 'status-fx-full', { ...baseConfig, effects: { atmosphere: true, clouds: true } });
-      createGlobe('globe-fx-atmo', 'status-fx-atmo', { ...baseConfig, effects: { atmosphere: true, clouds: false } });
-      createGlobe('globe-fx-clean', 'status-fx-clean', { ...baseConfig, effects: { atmosphere: false, clouds: false } });
-
-      // Custom stats
-      createGlobe('globe-custom-coffee', 'status-custom-coffee', { ...baseConfig }, coffeeData);
-      createGlobe('globe-custom-happiness', 'status-custom-happiness', { ...baseConfig }, happinessData);
-
-      // Flat views
-      createGlobe('globe-flat1', 'status-flat1', { ...baseConfig, initialView: 'flat' });
-      createGlobe('globe-flat2', 'status-flat2', { ...baseConfig, initialView: 'flat', effects: { atmosphere: false, clouds: false } });
-
-      // Tiny widgets
-      createGlobe('globe-tiny1', 'status-tiny1', { ...minimalConfig, statistic: 'gdpPerCapita' });
-      createGlobe('globe-tiny2', 'status-tiny2', { ...minimalConfig, statistic: 'co2Emissions' });
-      createGlobe('globe-tiny3', 'status-tiny3', { ...minimalConfig, statistic: 'internetUsers' });
-      createGlobe('globe-tiny4', 'status-tiny4', { ...minimalConfig, statistic: 'forestArea' });
-    }
-
-    initAll();
+    // Observe all globe containers
+    document.querySelectorAll('.globe-container').forEach(container => {
+      observer.observe(container);
+    });
   </script>
 </body>
 </html>

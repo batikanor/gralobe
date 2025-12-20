@@ -55,20 +55,34 @@ test.describe('Legend Component', () => {
 });
 
 test.describe('Legend Scoped to Container', () => {
-  test('each globe has its own legend inside its container', async ({ page }) => {
+  test('legend is inside its globe container', async ({ page }) => {
     await page.goto('/');
     
-    // Wait for multiple globes to initialize
+    // Wait for hero globe
     await page.waitForSelector('#hero-globe canvas', { timeout: 15000 });
-    await page.waitForTimeout(5000);
+    await page.waitForTimeout(2000);
     
-    // Check that legends are inside their respective containers
+    // Check that legend is inside its respective container (not in body)
     const heroLegend = page.locator('#hero-globe .gralobe-legend');
     await expect(heroLegend).toBeAttached();
     
-    // Count total legends - should match number of globes with showLegend: true
-    const legends = page.locator('.gralobe-legend');
-    const legendCount = await legends.count();
-    expect(legendCount).toBeGreaterThan(1);
+    // Legend should be a child of the container, not body
+    const legendParent = await heroLegend.evaluate((el) => el.parentElement?.id);
+    expect(legendParent).toBe('hero-globe');
+  });
+
+  test('legend scales based on container size', async ({ page }) => {
+    await page.goto('/');
+    
+    // Wait for hero globe
+    await page.waitForSelector('#hero-globe canvas', { timeout: 15000 });
+    await page.waitForTimeout(2000);
+    
+    // Hero is large, should have size-lg class
+    const heroLegend = page.locator('#hero-globe .gralobe-legend');
+    const hasLgClass = await heroLegend.evaluate((el) => 
+      el.classList.contains('size-lg') || el.classList.contains('size-md')
+    );
+    expect(hasLgClass).toBe(true);
   });
 });
