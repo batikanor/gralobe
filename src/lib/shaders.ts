@@ -49,6 +49,44 @@ float noise(vec2 p) {
     return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
 }
 
+// 3D noise for seamless spherical sampling
+float noise3D(vec3 p) {
+    vec3 i = floor(p);
+    vec3 f = fract(p);
+    f = f * f * (3.0 - 2.0 * f);
+    
+    float n000 = hash3(i);
+    float n100 = hash3(i + vec3(1.0, 0.0, 0.0));
+    float n010 = hash3(i + vec3(0.0, 1.0, 0.0));
+    float n110 = hash3(i + vec3(1.0, 1.0, 0.0));
+    float n001 = hash3(i + vec3(0.0, 0.0, 1.0));
+    float n101 = hash3(i + vec3(1.0, 0.0, 1.0));
+    float n011 = hash3(i + vec3(0.0, 1.0, 1.0));
+    float n111 = hash3(i + vec3(1.0, 1.0, 1.0));
+    
+    float nx00 = mix(n000, n100, f.x);
+    float nx10 = mix(n010, n110, f.x);
+    float nx01 = mix(n001, n101, f.x);
+    float nx11 = mix(n011, n111, f.x);
+    
+    float nxy0 = mix(nx00, nx10, f.y);
+    float nxy1 = mix(nx01, nx11, f.y);
+    
+    return mix(nxy0, nxy1, f.z);
+}
+
+// FBM using 3D noise for seamless spherical clouds
+float fbm3D(vec3 p) {
+    float value = 0.0;
+    float amplitude = 0.5;
+    for (int i = 0; i < 4; i++) {
+        value += amplitude * noise3D(p);
+        p *= 2.0;
+        amplitude *= 0.5;
+    }
+    return value;
+}
+
 // Fractal Brownian Motion for natural-looking tears
 float fbm(vec2 p) {
     float value = 0.0;
@@ -334,17 +372,29 @@ void main() {
         color += vec3(1.0, 0.9, 0.7) * scatter * 0.15;
     }
 
-    // Cloud layer
+    // Cloud layer - use spherical 3D coordinates for seamless wrapping
     if (uClouds > 0.01) {
-        vec2 cloudUv = vUv + vec2(uTime * uCloudSpeed * 0.01, 0.0);
-        cloudUv = fract(cloudUv);
-
-        float cloud1 = fbm(cloudUv * 8.0 + uTime * uCloudSpeed * 0.1);
-        float cloud2 = fbm(cloudUv * 16.0 - uTime * uCloudSpeed * 0.05);
-        float cloud3 = fbm(cloudUv * 4.0 + uTime * uCloudSpeed * 0.02);
+        // Convert UV to spherical 3D coordinates (naturally wraps without seams)
+        float lon = vUv.x * 2.0 * 3.14159;
+        float lat = (vUv.y - 0.5) * 3.14159;
+        
+        // Add time-based rotation for cloud movement
+        float cloudLon = lon + uTime * uCloudSpeed * 0.02;
+        
+        // Create 3D point on sphere surface
+        vec3 spherePoint = vec3(
+            cos(lat) * cos(cloudLon),
+            sin(lat),
+            cos(lat) * sin(cloudLon)
+        );
+        
+        // Sample noise at different scales using 3D coordinates
+        float cloud1 = fbm3D(spherePoint * 3.0 + uTime * uCloudSpeed * 0.01);
+        float cloud2 = fbm3D(spherePoint * 6.0 - uTime * uCloudSpeed * 0.005);
+        float cloud3 = fbm3D(spherePoint * 1.5 + uTime * uCloudSpeed * 0.003);
 
         float clouds = cloud1 * 0.5 + cloud2 * 0.3 + cloud3 * 0.2;
-        clouds = smoothstep(0.35, 0.7, clouds);
+        clouds = smoothstep(0.35, 0.65, clouds);
 
         vec3 cloudColor = vec3(1.0, 1.0, 1.0);
         float cloudLight = 0.7 + 0.3 * dayFactor;
