@@ -314,6 +314,8 @@ export class CountryLabels {
   private tempVector = new THREE.Vector3();
   private cameraDirection = new THREE.Vector3();
 
+  private tempFlatVector = new THREE.Vector3();
+
   private updateLabelPosition(object: CSS2DObject, label: CountryLabel, morph: number): void {
     const { lat, lon, element } = label;
     // Convert degrees to radians
@@ -336,20 +338,24 @@ export class CountryLabels {
     const flatY = (v - 0.5) * flatHeight;
     const flatZ = 0.5;
 
-    // Apply globe rotation to spherical position when morphed
-    if (this.globe && morph > 0.01) {
-      // For spherical positions, apply the globe's rotation
+    // Always apply globe rotation to both positions to keep labels aligned with map
+    if (this.globe) {
+      // Apply rotation to sphere position
       this.tempVector.set(sphereX, sphereY, sphereZ);
       this.tempVector.applyEuler(this.globe.rotation);
 
-      // Interpolate between rotated sphere and flat
+      // Apply rotation to flat position too - this keeps labels aligned in flat mode
+      this.tempFlatVector.set(flatX, flatY, flatZ);
+      this.tempFlatVector.applyEuler(this.globe.rotation);
+
+      // Interpolate between rotated sphere and rotated flat
       object.position.set(
-        this.tempVector.x * morph + flatX * (1 - morph),
-        this.tempVector.y * morph + flatY * (1 - morph),
-        this.tempVector.z * morph + flatZ * (1 - morph)
+        this.tempVector.x * morph + this.tempFlatVector.x * (1 - morph),
+        this.tempVector.y * morph + this.tempFlatVector.y * (1 - morph),
+        this.tempVector.z * morph + this.tempFlatVector.z * (1 - morph)
       );
 
-      // Check if label is facing the camera (dot product with camera direction)
+      // Check if label is facing the camera (only in globe mode)
       if (this.camera && morph > 0.5) {
         // Get camera direction (from globe center to camera)
         this.cameraDirection.copy(this.camera.position).normalize();
@@ -361,14 +367,13 @@ export class CountryLabels {
         const dot = labelNormal.dot(this.cameraDirection);
 
         // Hide label if facing away from camera
-        // Threshold of 0.15 ensures labels near the horizon are hidden
-        // This prevents labels from appearing to "float" off the globe edge
         const isVisible = dot > 0.15;
         element.style.opacity = isVisible ? '' : '0';
       } else {
         element.style.opacity = '';
       }
     } else {
+      // No globe reference - just interpolate without rotation
       object.position.set(
         sphereX * morph + flatX * (1 - morph),
         sphereY * morph + flatY * (1 - morph),
