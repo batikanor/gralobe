@@ -133,6 +133,8 @@ export interface GlobeVizConfig {
  * Public API for controlling the globe
  */
 export interface GlobeVizAPI {
+  /** Promise that resolves when globe is fully initialized */
+  ready: Promise<void>;
   /** Animate to globe view */
   toGlobe(): void;
   /** Animate to flat map view */
@@ -239,6 +241,10 @@ export class GlobeViz implements GlobeVizAPI {
   private animationId: number | null = null;
   private isDestroyed = false;
 
+  /** Promise that resolves when fully initialized */
+  public ready: Promise<void>;
+  private resolveReady!: () => void;
+
   /**
    * Create a new GlobeViz instance
    * @param container CSS selector or HTMLElement
@@ -260,6 +266,11 @@ export class GlobeViz implements GlobeVizAPI {
       ...config,
       effects: { ...DEFAULT_CONFIG.effects, ...config.effects },
     };
+
+    // Create ready promise
+    this.ready = new Promise((resolve) => {
+      this.resolveReady = resolve;
+    });
 
     // Initialize
     this.init();
@@ -338,6 +349,9 @@ export class GlobeViz implements GlobeVizAPI {
 
     // Start animation loop
     this.animate();
+
+    // Signal that initialization is complete
+    this.resolveReady();
   }
 
   private async createGlobe(): Promise<void> {

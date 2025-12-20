@@ -159,9 +159,11 @@ export class CountryLabels {
   constructor(container: HTMLElement, sphereRadius: number) {
     this.sphereRadius = sphereRadius;
 
-    // Create CSS2D renderer for crisp text
+    // Create CSS2D renderer for crisp text - use CONTAINER dimensions, not window
     this.labelRenderer = new CSS2DRenderer();
-    this.labelRenderer.setSize(window.innerWidth, window.innerHeight);
+    const width = container.clientWidth || 800;
+    const height = container.clientHeight || 600;
+    this.labelRenderer.setSize(width, height);
     this.labelRenderer.domElement.style.position = 'absolute';
     this.labelRenderer.domElement.style.top = '0';
     this.labelRenderer.domElement.style.left = '0';

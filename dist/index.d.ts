@@ -169,6 +169,9 @@ export declare class GlobeViz implements GlobeVizAPI {
     private currentStatistic;
     private animationId;
     private isDestroyed;
+    /** Promise that resolves when fully initialized */
+    ready: Promise<void>;
+    private resolveReady;
     /**
      * Create a new GlobeViz instance
      * @param container CSS selector or HTMLElement
@@ -203,6 +206,8 @@ export declare class GlobeViz implements GlobeVizAPI {
  * Public API for controlling the globe
  */
 export declare interface GlobeVizAPI {
+    /** Promise that resolves when globe is fully initialized */
+    ready: Promise<void>;
     /** Animate to globe view */
     toGlobe(): void;
     /** Animate to flat map view */
