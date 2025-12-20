@@ -311,74 +311,68 @@ export class CountryLabels {
     });
   }
 
-  private tempVector = new THREE.Vector3();
+  private localPos = new THREE.Vector3();
+  private worldPos = new THREE.Vector3();
   private cameraDirection = new THREE.Vector3();
-
-  private tempFlatVector = new THREE.Vector3();
+  private labelNormal = new THREE.Vector3();
 
   private updateLabelPosition(object: CSS2DObject, label: CountryLabel, morph: number): void {
     const { lat, lon, element } = label;
-    // Convert degrees to radians
-    const latRad = (lat * Math.PI) / 180;
-    const lonRad = (lon * Math.PI) / 180;
 
-    // Spherical position (local coordinates on globe surface)
-    const radius = this.sphereRadius + 0.5; // Slightly above surface
+    // Convert lat/lon to UV (same as shader)
+    const u = (lon + 180) / 360;
+    const v = (lat + 90) / 180;
+
+    // Calculate lat/lon in radians (same as shader)
+    const lonRad = (u - 0.5) * 2 * Math.PI;
+    const latRad = (v - 0.5) * Math.PI;
+
+    // Spherical position (same formula as shader, slightly above surface for labels)
+    const radius = this.sphereRadius + 0.3;
     const sphereX = radius * Math.cos(latRad) * Math.sin(lonRad);
     const sphereY = radius * Math.sin(latRad);
     const sphereZ = radius * Math.cos(latRad) * Math.cos(lonRad);
 
-    // Flat position (Mercator-like)
+    // Flat position (exactly matching shader)
     const flatWidth = 2 * Math.PI * this.sphereRadius;
     const flatHeight = Math.PI * this.sphereRadius;
-    // Convert lon (-180 to 180) and lat (-90 to 90) to UV (0 to 1)
-    const u = (lon + 180) / 360;
-    const v = (lat + 90) / 180;
     const flatX = (u - 0.5) * flatWidth;
     const flatY = (v - 0.5) * flatHeight;
-    const flatZ = 0.5;
+    const flatZ = 0.3; // Slightly above flat surface
 
-    // Always apply globe rotation to both positions to keep labels aligned with map
+    // Apply smoothstep easing to morph (same as shader: t * t * (3 - 2 * t))
+    const t = morph * morph * (3 - 2 * morph);
+
+    // Interpolate between flat and sphere (same as shader's mix())
+    this.localPos.set(
+      flatX + t * (sphereX - flatX),
+      flatY + t * (sphereY - flatY),
+      flatZ + t * (sphereZ - flatZ)
+    );
+
+    // Transform local position to world position using globe's matrix
     if (this.globe) {
-      // Apply rotation to sphere position
-      this.tempVector.set(sphereX, sphereY, sphereZ);
-      this.tempVector.applyEuler(this.globe.rotation);
+      this.worldPos.copy(this.localPos);
+      this.worldPos.applyMatrix4(this.globe.matrixWorld);
+      object.position.copy(this.worldPos);
 
-      // Apply rotation to flat position too - this keeps labels aligned in flat mode
-      this.tempFlatVector.set(flatX, flatY, flatZ);
-      this.tempFlatVector.applyEuler(this.globe.rotation);
-
-      // Interpolate between rotated sphere and rotated flat
-      object.position.set(
-        this.tempVector.x * morph + this.tempFlatVector.x * (1 - morph),
-        this.tempVector.y * morph + this.tempFlatVector.y * (1 - morph),
-        this.tempVector.z * morph + this.tempFlatVector.z * (1 - morph)
-      );
-
-      // Check if label is facing the camera (only in globe mode)
-      if (this.camera && morph > 0.5) {
-        // Get camera direction (from globe center to camera)
+      // Hide labels facing away from camera (only in globe mode)
+      if (this.camera && t > 0.5) {
+        // Get camera direction
         this.cameraDirection.copy(this.camera.position).normalize();
 
-        // Get label's normal direction (from center to label position, normalized)
-        const labelNormal = this.tempVector.clone().normalize();
+        // Get label normal in world space
+        this.labelNormal.set(sphereX, sphereY, sphereZ).normalize();
+        this.labelNormal.applyMatrix4(this.globe.matrixWorld).normalize();
 
-        // Dot product: positive means facing camera, negative means facing away
-        const dot = labelNormal.dot(this.cameraDirection);
-
-        // Hide label if facing away from camera
-        const isVisible = dot > 0.15;
-        element.style.opacity = isVisible ? '' : '0';
+        const dot = this.labelNormal.dot(this.cameraDirection);
+        element.style.opacity = dot > 0.15 ? '' : '0';
       } else {
         element.style.opacity = '';
       }
     } else {
-      // No globe reference - just interpolate without rotation
-      object.position.set(
-        sphereX * morph + flatX * (1 - morph),
-        sphereY * morph + flatY * (1 - morph),
-        sphereZ * morph + flatZ * (1 - morph)
-      );
+      // No globe - use local position directly
+      object.position.copy(this.localPos);
       element.style.opacity = '';
     }
   }
