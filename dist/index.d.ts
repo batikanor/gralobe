@@ -4,8 +4,8 @@
 export declare const BUILT_IN_STATISTICS: Record<string, StatisticDefinition>;
 
 /**
- * Country data with a value for visualization
- * Uses ISO 3166-1 numeric codes for country identification
+ * Country data with a value for visualization.
+ * Uses ISO 3166-1 numeric codes for country identification.
  */
 export declare interface CountryData {
     /** ISO 3166-1 numeric code (e.g., "840" for USA, "156" for China) */
@@ -42,9 +42,30 @@ declare interface CountryStatistics {
 }
 
 /**
+ * Value Formatters
+ *
+ * Centralized formatting utilities for statistic values.
+ * Used by Legend, tooltips, and any other display components.
+ */
+/**
+ * Create a formatter function based on the unit type.
+ *
+ * @param unit - The unit string (e.g., "%", "$", "years")
+ * @returns A function that formats numeric values with the appropriate unit
+ *
+ * @example
+ * const fmt = createFormatter('%');
+ * fmt(42.567); // "42.6%"
+ *
+ * const currencyFmt = createFormatter('$');
+ * currencyFmt(1234567); // "$1,234,567"
+ */
+export declare function createFormatter(unit: string): (value: number) => string;
+
+/**
  * Visual effects configuration
  */
-declare interface EffectsConfig {
+export declare interface EffectsConfig {
     /** Show atmosphere glow around globe */
     atmosphere?: boolean;
     /** Show cloud layer */
@@ -82,7 +103,7 @@ declare interface EffectsConfig {
 /**
  * Export options for screenshots, GIFs, and videos
  */
-declare interface ExportOptions {
+export declare interface ExportOptions {
     /** Output width in pixels */
     width?: number;
     /** Output height in pixels */
@@ -94,6 +115,16 @@ declare interface ExportOptions {
     /** Output filename */
     filename?: string;
 }
+
+/**
+ * Format a value using the provided formatter or create a default one.
+ *
+ * @param value - The numeric value to format
+ * @param unit - The unit string
+ * @param customFormatter - Optional custom formatter function
+ * @returns Formatted string
+ */
+export declare function formatValue(value: number, unit: string, customFormatter?: (value: number) => string): string;
 
 /**
  * GlobeViz - Interactive 3D Globe Visualization
@@ -282,46 +313,69 @@ export declare type LabelStyle = 'none' | 'major' | 'all' | 'capitals' | 'minima
 export declare function normalizeCountryValues(values: Record<string, number> | Map<string, number>): Record<string, number>;
 
 /**
- * Complete statistic data ready for visualization
+ * Complete statistic data ready for visualization.
+ * Combines the definition with actual country values.
  */
 export declare interface StatisticData {
     /** The statistic definition */
     definition: StatisticDefinition;
-    /** Country values keyed by ISO 3166-1 numeric code */
+    /**
+     * Country values keyed by ISO 3166-1 numeric code.
+     * Accepts both Map and plain object for flexibility.
+     * @example { "840": 85, "156": 68 } // USA: 85, China: 68
+     */
     values: Map<string, number> | Record<string, number>;
 }
 
 /**
- * Definition of a statistic to visualize
+ * Definition of a statistic to visualize.
+ *
+ * This is the canonical type for statistic definitions.
+ * The `format` function is optional - if not provided, a default
+ * formatter will be created based on the `unit` field.
  */
 export declare interface StatisticDefinition {
-    /** Unique identifier */
+    /** Unique identifier (snake_case recommended) */
     id: string;
-    /** Display name */
+    /** Human-readable display name */
     name: string;
-    /** Unit of measurement (e.g., "%", "years", "$") */
+    /** Unit of measurement (e.g., "%", "years", "$", "per capita") */
     unit: string;
-    /** Description for legend/tooltip */
+    /** Description shown in legend/tooltip */
     description: string;
     /**
-     * Color scale as [low, mid, high] hex colors
-     * @example ['#fee5d9', '#fcae91', '#cb181d']
+     * Color scale as [low, mid, high] hex colors.
+     * Used for choropleth rendering.
+     * @example ['#fee5d9', '#fcae91', '#cb181d'] // Red scale
+     * @example ['#e5f5e0', '#a1d99b', '#31a354'] // Green scale
      */
     colorScale: [string, string, string];
     /**
-     * Value domain [min, max] for color mapping
-     * @example [0, 100] for percentages
+     * Value domain [min, max] for color mapping.
+     * Values outside this range are clamped.
+     * @example [0, 100] // For percentages
+     * @example [1000, 80000] // For GDP per capita
      */
     domain: [number, number];
     /**
-     * Format function for displaying values
+     * Optional custom formatter for displaying values.
+     * If not provided, a default formatter is created based on `unit`.
+     *
+     * NOTE: This function cannot be serialized to JSON.
+     * When sending statistics over the wire, omit this field
+     * and the renderer will create a default formatter.
+     *
      * @example (v) => `${v.toFixed(1)}%`
+     * @example (v) => `$${(v/1000).toFixed(1)}k`
      */
-    format: (value: number) => string;
+    format?: (value: number) => string;
 }
 
 /**
- * Type definitions for GlobeViz
+ * Core Type Definitions for GlobeViz
+ *
+ * This is the SINGLE SOURCE OF TRUTH for all public types.
+ * Internal modules should import from here.
  */
 /**
  * Available texture presets for the globe

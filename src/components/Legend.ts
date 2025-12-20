@@ -1,8 +1,12 @@
-import type { StatisticDefinition } from '../data/worldStatistics';
-
 /**
- * Legend component for displaying color scales
+ * Legend Component
+ *
+ * Displays color scale and value range for the current statistic.
  */
+
+import type { StatisticDefinition } from '../lib/types';
+import { createFormatter } from '../lib/formatters';
+
 export class Legend {
   private container: HTMLElement;
   private visible: boolean = false;
@@ -10,15 +14,16 @@ export class Legend {
   constructor() {
     this.container = document.createElement('div');
     this.container.id = 'legend';
+    this.container.setAttribute('data-testid', 'globe-legend');
     this.container.innerHTML = `
       <div class="legend-hint">Press G to toggle globe/flat</div>
-      <div class="legend-title"></div>
+      <div class="legend-title" data-testid="legend-title"></div>
       <div class="legend-gradient"></div>
       <div class="legend-labels">
-        <span class="legend-min"></span>
-        <span class="legend-max"></span>
+        <span class="legend-min" data-testid="legend-min"></span>
+        <span class="legend-max" data-testid="legend-max"></span>
       </div>
-      <div class="legend-description"></div>
+      <div class="legend-description" data-testid="legend-description"></div>
     `;
     this.applyStyles();
     document.body.appendChild(this.container);
@@ -89,6 +94,12 @@ export class Legend {
     document.head.appendChild(style);
   }
 
+  /**
+   * Show the legend with the given statistic definition.
+   *
+   * If the statistic doesn't have a format function (e.g., when loaded from JSON),
+   * a default formatter is created based on the unit.
+   */
   show(stat: StatisticDefinition): void {
     const titleEl = this.container.querySelector('.legend-title') as HTMLElement;
     const gradientEl = this.container.querySelector('.legend-gradient') as HTMLElement;
@@ -102,8 +113,10 @@ export class Legend {
     const [low, mid, high] = stat.colorScale;
     gradientEl.style.background = `linear-gradient(to right, ${low}, ${mid}, ${high})`;
 
-    minEl.textContent = stat.format(stat.domain[0]);
-    maxEl.textContent = stat.format(stat.domain[1]);
+    // Use provided format function or create a default one based on unit
+    const formatValue = stat.format ?? createFormatter(stat.unit);
+    minEl.textContent = formatValue(stat.domain[0]);
+    maxEl.textContent = formatValue(stat.domain[1]);
 
     this.container.classList.add('visible');
     this.visible = true;

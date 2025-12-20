@@ -1,6 +1,6 @@
 {
   "name": "gralobe",
-  "version": "1.0.6",
+  "version": "1.0.8",
   "description": "Interactive 3D globe visualization with statistics, smooth flat map ↔ globe transitions, and country labels",
   "type": "module",
   "main": "./dist/gralobe.umd.cjs",
@@ -43,12 +43,15 @@
     "build": "tsc && vite build",
     "build:lib": "tsc && vite build --mode lib",
     "preview": "vite preview",
+    "test": "playwright test",
+    "test:ui": "playwright test --ui",
     "prepublishOnly": "npm run build:lib"
   },
   "peerDependencies": {
     "three": ">=0.150.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.57.0",
     "@types/topojson-client": "^3.1.5",
     "@types/topojson-specification": "^1.0.5",
     "typescript": "~5.9.3",

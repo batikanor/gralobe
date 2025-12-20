@@ -46,8 +46,15 @@ export default defineConfig(({ mode }) => {
     },
 
     server: {
-      port: 3000,
+      port: 5173,
       open: true,
+    },
+
+    resolve: {
+      alias: {
+        // Allow importing 'gralobe' in examples to resolve to local source
+        'gralobe': resolve(__dirname, 'src/index.ts'),
+      },
     },
 
     optimizeDeps: {

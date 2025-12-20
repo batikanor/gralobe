@@ -16,15 +16,18 @@ export interface CountryData {
   renewableEnergy: number;     // percentage of total energy
 }
 
-export interface StatisticDefinition {
-  id: string;
-  name: string;
-  unit: string;
-  description: string;
-  colorScale: [string, string, string]; // low, mid, high colors
-  domain: [number, number];             // min, max values for normalization
+import type { StatisticDefinition as BaseStatisticDefinition } from '../lib/types';
+
+/**
+ * Internal statistic definition with accessor for CountryData.
+ * NOTE: For internal use only. Public API uses StatisticDefinition from lib/types.
+ */
+export interface InternalStatisticDef extends BaseStatisticDefinition {
   accessor: (country: CountryData) => number;
 }
+
+// Re-export for backwards compatibility
+export type { BaseStatisticDefinition as StatisticDefinition };
 
 // Country data with statistics (simplified dataset of major countries)
 export const COUNTRY_DATA: CountryData[] = [
@@ -96,7 +99,7 @@ export const COUNTRY_DATA: CountryData[] = [
 ];
 
 // Available statistics with their display properties
-export const STATISTICS: StatisticDefinition[] = [
+export const STATISTICS: InternalStatisticDef[] = [
   {
     id: 'population',
     name: 'Population',
@@ -156,7 +159,7 @@ export const STATISTICS: StatisticDefinition[] = [
 /**
  * Get normalized value (0-1) for a statistic
  */
-export function getNormalizedValue(stat: StatisticDefinition, value: number): number {
+export function getNormalizedValue(stat: Pick<BaseStatisticDefinition, 'domain'>, value: number): number {
   const [min, max] = stat.domain;
   return Math.max(0, Math.min(1, (value - min) / (max - min)));
 }
@@ -164,7 +167,7 @@ export function getNormalizedValue(stat: StatisticDefinition, value: number): nu
 /**
  * Interpolate between colors based on normalized value
  */
-export function getColorForValue(stat: StatisticDefinition, value: number): string {
+export function getColorForValue(stat: Pick<BaseStatisticDefinition, 'domain' | 'colorScale'>, value: number): string {
   const t = getNormalizedValue(stat, value);
   const [low, mid, high] = stat.colorScale;
 

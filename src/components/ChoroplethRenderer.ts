@@ -1,6 +1,6 @@
 import * as topojson from 'topojson-client';
 import type { Topology, GeometryCollection } from 'topojson-specification';
-import type { StatisticDefinition, CountryStatistics } from '../data/worldStatistics';
+import type { InternalStatisticDef, CountryStatistics } from '../data/worldStatistics';
 import { WORLD_STATISTICS, getNormalizedValue } from '../data/worldStatistics';
 import { normalizeCountryValues } from '../lib/countryCodes';
 
@@ -73,7 +73,7 @@ export class ChoroplethRenderer {
   /**
    * Render a choropleth texture for the given statistic
    */
-  renderTexture(stat: StatisticDefinition): HTMLCanvasElement {
+  renderTexture(stat: InternalStatisticDef): HTMLCanvasElement {
     // Clear canvas with ocean color
     this.ctx.fillStyle = '#1a3a5c';
     this.ctx.fillRect(0, 0, TEXTURE_WIDTH, TEXTURE_HEIGHT);

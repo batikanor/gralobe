@@ -353,8 +353,10 @@ export class CountryLabels {
         // Dot product: positive means facing camera, negative means facing away
         const dot = labelNormal.dot(this.cameraDirection);
 
-        // Hide label if facing away from camera (with small threshold for edge cases)
-        const isVisible = dot > -0.1;
+        // Hide label if facing away from camera
+        // Threshold of 0.15 ensures labels near the horizon are hidden
+        // This prevents labels from appearing to "float" off the globe edge
+        const isVisible = dot > 0.15;
         element.style.opacity = isVisible ? '' : '0';
       } else {
         element.style.opacity = '';

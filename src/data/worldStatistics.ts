@@ -129,18 +129,23 @@ export const WORLD_STATISTICS: CountryStatistics[] = [
   { id: "591", code: "PA", name: "Panama", population: 4.4, gdpPerCapita: 35317, co2Emissions: 2.5, lifeExpectancy: 79.2, humanDevIndex: 0.805, internetUsers: 68.0, renewableEnergy: 35.0, urbanPopulation: 68.4, healthExpenditure: 7.3, educationExpenditure: 3.2, forestArea: 62.1, accessElectricity: 95.0 },
 ];
 
-export interface StatisticDefinition {
-  id: string;
-  name: string;
-  unit: string;
-  description: string;
-  colorScale: [string, string, string]; // low, mid, high
-  domain: [number, number];
+import type { StatisticDefinition as BaseStatisticDefinition } from '../lib/types';
+
+/**
+ * Internal statistic definition that extends the public type
+ * with an accessor function for extracting values from CountryStatistics.
+ *
+ * NOTE: This is for internal use only. Public API uses StatisticDefinition from lib/types.
+ */
+export interface InternalStatisticDef extends BaseStatisticDefinition {
+  /** Accessor function to extract value from CountryStatistics */
   accessor: (country: CountryStatistics) => number;
-  format: (value: number) => string;
 }
 
-export const STATISTICS: StatisticDefinition[] = [
+// Re-export the base type for backwards compatibility
+export type { BaseStatisticDefinition as StatisticDefinition };
+
+export const STATISTICS: InternalStatisticDef[] = [
   {
     id: 'humanDevIndex',
     name: 'Human Development Index',
@@ -243,11 +248,17 @@ export const STATISTICS: StatisticDefinition[] = [
   },
 ];
 
-export function getNormalizedValue(stat: StatisticDefinition, value: number): number {
+/**
+ * Normalize a value to 0-1 range based on statistic domain.
+ */
+export function getNormalizedValue(stat: Pick<BaseStatisticDefinition, 'domain'>, value: number): number {
   const [min, max] = stat.domain;
   return Math.max(0, Math.min(1, (value - min) / (max - min)));
 }
 
-export function getStatisticById(id: string): StatisticDefinition | undefined {
+/**
+ * Get a built-in statistic by ID.
+ */
+export function getStatisticById(id: string): InternalStatisticDef | undefined {
   return STATISTICS.find(s => s.id === id);
 }

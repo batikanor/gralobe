@@ -30,7 +30,12 @@ export type {
   StatisticDefinition,
   StatisticData,
   CountryData,
+  EffectsConfig,
+  ExportOptions,
 } from './lib/types';
+
+// Formatting utilities
+export { createFormatter, formatValue } from './lib/formatters';
 
 // Built-in statistics
 export { BUILT_IN_STATISTICS } from './lib/statistics';

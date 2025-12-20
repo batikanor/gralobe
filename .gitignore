@@ -28,3 +28,8 @@ dist-ssr
 # Large video files (keep compressed version only)
 video_demo_1.mov
 .vercel
+
+# Test artifacts
+test-results/
+playwright-report/
+playwright/.cache/
