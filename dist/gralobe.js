@@ -6358,13 +6358,20 @@ class xo {
     this.stars = new S.Points(t, s), this.scene.add(this.stars);
   }
   createGUI() {
-    this.gui = new Vi({ title: "Globe Controls", width: 300 });
-    const e = this.gui.addFolder("View");
-    e.add({ toGlobe: () => this.toGlobe() }, "toGlobe").name("→ Globe"), e.add({ toFlat: () => this.toFlat() }, "toFlat").name("→ Flat Map"), e.add({ morph: this.morph }, "morph", 0, 1).name("Morph").onChange((r) => this.setMorph(r)), e.open();
-    const t = this.gui.addFolder("Statistics"), i = Object.keys(wi);
-    t.add({ stat: this.config.statistic }, "stat", i).name("Statistic").onChange((r) => this.setStatistic(r)), t.open();
-    const n = ["none", "minimal", "major", "all"];
-    this.gui.add({ labels: this.config.labels }, "labels", n).name("Labels").onChange((r) => this.setLabels(r)), this.gui.add(this.config, "autoRotate").name("Auto Rotate");
+    getComputedStyle(this.container).position === "static" && (this.container.style.position = "relative"), this.gui = new Vi({
+      container: this.container,
+      title: "⚙ Controls",
+      width: 220,
+      closeFolders: !0
+    });
+    const t = this.gui.domElement;
+    t.style.position = "absolute", t.style.top = "8px", t.style.right = "8px", t.style.zIndex = "100", this.gui.close();
+    const i = this.gui.addFolder("View");
+    i.add({ toGlobe: () => this.toGlobe() }, "toGlobe").name("→ Globe"), i.add({ toFlat: () => this.toFlat() }, "toFlat").name("→ Flat"), i.add({ morph: this.morph }, "morph", 0, 1).name("Morph").onChange((o) => this.setMorph(o));
+    const n = this.gui.addFolder("Statistics"), r = Object.keys(wi);
+    n.add({ stat: this.config.statistic }, "stat", r).name("Statistic").onChange((o) => this.setStatistic(o));
+    const s = ["none", "minimal", "major", "all"];
+    this.gui.addFolder("Display").add({ labels: this.config.labels }, "labels", s).name("Labels").onChange((o) => this.setLabels(o)), this.gui.add(this.config, "autoRotate").name("Auto Rotate");
   }
   handleResize = () => {
     if (this.isDestroyed) return;

@@ -234,14 +234,13 @@
   <section id="hero">
     <div class="section-header">
       <h2 class="section-title">Interactive Globe</h2>
-      <p class="section-desc">G: toggle view · F: fullscreen · Hover for controls</p>
+      <p class="section-desc">G: toggle view · F: fullscreen · Click ⚙ Controls to expand</p>
     </div>
     <div class="hero-container">
       <div id="hero-globe" class="globe-container" data-config='{"labels":"major","effects":{"atmosphere":true,"clouds":true},"showControls":true}'>
         <div class="globe-loader"></div>
         <div class="globe-error">Failed to load</div>
         <div class="globe-toolbar always-visible">
-          <button class="toolbar-btn" onclick="toggleControls('hero-globe')" title="Toggle Controls">⚙</button>
           <button class="toolbar-btn" onclick="toggleFullscreen('hero-globe')" title="Fullscreen">⛶</button>
         </div>
       </div>
@@ -272,7 +271,7 @@
         <div class="variant-container height-400 globe-container" id="globe-size-half" data-config='{"labels":"major","showControls":true}'>
           <div class="globe-loader"></div>
           <div class="globe-toolbar">
-            <button class="toolbar-btn" onclick="toggleControls('globe-size-half')" title="Controls">⚙</button>
+            
             <button class="toolbar-btn" onclick="toggleFullscreen('globe-size-half')" title="Fullscreen">⛶</button>
           </div>
         </div>
@@ -299,7 +298,7 @@
         <div class="variant-container height-320 globe-container" id="globe-size-third1" data-config='{"labels":"major","showControls":true}'>
           <div class="globe-loader"></div>
           <div class="globe-toolbar">
-            <button class="toolbar-btn" onclick="toggleControls('globe-size-third1')" title="Controls">⚙</button>
+            
             <button class="toolbar-btn" onclick="toggleFullscreen('globe-size-third1')" title="Fullscreen">⛶</button>
           </div>
         </div>
@@ -346,7 +345,7 @@
         <div class="variant-container height-280 globe-container" id="globe-tex-satellite" data-config='{"texture":"satellite","labels":"none","showControls":true}'>
           <div class="globe-loader"></div>
           <div class="globe-toolbar">
-            <button class="toolbar-btn" onclick="toggleControls('globe-tex-satellite')" title="Controls">⚙</button>
+            
             <button class="toolbar-btn" onclick="toggleFullscreen('globe-tex-satellite')" title="Fullscreen">⛶</button>
           </div>
         </div>
@@ -429,7 +428,7 @@
         <div class="variant-container height-320 globe-container" id="globe-fx-full" data-config='{"effects":{"atmosphere":true,"clouds":true},"showControls":true}'>
           <div class="globe-loader"></div>
           <div class="globe-toolbar">
-            <button class="toolbar-btn" onclick="toggleControls('globe-fx-full')" title="Controls">⚙</button>
+            
             <button class="toolbar-btn" onclick="toggleFullscreen('globe-fx-full')" title="Fullscreen">⛶</button>
           </div>
         </div>
@@ -479,7 +478,7 @@
         <div class="variant-container height-380 globe-container" id="globe-custom-coffee" data-config='{"labels":"major","showControls":true}' data-custom-stat="coffee">
           <div class="globe-loader"></div>
           <div class="globe-toolbar">
-            <button class="toolbar-btn" onclick="toggleControls('globe-custom-coffee')" title="Controls">⚙</button>
+            
             <button class="toolbar-btn" onclick="toggleFullscreen('globe-custom-coffee')" title="Fullscreen">⛶</button>
           </div>
         </div>
@@ -514,7 +513,7 @@
         <div class="variant-container height-380 globe-container" id="globe-flat1" data-config='{"initialView":"flat","labels":"major","showControls":true}'>
           <div class="globe-loader"></div>
           <div class="globe-toolbar">
-            <button class="toolbar-btn" onclick="toggleControls('globe-flat1')" title="Controls">⚙</button>
+            
             <button class="toolbar-btn" onclick="toggleFullscreen('globe-flat1')" title="Fullscreen">⛶</button>
           </div>
         </div>
@@ -706,12 +705,7 @@
       globes.get(containerId)?.toggleFullscreen();
     };
 
-    window.toggleControls = (containerId) => {
-      const globe = globes.get(containerId);
-      // Toggle the GUI visibility - this requires exposing the method in GlobeViz
-      // For now, the controls are shown based on config.showControls
-      console.log('Toggle controls for:', containerId);
-    };
+    // toggleControls removed - GUI now has its own clickable header
 
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
@@ -741,7 +735,7 @@
                data-config='{"statistic":"${id}","labels":"none","effects":{"atmosphere":false,"clouds":false},"showControls":${showControls}}'>
             <div class="globe-loader"></div>
             <div class="globe-toolbar">
-              ${showControls ? `<button class="toolbar-btn" onclick="toggleControls('globe-stat-${id}')" title="Controls">⚙</button>` : ''}
+              ${showControls ? `` : ''}
               <button class="toolbar-btn" onclick="toggleFullscreen('globe-stat-${id}')" title="Fullscreen">⛶</button>
             </div>
           </div>

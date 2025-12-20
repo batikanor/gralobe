@@ -501,14 +501,35 @@ export class GlobeViz implements GlobeVizAPI {
   }
 
   private createGUI(): void {
-    this.gui = new GUI({ title: 'Globe Controls', width: 300 });
+    // Ensure container has relative positioning for GUI
+    const containerPosition = getComputedStyle(this.container).position;
+    if (containerPosition === 'static') {
+      this.container.style.position = 'relative';
+    }
+
+    // Create GUI attached to container, compact and closed by default
+    this.gui = new GUI({ 
+      container: this.container,
+      title: '⚙ Controls',
+      width: 220,
+      closeFolders: true,
+    });
+
+    // Style the GUI to be positioned within container
+    const guiDom = this.gui.domElement;
+    guiDom.style.position = 'absolute';
+    guiDom.style.top = '8px';
+    guiDom.style.right = '8px';
+    guiDom.style.zIndex = '100';
+
+    // Start closed
+    this.gui.close();
 
     // View controls
     const viewFolder = this.gui.addFolder('View');
     viewFolder.add({ toGlobe: () => this.toGlobe() }, 'toGlobe').name('→ Globe');
-    viewFolder.add({ toFlat: () => this.toFlat() }, 'toFlat').name('→ Flat Map');
+    viewFolder.add({ toFlat: () => this.toFlat() }, 'toFlat').name('→ Flat');
     viewFolder.add({ morph: this.morph }, 'morph', 0, 1).name('Morph').onChange((v: number) => this.setMorph(v));
-    viewFolder.open();
 
     // Statistics
     const statsFolder = this.gui.addFolder('Statistics');
@@ -516,11 +537,11 @@ export class GlobeViz implements GlobeVizAPI {
     statsFolder.add({ stat: this.config.statistic as string }, 'stat', statOptions)
       .name('Statistic')
       .onChange((id: string) => this.setStatistic(id));
-    statsFolder.open();
 
     // Labels
     const labelOptions: LabelStyle[] = ['none', 'minimal', 'major', 'all'];
-    this.gui.add({ labels: this.config.labels }, 'labels', labelOptions)
+    this.gui.addFolder('Display')
+      .add({ labels: this.config.labels }, 'labels', labelOptions)
       .name('Labels')
       .onChange((style: LabelStyle) => this.setLabels(style));
 
