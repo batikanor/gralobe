@@ -4832,22 +4832,24 @@ class eo {
   }
   /**
    * Draw country labels onto canvas
+   * @param camera - Optional camera to use for projection (defaults to main camera)
    */
-  drawCountryLabelsOnCanvas(e, t, i) {
+  drawCountryLabelsOnCanvas(e, t, i, n) {
     if (this.countryLabels)
       try {
-        this.countryLabels.getVisibleLabelsForCanvas(this.camera, t, i).forEach((r) => {
-          e.save(), e.globalAlpha = r.opacity, e.font = "bold 12px Arial, sans-serif", e.textAlign = "center", e.textBaseline = "middle", e.strokeStyle = "rgba(0, 0, 0, 0.8)", e.lineWidth = 3, e.strokeText(r.text, r.x, r.y), e.fillStyle = "#ffffff", e.fillText(r.text, r.x, r.y), e.restore();
+        this.countryLabels.getVisibleLabelsForCanvas(n || this.camera, t, i).forEach((s) => {
+          e.save(), e.globalAlpha = s.opacity, e.font = "bold 12px Arial, sans-serif", e.textAlign = "center", e.textBaseline = "middle", e.strokeStyle = "rgba(0, 0, 0, 0.8)", e.lineWidth = 3, e.strokeText(s.text, s.x, s.y), e.fillStyle = "#ffffff", e.fillText(s.text, s.x, s.y), e.restore();
         });
-      } catch (n) {
-        console.warn("Failed to draw country labels:", n);
+      } catch (r) {
+        console.warn("Failed to draw country labels:", r);
       }
   }
   /**
    * Draw all overlays (legend + country labels) onto canvas
+   * @param camera - Optional camera to use for label projection (defaults to main camera)
    */
-  drawOverlaysOnCanvas(e, t, i) {
-    this.drawCountryLabelsOnCanvas(e, t, i), this.drawLegendOnCanvas(e, t, i);
+  drawOverlaysOnCanvas(e, t, i, n) {
+    this.drawCountryLabelsOnCanvas(e, t, i, n), this.drawLegendOnCanvas(e, t, i);
   }
   /**
    * Draw legend onto canvas at specified position
@@ -4895,7 +4897,7 @@ class eo {
     });
     r.setSize(t, i), r.setPixelRatio(1);
     const s = this.camera.clone();
-    s.aspect = t / i, s.updateProjectionMatrix(), r.render(this.scene, s), this.compositeCanvas.width = t, this.compositeCanvas.height = i, this.compositeCtx.drawImage(r.domElement, 0, 0), this.drawOverlaysOnCanvas(this.compositeCtx, t, i);
+    s.aspect = t / i, s.updateProjectionMatrix(), r.render(this.scene, s), this.compositeCanvas.width = t, this.compositeCanvas.height = i, this.compositeCtx.drawImage(r.domElement, 0, 0), this.drawOverlaysOnCanvas(this.compositeCtx, t, i, s);
     const o = this.compositeCanvas.toDataURL("image/png");
     r.dispose();
     const l = n ? `${n}.png` : `globe-${Date.now()}.png`;

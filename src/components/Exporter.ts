@@ -72,12 +72,13 @@ export class Exporter {
 
     /**
      * Draw country labels onto canvas
+     * @param camera - Optional camera to use for projection (defaults to main camera)
      */
-    private drawCountryLabelsOnCanvas(ctx: CanvasRenderingContext2D, canvasWidth: number, canvasHeight: number): void {
+    private drawCountryLabelsOnCanvas(ctx: CanvasRenderingContext2D, canvasWidth: number, canvasHeight: number, camera?: THREE.Camera): void {
         if (!this.countryLabels) return;
 
         try {
-            const labels = this.countryLabels.getVisibleLabelsForCanvas(this.camera, canvasWidth, canvasHeight);
+            const labels = this.countryLabels.getVisibleLabelsForCanvas(camera || this.camera, canvasWidth, canvasHeight);
 
             labels.forEach(label => {
                 ctx.save();
@@ -106,9 +107,10 @@ export class Exporter {
 
     /**
      * Draw all overlays (legend + country labels) onto canvas
+     * @param camera - Optional camera to use for label projection (defaults to main camera)
      */
-    private drawOverlaysOnCanvas(ctx: CanvasRenderingContext2D, canvasWidth: number, canvasHeight: number): void {
-        this.drawCountryLabelsOnCanvas(ctx, canvasWidth, canvasHeight);
+    private drawOverlaysOnCanvas(ctx: CanvasRenderingContext2D, canvasWidth: number, canvasHeight: number, camera?: THREE.Camera): void {
+        this.drawCountryLabelsOnCanvas(ctx, canvasWidth, canvasHeight, camera);
         this.drawLegendOnCanvas(ctx, canvasWidth, canvasHeight);
     }
 
@@ -260,10 +262,11 @@ export class Exporter {
         offscreenRenderer.render(this.scene, tempCamera);
 
         // Create composite with legend and labels
+        // IMPORTANT: Pass tempCamera so labels are projected correctly for the screenshot aspect ratio
         this.compositeCanvas.width = width;
         this.compositeCanvas.height = height;
         this.compositeCtx.drawImage(offscreenRenderer.domElement, 0, 0);
-        this.drawOverlaysOnCanvas(this.compositeCtx, width, height);
+        this.drawOverlaysOnCanvas(this.compositeCtx, width, height, tempCamera);
 
         // Capture from composite
         const dataUrl = this.compositeCanvas.toDataURL('image/png');
