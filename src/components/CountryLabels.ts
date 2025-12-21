@@ -168,6 +168,7 @@ export class CountryLabels {
     this.labelRenderer.domElement.style.top = '0';
     this.labelRenderer.domElement.style.left = '0';
     this.labelRenderer.domElement.style.pointerEvents = 'none';
+    this.labelRenderer.domElement.style.zIndex = '5'; // Below legend (10) and UI controls
     container.appendChild(this.labelRenderer.domElement);
 
     // Create group to hold label objects

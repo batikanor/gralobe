@@ -120,11 +120,12 @@ export class Exporter {
             if (!this.legendElement || !this.legendElement.classList.contains('visible')) return;
 
             const legend = this.legendElement;
-            const title = legend.querySelector('.legend-title') as HTMLElement;
-            const gradient = legend.querySelector('.legend-gradient') as HTMLElement;
-            const minLabel = legend.querySelector('.legend-min') as HTMLElement;
-            const maxLabel = legend.querySelector('.legend-max') as HTMLElement;
-            const description = legend.querySelector('.legend-description') as HTMLElement;
+            // Support both old class names and new gralobe- prefixed names
+            const title = (legend.querySelector('.gralobe-legend-title') || legend.querySelector('.legend-title')) as HTMLElement;
+            const gradient = (legend.querySelector('.gralobe-legend-gradient') || legend.querySelector('.legend-gradient')) as HTMLElement;
+            const minLabel = (legend.querySelector('.gralobe-legend-min') || legend.querySelector('.legend-min')) as HTMLElement;
+            const maxLabel = (legend.querySelector('.gralobe-legend-max') || legend.querySelector('.legend-max')) as HTMLElement;
+            const description = (legend.querySelector('.gralobe-legend-description') || legend.querySelector('.legend-description')) as HTMLElement;
 
             if (!title || !gradient) return;
 

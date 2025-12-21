@@ -4361,7 +4361,7 @@ function Ua() {
       transform: translateY(8px) scale(0.95);
       transition: opacity 0.3s ease, transform 0.3s ease;
       pointer-events: none;
-      z-index: 50;
+      z-index: 10;
       transform-origin: bottom left;
     }
 
@@ -4414,18 +4414,43 @@ function Ua() {
     .gralobe-legend.size-sm .gralobe-legend-hint { display: none; }
 
     .gralobe-legend.size-xs {
-      padding: 4px 6px;
-      min-width: 70px;
-      max-width: 120px;
+      padding: 3px 5px;
+      min-width: 60px;
+      max-width: 100px;
       border-radius: 3px;
       bottom: 4px;
       left: 4px;
     }
-    .gralobe-legend.size-xs .gralobe-legend-title { font-size: 8px; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .gralobe-legend.size-xs .gralobe-legend-gradient { height: 4px; margin-bottom: 2px; border-radius: 1px; }
-    .gralobe-legend.size-xs .gralobe-legend-labels { font-size: 7px; margin-bottom: 0; }
+    .gralobe-legend.size-xs .gralobe-legend-title { font-size: 7px; margin-bottom: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .gralobe-legend.size-xs .gralobe-legend-gradient { height: 3px; margin-bottom: 1px; border-radius: 1px; }
+    .gralobe-legend.size-xs .gralobe-legend-labels { font-size: 6px; margin-bottom: 0; }
     .gralobe-legend.size-xs .gralobe-legend-description { display: none; }
     .gralobe-legend.size-xs .gralobe-legend-hint { display: none; }
+
+    /* Mobile-specific: even smaller for very small screens */
+    @media (max-width: 480px) {
+      .gralobe-legend.size-sm {
+        padding: 4px 6px;
+        min-width: 80px;
+        max-width: 130px;
+      }
+      .gralobe-legend.size-sm .gralobe-legend-title { font-size: 8px; }
+      .gralobe-legend.size-sm .gralobe-legend-gradient { height: 5px; }
+      .gralobe-legend.size-sm .gralobe-legend-labels { font-size: 7px; }
+      .gralobe-legend.size-sm .gralobe-legend-description { display: none; }
+      .gralobe-legend.size-sm .gralobe-legend-hint { display: none; }
+      
+      .gralobe-legend.size-md {
+        padding: 5px 8px;
+        min-width: 100px;
+        max-width: 160px;
+      }
+      .gralobe-legend.size-md .gralobe-legend-title { font-size: 9px; }
+      .gralobe-legend.size-md .gralobe-legend-gradient { height: 6px; }
+      .gralobe-legend.size-md .gralobe-legend-labels { font-size: 8px; }
+      .gralobe-legend.size-md .gralobe-legend-description { display: none; }
+      .gralobe-legend.size-md .gralobe-legend-hint { display: none; }
+    }
 
     .gralobe-legend-title {
       font-weight: 600;
@@ -4830,7 +4855,7 @@ class eo {
   drawLegendOnCanvas(e, t, i) {
     try {
       if (!this.legendElement || !this.legendElement.classList.contains("visible")) return;
-      const n = this.legendElement, r = n.querySelector(".legend-title"), s = n.querySelector(".legend-gradient"), o = n.querySelector(".legend-min"), l = n.querySelector(".legend-max"), c = n.querySelector(".legend-description");
+      const n = this.legendElement, r = n.querySelector(".gralobe-legend-title") || n.querySelector(".legend-title"), s = n.querySelector(".gralobe-legend-gradient") || n.querySelector(".legend-gradient"), o = n.querySelector(".gralobe-legend-min") || n.querySelector(".legend-min"), l = n.querySelector(".gralobe-legend-max") || n.querySelector(".legend-max"), c = n.querySelector(".gralobe-legend-description") || n.querySelector(".legend-description");
       if (!r || !s) return;
       const h = 280, u = 100, p = 20, m = t - h - p, f = i - u - p, d = 12;
       e.fillStyle = "rgba(0, 10, 20, 0.9)", e.strokeStyle = "rgba(100, 170, 255, 0.5)", e.lineWidth = 2, e.beginPath(), e.roundRect ? e.roundRect(m, f, h, u, d) : e.rect(m, f, h, u), e.fill(), e.stroke(), e.fillStyle = "#44aaff", e.font = "bold 18px Arial, sans-serif", e.fillText(r.textContent || "", m + 16, f + 28);
@@ -5313,7 +5338,7 @@ class ho {
   constructor(e, t) {
     this.sphereRadius = t, this.labelRenderer = new io();
     const i = e.clientWidth || 800, n = e.clientHeight || 600;
-    this.labelRenderer.setSize(i, n), this.labelRenderer.domElement.style.position = "absolute", this.labelRenderer.domElement.style.top = "0", this.labelRenderer.domElement.style.left = "0", this.labelRenderer.domElement.style.pointerEvents = "none", e.appendChild(this.labelRenderer.domElement), this.labelGroup = new S.Group(), this.injectStyles(), this.createLabels();
+    this.labelRenderer.setSize(i, n), this.labelRenderer.domElement.style.position = "absolute", this.labelRenderer.domElement.style.top = "0", this.labelRenderer.domElement.style.left = "0", this.labelRenderer.domElement.style.pointerEvents = "none", this.labelRenderer.domElement.style.zIndex = "5", e.appendChild(this.labelRenderer.domElement), this.labelGroup = new S.Group(), this.injectStyles(), this.createLabels();
   }
   injectStyles() {
     const e = document.createElement("style");
