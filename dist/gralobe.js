@@ -4861,12 +4861,20 @@ class eo {
   }
   /**
    * Capture a single screenshot (includes legend if visible)
+   * Uses an offscreen renderer to avoid disturbing the main display
    */
   screenshot(e = {}) {
-    const { width: t = 1920, height: i = 1080 } = e, n = this.renderer.domElement.width, r = this.renderer.domElement.height;
-    this.renderer.setSize(t, i), this.camera.aspect = t / i, this.camera.updateProjectionMatrix(), this.renderer.render(this.scene, this.camera), this.compositeCanvas.width = t, this.compositeCanvas.height = i, this.compositeCtx.drawImage(this.renderer.domElement, 0, 0), this.drawOverlaysOnCanvas(this.compositeCtx, t, i);
-    const s = this.compositeCanvas.toDataURL("image/png");
-    this.renderer.setSize(n, r), this.camera.aspect = n / r, this.camera.updateProjectionMatrix(), this.downloadFile(s, `globe-${Date.now()}.png`);
+    const { width: t = 1920, height: i = 1080, filename: n } = e, r = new S.WebGLRenderer({
+      antialias: !0,
+      preserveDrawingBuffer: !0
+    });
+    r.setSize(t, i), r.setPixelRatio(1);
+    const s = this.camera.clone();
+    s.aspect = t / i, s.updateProjectionMatrix(), r.render(this.scene, s), this.compositeCanvas.width = t, this.compositeCanvas.height = i, this.compositeCtx.drawImage(r.domElement, 0, 0), this.drawOverlaysOnCanvas(this.compositeCtx, t, i);
+    const o = this.compositeCanvas.toDataURL("image/png");
+    r.dispose();
+    const l = n ? `${n}.png` : `globe-${Date.now()}.png`;
+    this.downloadFile(o, l);
   }
   /**
    * Start recording video using MediaRecorder

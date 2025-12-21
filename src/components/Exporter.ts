@@ -237,38 +237,42 @@ export class Exporter {
 
     /**
      * Capture a single screenshot (includes legend if visible)
+     * Uses an offscreen renderer to avoid disturbing the main display
      */
     screenshot(options: ExportOptions = {}): void {
-        const { width = 1920, height = 1080 } = options;
+        const { width = 1920, height = 1080, filename } = options;
 
-        // Store original size
-        const originalWidth = this.renderer.domElement.width;
-        const originalHeight = this.renderer.domElement.height;
+        // Create an offscreen renderer to avoid disturbing the main display
+        const offscreenRenderer = new THREE.WebGLRenderer({ 
+            antialias: true,
+            preserveDrawingBuffer: true 
+        });
+        offscreenRenderer.setSize(width, height);
+        offscreenRenderer.setPixelRatio(1); // Use 1 for consistent output size
 
-        // Resize for high-res capture
-        this.renderer.setSize(width, height);
-        (this.camera as THREE.PerspectiveCamera).aspect = width / height;
-        (this.camera as THREE.PerspectiveCamera).updateProjectionMatrix();
+        // Create a temporary camera with correct aspect ratio
+        const tempCamera = (this.camera as THREE.PerspectiveCamera).clone();
+        tempCamera.aspect = width / height;
+        tempCamera.updateProjectionMatrix();
 
-        // Render
-        this.renderer.render(this.scene, this.camera);
+        // Render to offscreen renderer
+        offscreenRenderer.render(this.scene, tempCamera);
 
-        // Create composite with legend
+        // Create composite with legend and labels
         this.compositeCanvas.width = width;
         this.compositeCanvas.height = height;
-        this.compositeCtx.drawImage(this.renderer.domElement, 0, 0);
+        this.compositeCtx.drawImage(offscreenRenderer.domElement, 0, 0);
         this.drawOverlaysOnCanvas(this.compositeCtx, width, height);
 
         // Capture from composite
         const dataUrl = this.compositeCanvas.toDataURL('image/png');
 
-        // Restore original size
-        this.renderer.setSize(originalWidth, originalHeight);
-        (this.camera as THREE.PerspectiveCamera).aspect = originalWidth / originalHeight;
-        (this.camera as THREE.PerspectiveCamera).updateProjectionMatrix();
+        // Clean up offscreen renderer
+        offscreenRenderer.dispose();
 
         // Download
-        this.downloadFile(dataUrl, `globe-${Date.now()}.png`);
+        const outputFilename = filename ? `${filename}.png` : `globe-${Date.now()}.png`;
+        this.downloadFile(dataUrl, outputFilename);
     }
 
     /**
