@@ -6,7 +6,7 @@ This document outlines rules for AI assistants contributing to this repository.
 
 1. **No AI self-attribution**: AI assistants must NOT add themselves as co-authors in commits. The human developer who initiated and reviewed the work is the sole author.
 
-2. **No bot signatures**: Do not include `Co-authored-by:` lines referencing AI bots or assistants.
+2. **No bot signatures**: Do not include `Co-authored-by:` lines referencing AI bots, assistants, or tools (Claude, Factory, Copilot, etc.).
 
 3. **Human ownership**: All contributions are owned by the human developer who requested and approved them.
 
@@ -18,10 +18,45 @@ This document outlines rules for AI assistants contributing to this repository.
 
 ## Code Quality
 
+**Implementation must be elegant and production-ready, in ways that would be approved by experienced principal and senior engineers. Just working code is not enough.**
+
 - Follow existing code conventions in the repository
+- Write clean, maintainable, and well-structured code
+- Prefer pure functions and testable architecture
 - Add comments only where necessary for clarity
 - Do not add comments crediting AI assistance
 - Ensure all code is tested before committing
+
+## Testing Requirements
+
+**IMPORTANT: All new functionality MUST be accompanied by tests that assert the actual intended outcomes are being delivered.**
+
+### Philosophy
+
+- **Test the real system**: Tests should verify real behavior, not mock the very thing being tested. Mocks are acceptable for external dependencies (APIs, databases), but the core logic under test must be real.
+- **Write testable code**: Favor pure functions, dependency injection, and clear interfaces that make testing natural.
+- **Clever testing encouraged**: Creative approaches like using multimodal AI to assert visual correctness in screenshots are welcome.
+
+### Test Types
+
+1. **Unit tests**: For utility functions, data transformations, and business logic
+   - Use Vitest for unit tests
+   - Test meaningful invariants, not trivial constant checks
+
+2. **E2E tests**: For user-facing features and visual components
+   - Place in `tests/` directory
+   - Use Playwright for E2E tests
+   - Visual regression and screenshot-based assertions are encouraged
+
+3. **Test quality expectations**:
+   - Tests should fail if the feature breaks
+   - Avoid flaky tests (no arbitrary timeouts, use proper waits)
+   - Edge cases and error handling should be tested
+
+4. **Before submitting**:
+   - Run `pnpm test` to verify unit tests pass
+   - Run `pnpm test:e2e` to verify E2E tests pass
+   - Ensure no existing tests are broken
 
 ## Documentation
 
