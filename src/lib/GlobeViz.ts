@@ -324,8 +324,14 @@ export class GlobeViz implements GlobeVizAPI {
     this.countryLabels.setCamera(this.camera);
     this.countryLabels.setStyle(this.config.labels);
 
-    // Initialize exporter
+    // Initialize exporter with overlay elements
     this.exporter = new Exporter(this.renderer, this.scene, this.camera);
+    if (this.legend) {
+      this.exporter.setLegendElement(this.legend.getElement());
+    }
+    if (this.countryLabels) {
+      this.exporter.setCountryLabels(this.countryLabels);
+    }
 
     // Setup controls GUI if enabled
     if (this.config.showControls) {
