@@ -553,6 +553,11 @@ export class GlobeViz implements GlobeVizAPI {
 
     // Auto rotate
     this.gui.add(this.config, 'autoRotate').name('Auto Rotate');
+
+    // Export controls
+    const exportFolder = this.gui.addFolder('Export');
+    exportFolder.add({ screenshot: () => this.screenshot({ width: 1920, height: 1080 }) }, 'screenshot')
+      .name('📷 Screenshot');
   }
 
   private handleResize = (): void => {

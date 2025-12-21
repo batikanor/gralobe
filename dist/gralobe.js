@@ -6403,11 +6403,11 @@ class xo {
     const t = this.gui.domElement;
     t.style.position = "absolute", t.style.top = "8px", t.style.right = "8px", t.style.zIndex = "100", this.gui.close();
     const i = this.gui.addFolder("View");
-    i.add({ toGlobe: () => this.toGlobe() }, "toGlobe").name("→ Globe"), i.add({ toFlat: () => this.toFlat() }, "toFlat").name("→ Flat"), i.add({ morph: this.morph }, "morph", 0, 1).name("Morph").onChange((o) => this.setMorph(o));
+    i.add({ toGlobe: () => this.toGlobe() }, "toGlobe").name("→ Globe"), i.add({ toFlat: () => this.toFlat() }, "toFlat").name("→ Flat"), i.add({ morph: this.morph }, "morph", 0, 1).name("Morph").onChange((l) => this.setMorph(l));
     const n = this.gui.addFolder("Statistics"), r = Object.keys(wi);
-    n.add({ stat: this.config.statistic }, "stat", r).name("Statistic").onChange((o) => this.setStatistic(o));
+    n.add({ stat: this.config.statistic }, "stat", r).name("Statistic").onChange((l) => this.setStatistic(l));
     const s = ["none", "minimal", "major", "all"];
-    this.gui.addFolder("Display").add({ labels: this.config.labels }, "labels", s).name("Labels").onChange((o) => this.setLabels(o)), this.gui.add(this.config, "autoRotate").name("Auto Rotate");
+    this.gui.addFolder("Display").add({ labels: this.config.labels }, "labels", s).name("Labels").onChange((l) => this.setLabels(l)), this.gui.add(this.config, "autoRotate").name("Auto Rotate"), this.gui.addFolder("Export").add({ screenshot: () => this.screenshot({ width: 1920, height: 1080 }) }, "screenshot").name("📷 Screenshot");
   }
   handleResize = () => {
     if (this.isDestroyed) return;
