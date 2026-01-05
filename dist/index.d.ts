@@ -179,13 +179,13 @@ export declare class GlobeViz implements GlobeVizAPI {
      */
     constructor(container: string | HTMLElement, config?: GlobeVizConfig);
     private init;
+    private handleKeydown;
     private createGlobe;
     private createAtmosphere;
     private createStars;
     private createGUI;
     private handleResize;
     private handleFullscreenChange;
-    private handleKeydown;
     private animate;
     toGlobe(): void;
     toFlat(): void;
