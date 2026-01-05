@@ -2,34 +2,33 @@
  * GlobeViz - Main class for creating interactive globe visualizations
  */
 
-import * as THREE from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { gsap } from 'gsap';
 import GUI from 'lil-gui';
+import * as THREE from 'three';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
 import { ChoroplethRenderer } from '../components/ChoroplethRenderer';
-import { Legend } from '../components/Legend';
-import { Exporter } from '../components/Exporter';
 import { CountryLabels, type LabelStyle } from '../components/CountryLabels';
-import { BUILT_IN_STATISTICS, DEFAULT_STATISTIC } from './statistics';
-import { WORLD_STATISTICS, STATISTICS as INTERNAL_STATISTICS } from '../data/worldStatistics';
+import { Exporter } from '../components/Exporter';
+import { Legend } from '../components/Legend';
+import { STATISTICS as INTERNAL_STATISTICS } from '../data/worldStatistics';
 import {
-  vertexShader,
-  fragmentShader,
-  atmosphereVertexShader,
   atmosphereFragmentShader,
-  starVertexShader,
-  starFragmentShader,
+  atmosphereVertexShader,
+  fragmentShader,
   SPHERE_RADIUS,
+  starFragmentShader,
+  starVertexShader,
+  vertexShader,
 } from './shaders';
+import { BUILT_IN_STATISTICS } from './statistics';
 
 import type {
-  TexturePreset,
-  StatisticDefinition,
-  StatisticData,
   CountryData,
   EffectsConfig,
   ExportOptions,
+  StatisticData,
+  TexturePreset
 } from './types';
 
 /**
@@ -357,8 +356,17 @@ export class GlobeViz implements GlobeVizAPI {
     // Handle fullscreen changes
     document.addEventListener('fullscreenchange', this.handleFullscreenChange);
 
+    // Make canvas focusable for keyboard events
+    this.renderer.domElement.tabIndex = 0;
+    this.renderer.domElement.style.outline = 'none'; // Remove default focus outline
+    
+    // Focus on click
+    this.renderer.domElement.addEventListener('mousedown', () => {
+      this.renderer.domElement.focus();
+    });
+
     // Handle keyboard shortcuts
-    window.addEventListener('keydown', this.handleKeydown);
+    this.renderer.domElement.addEventListener('keydown', this.handleKeydown);
 
     // Start animation loop
     this.animate();
@@ -366,6 +374,27 @@ export class GlobeViz implements GlobeVizAPI {
     // Signal that initialization is complete
     this.resolveReady();
   }
+
+  // ... (existing code)
+
+  private handleKeydown = (e: KeyboardEvent): void => {
+    if (this.isDestroyed) return;
+
+    // Only handle events if the canvas is focused
+    if (document.activeElement !== this.renderer.domElement) return;
+
+    if (e.key === 'g' || e.key === 'G') {
+      if (this.morph > 0.5) {
+        this.toFlat();
+      } else {
+        this.toGlobe();
+      }
+    }
+
+    if (e.key === 'f' || e.key === 'F') {
+      this.toggleFullscreen();
+    }
+  };
 
   private async createGlobe(): Promise<void> {
     // Load base earth texture
@@ -578,21 +607,7 @@ export class GlobeViz implements GlobeVizAPI {
     setTimeout(() => this.handleResize(), 50);
   };
 
-  private handleKeydown = (e: KeyboardEvent): void => {
-    if (this.isDestroyed) return;
 
-    if (e.key === 'g' || e.key === 'G') {
-      if (this.morph > 0.5) {
-        this.toFlat();
-      } else {
-        this.toGlobe();
-      }
-    }
-
-    if (e.key === 'f' || e.key === 'F') {
-      this.toggleFullscreen();
-    }
-  };
 
   private animate = (): void => {
     if (this.isDestroyed) return;
