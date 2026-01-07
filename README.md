@@ -299,7 +299,3 @@ Gralobe requires WebGL support. It works in all modern browsers:
 ## License
 
 MIT
-
----
-
-**Created for [TechArena Finland Hackathon](https://platform.techarena-finland.hackathon.com)**
