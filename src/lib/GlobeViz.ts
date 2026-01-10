@@ -787,13 +787,29 @@ export class GlobeViz implements GlobeVizAPI {
   }
 
   toFlat(): void {
-    // Determine optimal Z distance to fill screen based on FOV and map size
-    // mapHeight = PI * RADIUS = 3.14 * 50 = 157
-    // FOV = 45 (or 75? default is 75 in constructor)
-    // distance = (height/2) / tan(FOV/2)
-    // At FOV 75, tan(37.5) ~= 0.767. dist = 78.5 / 0.767 ~= 102.
-    // We add a bit of padding (130) to ensure corners aren't cut off if aspect ratio is wide.
-    const fitZ = 130;
+    // Determine optimal Z distance to fill screen ("Cover" logic)
+    // Map dimensions
+    const mapHeight = Math.PI * SPHERE_RADIUS;
+    const mapWidth = 2 * Math.PI * SPHERE_RADIUS;
+
+    // Camera FOV calculation
+    // this.camera.fov is vertical FOV in degrees
+    const fovRad = (this.camera.fov * Math.PI) / 180;
+    const aspect = this.camera.aspect;
+
+    // Distance to fit height
+    const distFitHeight = mapHeight / 2 / Math.tan(fovRad / 2);
+
+    // Distance to fit width
+    // Visible height at distance d: h = 2 * d * tan(fov/2)
+    // Visible width = h * aspect = 2 * d * tan(fov/2) * aspect
+    // We want VisibleWidth = MapWidth -> d = MapWidth / (2 * tan(fov/2) * aspect)
+    const distFitWidth = mapWidth / (2 * Math.tan(fovRad / 2) * aspect);
+
+    // To "Cover" the screen (no black bars), we need the map to be LARGER than the view.
+    // This implies zooming in until the smaller dimension matches.
+    // So we pick the MINIMUM distance.
+    const fitZ = Math.min(distFitHeight, distFitWidth);
 
     // Disable controls during animation to prevent fighting
     this.controls.enabled = false;
