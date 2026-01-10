@@ -471,7 +471,7 @@
         <div class="variant">
           <div class="variant-header">
             <span class="variant-title">World Cities</span>
-            <span class="variant-meta">Point Data (Lat/Lng)</span>
+            <span class="variant-meta">High Density Heatmap</span>
           </div>
           <div
             class="variant-container height-400 globe-container"
@@ -1327,81 +1327,69 @@
             }
             fullConfig.statistic = customStats.germany_population;
           } else if (container.dataset.customTopology === "world_cities") {
-            // CIty-Based Demo
-            fullConfig.texture = "dark";
-            fullConfig.effects = {
-              atmosphere: true,
-              glowPulse: true,
-              cityLights: true,
-            };
-            fullConfig.statistic = undefined; // No choropleth
+             // City-Based Demo (Choropleth Texture - Points)
+             
+             // Define stats for the cities
+             if (!customStats.world_cities_pop) {
+               customStats.world_cities_pop = {
+                 key: "world_cities_pop",
+                 label: "City Population",
+                 colorScale: ["#fef0d9", "#fc8d59", "#b30000"], // Oranges/Red
+                 domain: [0, 100],
+                 accessor: (d) => d,
+                 values: {
+                   "nyc": 95, // New York
+                   "lon": 85, // London
+                   "tyo": 100,// Tokyo
+                   "par": 80, // Paris
+                   "ber": 70, // Berlin
+                   "syd": 60, // Sydney
+                   "cpt": 50, // Cape Town,
+                   "ist": 88, // Istanbul
+                   "mex": 92, // Mexico City
+                   "mum": 98, // Mumbai
+                   "pek": 96, // Beijing
+                   "mos": 82, // Moscow
+                   "rio": 75, // Rio
+                   "lag": 85, // Lagos
+                   "cai": 78, // Cairo
+                 },
+               };
+             }
 
-            // Add markers after init
-            setTimeout(() => {
-              const cityData = [
-                {
-                  id: "nyc",
-                  lat: 40.71,
-                  lng: -74.0,
-                  value: 85,
-                  name: "New York",
-                  color: "#0ea5e9",
-                },
-                {
-                  id: "lon",
-                  lat: 51.5,
-                  lng: -0.12,
-                  value: 75,
-                  name: "London",
-                  color: "#a855f7",
-                },
-                {
-                  id: "tyo",
-                  lat: 35.67,
-                  lng: 139.65,
-                  value: 100,
-                  name: "Tokyo",
-                  color: "#f43f5e",
-                },
-                {
-                  id: "par",
-                  lat: 48.85,
-                  lng: 2.35,
-                  value: 65,
-                  name: "Paris",
-                  color: "#ec4899",
-                },
-                {
-                  id: "ber",
-                  lat: 52.52,
-                  lng: 13.4,
-                  value: 60,
-                  name: "Berlin",
-                  color: "#fbbf24",
-                },
-                {
-                  id: "syd",
-                  lat: -33.86,
-                  lng: 151.2,
-                  value: 55,
-                  name: "Sydney",
-                  color: "#22c55e",
-                },
-                {
-                  id: "cpt",
-                  lat: -33.92,
-                  lng: 18.42,
-                  value: 50,
-                  name: "Cape Town",
-                  color: "#f97316",
-                },
-              ];
-              globe.setMarkers(cityData, {
-                style: "spike",
-                maxHeight: 25,
-                pulseAnimation: true,
-              });
-            }, 1000);
+             fullConfig.texture = "dark";
+             fullConfig.topology = {
+               // Data URI for GeoJSON content
+               url: "data:application/json;base64," + btoa(JSON.stringify({
+                 type: "FeatureCollection",
+                 features: [
+                   { type: "Feature", id: "nyc", geometry: { type: "Point", coordinates: [-74.00, 40.71] } },
+                   { type: "Feature", id: "lon", geometry: { type: "Point", coordinates: [-0.12, 51.50] } },
+                   { type: "Feature", id: "tyo", geometry: { type: "Point", coordinates: [139.65, 35.67] } },
+                   { type: "Feature", id: "par", geometry: { type: "Point", coordinates: [2.35, 48.85] } },
+                   { type: "Feature", id: "ber", geometry: { type: "Point", coordinates: [13.40, 52.52] } },
+                   { type: "Feature", id: "syd", geometry: { type: "Point", coordinates: [151.20, -33.86] } },
+                   { type: "Feature", id: "cpt", geometry: { type: "Point", coordinates: [18.42, -33.92] } },
+                   { type: "Feature", id: "ist", geometry: { type: "Point", coordinates: [28.97, 41.00] } },
+                   { type: "Feature", id: "mex", geometry: { type: "Point", coordinates: [-99.13, 19.43] } },
+                   { type: "Feature", id: "mum", geometry: { type: "Point", coordinates: [72.87, 19.07] } },
+                   { type: "Feature", id: "pek", geometry: { type: "Point", coordinates: [116.40, 39.90] } },
+                   { type: "Feature", id: "mos", geometry: { type: "Point", coordinates: [37.61, 55.75] } },
+                   { type: "Feature", id: "rio", geometry: { type: "Point", coordinates: [-43.17, -22.90] } },
+                   { type: "Feature", id: "lag", geometry: { type: "Point", coordinates: [3.37, 6.52] } },
+                   { type: "Feature", id: "cai", geometry: { type: "Point", coordinates: [31.23, 30.04] } }
+                 ]
+               })),
+               objectName: "cities", 
+               disableNormalization: true
+             };
+             
+             fullConfig.effects = { 
+               atmosphere: true, 
+               glowPulse: true,
+               cityLights: true 
+             };
+             fullConfig.statistic = customStats.world_cities_pop;
           } else if (container.dataset.customTopology === "us_election_2020") {
             fullConfig.topology = {
               url: "https://cdn.jsdelivr.net/npm/us-atlas@3/counties-10m.json",

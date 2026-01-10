@@ -13,8 +13,8 @@ interface CountryFeature {
   id: string;
   properties: { name: string };
   geometry: {
-    type: "Polygon" | "MultiPolygon";
-    coordinates: number[][][] | number[][][][];
+    type: "Polygon" | "MultiPolygon" | "Point";
+    coordinates: number[][][] | number[][][][] | number[];
   };
 }
 
@@ -341,6 +341,12 @@ export class ChoroplethRenderer {
       (geometry.coordinates as number[][][][]).forEach((polygon) => {
         this.addPolygonToPath(path, polygon);
       });
+    } else if (geometry.type === "Point") {
+      // For Points, we don't create a Path2D in the same way (it's not a fillable shape).
+      // We'll handle drawing directly in drawFeature or create a small circle path.
+      const [lon, lat] = geometry.coordinates as unknown as number[];
+      const [x, y] = this.projectPoint(lon, lat);
+      path.arc(x, y, 4, 0, Math.PI * 2); // 4px radius dot
     }
     return path;
   }
@@ -371,8 +377,9 @@ export class ChoroplethRenderer {
   }
 
   private projectPoint(lon: number, lat: number): [number, number] {
+    // Simple Equirectangular projection
     const x = ((lon + 180) / 360) * TEXTURE_WIDTH;
-    const y = ((90 - lat) / 180) * TEXTURE_HEIGHT;
+    const y = ((90 - lat) / 180) * TEXTURE_HEIGHT; // Invert Y for canvas
     return [x, y];
   }
 
