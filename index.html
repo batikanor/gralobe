@@ -1,749 +1,1306 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Gralobe - Development Preview</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    html { scroll-behavior: smooth; }
-    body { 
-      background: #0a0a0f; 
-      font-family: system-ui, -apple-system, sans-serif;
-      color: #fff;
-    }
-    
-    nav {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      background: rgba(10, 10, 15, 0.95);
-      backdrop-filter: blur(10px);
-      border-bottom: 1px solid #222;
-      padding: 10px 20px;
-      z-index: 1000;
-      display: flex;
-      gap: 15px;
-      align-items: center;
-      flex-wrap: wrap;
-    }
-    nav a {
-      color: #555;
-      text-decoration: none;
-      font-size: 12px;
-      transition: color 0.2s;
-      padding: 4px 8px;
-      border-radius: 4px;
-    }
-    nav a:hover { color: #4af; background: rgba(68, 170, 255, 0.1); }
-    nav .logo {
-      font-weight: 700;
-      font-size: 16px;
-      color: #4af;
-      margin-right: auto;
-    }
-    .webgl-count {
-      font-size: 10px;
-      color: #444;
-      padding: 4px 8px;
-      background: #111;
-      border-radius: 4px;
-    }
-    
-    section {
-      padding: 70px 20px 40px;
-      border-bottom: 1px solid #151520;
-    }
-    
-    .section-header {
-      max-width: 1400px;
-      margin: 0 auto 20px;
-    }
-    .section-title {
-      font-size: 20px;
-      font-weight: 600;
-      color: #4af;
-      margin-bottom: 4px;
-    }
-    .section-desc {
-      color: #444;
-      font-size: 12px;
-    }
-    
-    .hero-container {
-      max-width: 1400px;
-      margin: 0 auto;
-    }
-    #hero-globe {
-      height: calc(100vh - 150px);
-      min-height: 500px;
-      position: relative;
-    }
-    
-    .grid { display: grid; gap: 12px; max-width: 1400px; margin: 0 auto; }
-    .grid-2 { grid-template-columns: repeat(2, 1fr); }
-    .grid-3 { grid-template-columns: repeat(3, 1fr); }
-    .grid-4 { grid-template-columns: repeat(4, 1fr); }
-    
-    @media (max-width: 1200px) {
-      .grid-4, .grid-3 { grid-template-columns: repeat(2, 1fr); }
-    }
-    @media (max-width: 768px) {
-      .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
-    }
-    
-    .variant {
-      background: #0a0a0f;
-      border: 1px solid #1a1a25;
-      border-radius: 6px;
-      overflow: hidden;
-    }
-    .variant-header {
-      padding: 6px 10px;
-      background: #0f0f15;
-      border-bottom: 1px solid #1a1a25;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .variant-title { font-weight: 500; color: #888; font-size: 12px; }
-    .variant-meta { font-size: 9px; color: #333; font-family: monospace; }
-    .variant-container { position: relative; }
-    
-    .height-400 { height: 400px; }
-    .height-380 { height: 380px; }
-    .height-320 { height: 320px; }
-    .height-280 { height: 280px; }
-    .height-250 { height: 250px; }
-    .height-180 { height: 180px; }
-    
-    /* Globe toolbar - top right corner */
-    .globe-toolbar {
-      position: absolute;
-      top: 8px;
-      right: 8px;
-      display: flex;
-      gap: 4px;
-      z-index: 100;
-      opacity: 0;
-      transition: opacity 0.2s;
-    }
-    .globe-container:hover .globe-toolbar { opacity: 1; }
-    .globe-toolbar.always-visible { opacity: 1; }
-    
-    .toolbar-btn {
-      width: 28px;
-      height: 28px;
-      border-radius: 4px;
-      background: rgba(0, 0, 0, 0.7);
-      border: 1px solid #333;
-      color: #666;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 12px;
-      transition: all 0.15s;
-    }
-    .toolbar-btn:hover { background: rgba(68, 170, 255, 0.15); color: #4af; border-color: #4af; }
-    .toolbar-btn.active { background: rgba(68, 170, 255, 0.2); color: #4af; border-color: #4af; }
-    
-    /* Loading spinner */
-    .globe-loader {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 32px;
-      height: 32px;
-      border: 2px solid #222;
-      border-top-color: #4af;
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-      z-index: 50;
-    }
-    .globe-loader.hidden { display: none; }
-    @keyframes spin { to { transform: translate(-50%, -50%) rotate(360deg); } }
-    
-    /* Error state */
-    .globe-error {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      color: #f44;
-      font-size: 11px;
-      text-align: center;
-      display: none;
-    }
-    .globe-error.visible { display: block; }
-    
-    .info-box {
-      background: #0f0f15;
-      border: 1px solid #1a1a25;
-      border-radius: 6px;
-      padding: 10px 14px;
-      margin-bottom: 12px;
-      max-width: 1400px;
-      margin-left: auto;
-      margin-right: auto;
-      font-size: 11px;
-      color: #555;
-    }
-    .info-box code {
-      background: #0a0a0f;
-      padding: 2px 4px;
-      border-radius: 3px;
-      font-size: 10px;
-      color: #4af;
-    }
-    
-    .stat-gallery {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-      gap: 12px;
-      max-width: 1400px;
-      margin: 0 auto;
-    }
-    
-    footer {
-      padding: 30px 20px;
-      text-align: center;
-      color: #222;
-      font-size: 11px;
-    }
-    footer a { color: #4af; text-decoration: none; }
-  </style>
-</head>
-<body>
-  <nav>
-    <span class="logo">gralobe</span>
-    <a href="#hero">Hero</a>
-    <a href="#statistics">Stats</a>
-    <a href="#sizes">Sizes</a>
-    <a href="#textures">Textures</a>
-    <a href="#effects">Effects</a>
-    <a href="#custom">Custom</a>
-    <a href="#flat">Flat</a>
-    <a href="#tiny">Tiny</a>
-    <span class="webgl-count" id="webgl-count">0</span>
-  </nav>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gralobe - Development Preview</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        background: #0a0a0f;
+        font-family: system-ui, -apple-system, sans-serif;
+        color: #fff;
+      }
 
-  <!-- Hero -->
-  <section id="hero">
-    <div class="section-header">
-      <h2 class="section-title">Interactive Globe</h2>
-      <p class="section-desc">G: toggle view · F: fullscreen · Click ⚙ Controls to expand</p>
-    </div>
-    <div class="hero-container">
-      <div id="hero-globe" class="globe-container" data-config='{"labels":"major","effects":{"atmosphere":true,"clouds":true},"showControls":true}'>
-        <div class="globe-loader"></div>
-        <div class="globe-error">Failed to load</div>
-        <div class="globe-toolbar always-visible">
-          <button class="toolbar-btn" onclick="toggleFullscreen('hero-globe')" title="Fullscreen">⛶</button>
-        </div>
-      </div>
-    </div>
-  </section>
+      nav {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        background: rgba(10, 10, 15, 0.95);
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid #222;
+        padding: 10px 20px;
+        z-index: 1000;
+        display: flex;
+        gap: 15px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      nav a {
+        color: #555;
+        text-decoration: none;
+        font-size: 12px;
+        transition: color 0.2s;
+        padding: 4px 8px;
+        border-radius: 4px;
+      }
+      nav a:hover {
+        color: #4af;
+        background: rgba(68, 170, 255, 0.1);
+      }
+      nav .logo {
+        font-weight: 700;
+        font-size: 16px;
+        color: #4af;
+        margin-right: auto;
+      }
+      .webgl-count {
+        font-size: 10px;
+        color: #444;
+        padding: 4px 8px;
+        background: #111;
+        border-radius: 4px;
+      }
 
-  <!-- Statistics Gallery -->
-  <section id="statistics">
-    <div class="section-header">
-      <h2 class="section-title">Built-in Statistics</h2>
-      <p class="section-desc">12 statistics · Lazy loaded on scroll</p>
-    </div>
-    <div class="stat-gallery" id="stats-gallery"></div>
-  </section>
+      section {
+        padding: 70px 20px 40px;
+        border-bottom: 1px solid #151520;
+      }
 
-  <!-- Sizes -->
-  <section id="sizes">
-    <div class="section-header">
-      <h2 class="section-title">Responsive Sizing</h2>
-      <p class="section-desc">Legend scales with container</p>
-    </div>
-    <div class="grid grid-2">
-      <div class="variant">
-        <div class="variant-header">
-          <span class="variant-title">Half Width</span>
-          <span class="variant-meta">showControls: true</span>
-        </div>
-        <div class="variant-container height-400 globe-container" id="globe-size-half" data-config='{"labels":"major","showControls":true}'>
-          <div class="globe-loader"></div>
-          <div class="globe-toolbar">
-            
-            <button class="toolbar-btn" onclick="toggleFullscreen('globe-size-half')" title="Fullscreen">⛶</button>
-          </div>
-        </div>
-      </div>
-      <div class="variant">
-        <div class="variant-header">
-          <span class="variant-title">Half Width - All Labels</span>
-          <span class="variant-meta">labels: "all"</span>
-        </div>
-        <div class="variant-container height-400 globe-container" id="globe-size-half2" data-config='{"labels":"all"}'>
-          <div class="globe-loader"></div>
-          <div class="globe-toolbar">
-            <button class="toolbar-btn" onclick="toggleFullscreen('globe-size-half2')" title="Fullscreen">⛶</button>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="grid grid-3" style="margin-top: 12px;">
-      <div class="variant">
-        <div class="variant-header">
-          <span class="variant-title">Third Width</span>
-          <span class="variant-meta">320px</span>
-        </div>
-        <div class="variant-container height-320 globe-container" id="globe-size-third1" data-config='{"labels":"major","showControls":true}'>
-          <div class="globe-loader"></div>
-          <div class="globe-toolbar">
-            
-            <button class="toolbar-btn" onclick="toggleFullscreen('globe-size-third1')" title="Fullscreen">⛶</button>
-          </div>
-        </div>
-      </div>
-      <div class="variant">
-        <div class="variant-header">
-          <span class="variant-title">Minimal Labels</span>
-          <span class="variant-meta">labels: "minimal"</span>
-        </div>
-        <div class="variant-container height-320 globe-container" id="globe-size-third2" data-config='{"labels":"minimal"}'>
-          <div class="globe-loader"></div>
-          <div class="globe-toolbar">
-            <button class="toolbar-btn" onclick="toggleFullscreen('globe-size-third2')" title="Fullscreen">⛶</button>
-          </div>
-        </div>
-      </div>
-      <div class="variant">
-        <div class="variant-header">
-          <span class="variant-title">No Legend</span>
-          <span class="variant-meta">showLegend: false</span>
-        </div>
-        <div class="variant-container height-320 globe-container" id="globe-size-third3" data-config='{"labels":"major","showLegend":false}'>
-          <div class="globe-loader"></div>
-          <div class="globe-toolbar">
-            <button class="toolbar-btn" onclick="toggleFullscreen('globe-size-third3')" title="Fullscreen">⛶</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
+      .section-header {
+        max-width: 1400px;
+        margin: 0 auto 20px;
+      }
+      .section-title {
+        font-size: 20px;
+        font-weight: 600;
+        color: #4af;
+        margin-bottom: 4px;
+      }
+      .section-desc {
+        color: #444;
+        font-size: 12px;
+      }
 
-  <!-- Textures -->
-  <section id="textures">
-    <div class="section-header">
-      <h2 class="section-title">Earth Textures</h2>
-      <p class="section-desc">6 presets</p>
-    </div>
-    <div class="grid grid-3">
-      <div class="variant">
-        <div class="variant-header">
-          <span class="variant-title">Satellite</span>
-          <span class="variant-meta">"satellite"</span>
-        </div>
-        <div class="variant-container height-280 globe-container" id="globe-tex-satellite" data-config='{"texture":"satellite","labels":"none","showControls":true}'>
-          <div class="globe-loader"></div>
-          <div class="globe-toolbar">
-            
-            <button class="toolbar-btn" onclick="toggleFullscreen('globe-tex-satellite')" title="Fullscreen">⛶</button>
-          </div>
-        </div>
-      </div>
-      <div class="variant">
-        <div class="variant-header">
-          <span class="variant-title">Natural</span>
-          <span class="variant-meta">"natural"</span>
-        </div>
-        <div class="variant-container height-280 globe-container" id="globe-tex-natural" data-config='{"texture":"natural","labels":"none"}'>
-          <div class="globe-loader"></div>
-          <div class="globe-toolbar">
-            <button class="toolbar-btn" onclick="toggleFullscreen('globe-tex-natural')" title="Fullscreen">⛶</button>
-          </div>
-        </div>
-      </div>
-      <div class="variant">
-        <div class="variant-header">
-          <span class="variant-title">Night</span>
-          <span class="variant-meta">"night"</span>
-        </div>
-        <div class="variant-container height-280 globe-container" id="globe-tex-night" data-config='{"texture":"night","labels":"none"}'>
-          <div class="globe-loader"></div>
-          <div class="globe-toolbar">
-            <button class="toolbar-btn" onclick="toggleFullscreen('globe-tex-night')" title="Fullscreen">⛶</button>
-          </div>
-        </div>
-      </div>
-      <div class="variant">
-        <div class="variant-header">
-          <span class="variant-title">Topographic</span>
-          <span class="variant-meta">"topographic"</span>
-        </div>
-        <div class="variant-container height-280 globe-container" id="globe-tex-topo" data-config='{"texture":"topographic","labels":"none"}'>
-          <div class="globe-loader"></div>
-          <div class="globe-toolbar">
-            <button class="toolbar-btn" onclick="toggleFullscreen('globe-tex-topo')" title="Fullscreen">⛶</button>
-          </div>
-        </div>
-      </div>
-      <div class="variant">
-        <div class="variant-header">
-          <span class="variant-title">Light</span>
-          <span class="variant-meta">"light"</span>
-        </div>
-        <div class="variant-container height-280 globe-container" id="globe-tex-light" data-config='{"texture":"light","labels":"none"}'>
-          <div class="globe-loader"></div>
-          <div class="globe-toolbar">
-            <button class="toolbar-btn" onclick="toggleFullscreen('globe-tex-light')" title="Fullscreen">⛶</button>
-          </div>
-        </div>
-      </div>
-      <div class="variant">
-        <div class="variant-header">
-          <span class="variant-title">Dark</span>
-          <span class="variant-meta">"dark"</span>
-        </div>
-        <div class="variant-container height-280 globe-container" id="globe-tex-dark" data-config='{"texture":"dark","labels":"none"}'>
-          <div class="globe-loader"></div>
-          <div class="globe-toolbar">
-            <button class="toolbar-btn" onclick="toggleFullscreen('globe-tex-dark')" title="Fullscreen">⛶</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
+      .hero-container {
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+      #hero-globe {
+        height: calc(100vh - 150px);
+        min-height: 500px;
+        position: relative;
+      }
 
-  <!-- Effects -->
-  <section id="effects">
-    <div class="section-header">
-      <h2 class="section-title">Visual Effects</h2>
-      <p class="section-desc">Atmosphere, clouds, and more</p>
-    </div>
-    <div class="grid grid-3">
-      <div class="variant">
-        <div class="variant-header">
-          <span class="variant-title">Full Effects</span>
-          <span class="variant-meta">atmosphere + clouds</span>
-        </div>
-        <div class="variant-container height-320 globe-container" id="globe-fx-full" data-config='{"effects":{"atmosphere":true,"clouds":true},"showControls":true}'>
-          <div class="globe-loader"></div>
-          <div class="globe-toolbar">
-            
-            <button class="toolbar-btn" onclick="toggleFullscreen('globe-fx-full')" title="Fullscreen">⛶</button>
-          </div>
-        </div>
-      </div>
-      <div class="variant">
-        <div class="variant-header">
-          <span class="variant-title">Atmosphere Only</span>
-          <span class="variant-meta">clouds: false</span>
-        </div>
-        <div class="variant-container height-320 globe-container" id="globe-fx-atmo" data-config='{"effects":{"atmosphere":true,"clouds":false}}'>
-          <div class="globe-loader"></div>
-          <div class="globe-toolbar">
-            <button class="toolbar-btn" onclick="toggleFullscreen('globe-fx-atmo')" title="Fullscreen">⛶</button>
-          </div>
-        </div>
-      </div>
-      <div class="variant">
-        <div class="variant-header">
-          <span class="variant-title">Clean</span>
-          <span class="variant-meta">no effects</span>
-        </div>
-        <div class="variant-container height-320 globe-container" id="globe-fx-clean" data-config='{"effects":{"atmosphere":false,"clouds":false}}'>
-          <div class="globe-loader"></div>
-          <div class="globe-toolbar">
-            <button class="toolbar-btn" onclick="toggleFullscreen('globe-fx-clean')" title="Fullscreen">⛶</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
+      .grid {
+        display: grid;
+        gap: 12px;
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+      .grid-2 {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .grid-3 {
+        grid-template-columns: repeat(3, 1fr);
+      }
+      .grid-4 {
+        grid-template-columns: repeat(4, 1fr);
+      }
 
-  <!-- Custom Statistics -->
-  <section id="custom">
-    <div class="section-header">
-      <h2 class="section-title">Custom Statistics</h2>
-      <p class="section-desc">API simulation - no format function</p>
-    </div>
-    <div class="info-box">
-      Tests <code>StatisticData</code> from JSON (no <code>format</code> function). Legend auto-generates formatters.
-    </div>
-    <div class="grid grid-2">
-      <div class="variant">
-        <div class="variant-header">
-          <span class="variant-title">Coffee Consumption</span>
-          <span class="variant-meta">kg/capita</span>
-        </div>
-        <div class="variant-container height-380 globe-container" id="globe-custom-coffee" data-config='{"labels":"major","showControls":true}' data-custom-stat="coffee">
-          <div class="globe-loader"></div>
-          <div class="globe-toolbar">
-            
-            <button class="toolbar-btn" onclick="toggleFullscreen('globe-custom-coffee')" title="Fullscreen">⛶</button>
-          </div>
-        </div>
-      </div>
-      <div class="variant">
-        <div class="variant-header">
-          <span class="variant-title">Happiness Index</span>
-          <span class="variant-meta">score</span>
-        </div>
-        <div class="variant-container height-380 globe-container" id="globe-custom-happiness" data-config='{"labels":"major"}' data-custom-stat="happiness">
-          <div class="globe-loader"></div>
-          <div class="globe-toolbar">
-            <button class="toolbar-btn" onclick="toggleFullscreen('globe-custom-happiness')" title="Fullscreen">⛶</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Flat View -->
-  <section id="flat">
-    <div class="section-header">
-      <h2 class="section-title">Flat Map</h2>
-      <p class="section-desc">Mercator projection · Press G to morph</p>
-    </div>
-    <div class="grid grid-2">
-      <div class="variant">
-        <div class="variant-header">
-          <span class="variant-title">Flat Default</span>
-          <span class="variant-meta">initialView: "flat"</span>
-        </div>
-        <div class="variant-container height-380 globe-container" id="globe-flat1" data-config='{"initialView":"flat","labels":"major","showControls":true}'>
-          <div class="globe-loader"></div>
-          <div class="globe-toolbar">
-            
-            <button class="toolbar-btn" onclick="toggleFullscreen('globe-flat1')" title="Fullscreen">⛶</button>
-          </div>
-        </div>
-      </div>
-      <div class="variant">
-        <div class="variant-header">
-          <span class="variant-title">Flat Clean</span>
-          <span class="variant-meta">no effects</span>
-        </div>
-        <div class="variant-container height-380 globe-container" id="globe-flat2" data-config='{"initialView":"flat","labels":"none","effects":{"atmosphere":false,"clouds":false}}'>
-          <div class="globe-loader"></div>
-          <div class="globe-toolbar">
-            <button class="toolbar-btn" onclick="toggleFullscreen('globe-flat2')" title="Fullscreen">⛶</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Tiny Widgets -->
-  <section id="tiny">
-    <div class="section-header">
-      <h2 class="section-title">Tiny Widgets</h2>
-      <p class="section-desc">Minimal footprint</p>
-    </div>
-    <div class="grid grid-4">
-      <div class="variant">
-        <div class="variant-header"><span class="variant-title">GDP</span></div>
-        <div class="variant-container height-180 globe-container" id="globe-tiny1" data-config='{"statistic":"gdpPerCapita","labels":"none","showLegend":true,"effects":{"atmosphere":false,"clouds":false}}'>
-          <div class="globe-loader"></div>
-          <div class="globe-toolbar">
-            <button class="toolbar-btn" onclick="toggleFullscreen('globe-tiny1')" title="Fullscreen">⛶</button>
-          </div>
-        </div>
-      </div>
-      <div class="variant">
-        <div class="variant-header"><span class="variant-title">CO2</span></div>
-        <div class="variant-container height-180 globe-container" id="globe-tiny2" data-config='{"statistic":"co2Emissions","labels":"none","showLegend":true,"effects":{"atmosphere":false,"clouds":false}}'>
-          <div class="globe-loader"></div>
-          <div class="globe-toolbar">
-            <button class="toolbar-btn" onclick="toggleFullscreen('globe-tiny2')" title="Fullscreen">⛶</button>
-          </div>
-        </div>
-      </div>
-      <div class="variant">
-        <div class="variant-header"><span class="variant-title">Internet</span></div>
-        <div class="variant-container height-180 globe-container" id="globe-tiny3" data-config='{"statistic":"internetUsers","labels":"none","showLegend":true,"effects":{"atmosphere":false,"clouds":false}}'>
-          <div class="globe-loader"></div>
-          <div class="globe-toolbar">
-            <button class="toolbar-btn" onclick="toggleFullscreen('globe-tiny3')" title="Fullscreen">⛶</button>
-          </div>
-        </div>
-      </div>
-      <div class="variant">
-        <div class="variant-header"><span class="variant-title">Forest</span></div>
-        <div class="variant-container height-180 globe-container" id="globe-tiny4" data-config='{"statistic":"forestArea","labels":"none","showLegend":true,"effects":{"atmosphere":false,"clouds":false}}'>
-          <div class="globe-loader"></div>
-          <div class="globe-toolbar">
-            <button class="toolbar-btn" onclick="toggleFullscreen('globe-tiny4')" title="Fullscreen">⛶</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <footer>
-    gralobe · <a href="https://github.com/batikanor/gralobe">GitHub</a> · <a href="https://npmjs.com/package/gralobe">npm</a>
-  </footer>
-
-  <script type="module">
-    import { GlobeViz } from './src/lib/GlobeViz.ts';
-
-    const globes = new Map();
-    const MAX_ACTIVE_GLOBES = 6;
-
-    const customStats = {
-      coffee: {
-        definition: {
-          id: "coffee_consumption",
-          name: "Coffee Consumption",
-          unit: "kg/capita",
-          description: "Annual per capita",
-          colorScale: ["#f7e6d5", "#c9a87c", "#3d2314"],
-          domain: [0, 12]
-        },
-        values: {
-          "246": 12.0, "578": 9.9, "208": 8.7, "528": 8.4, "752": 8.2,
-          "756": 7.9, "056": 6.8, "276": 6.5, "124": 6.5, "040": 6.1,
-          "076": 6.1, "380": 5.9, "250": 5.4, "300": 5.7, "620": 4.3,
-          "203": 4.5, "840": 4.2, "348": 3.8, "392": 3.4, "616": 3.2
-        }
-      },
-      happiness: {
-        definition: {
-          id: "happiness_index",
-          name: "World Happiness",
-          unit: "score",
-          description: "UN Report 2024",
-          colorScale: ["#fde0dd", "#fa9fb5", "#c51b8a"],
-          domain: [3, 8]
-        },
-        values: {
-          "246": 7.8, "208": 7.6, "352": 7.5, "756": 7.5, "528": 7.4,
-          "578": 7.3, "752": 7.3, "040": 7.2, "036": 7.1, "554": 7.1,
-          "124": 7.0, "826": 6.9, "276": 6.9, "056": 6.8, "840": 6.7
+      @media (max-width: 1200px) {
+        .grid-4,
+        .grid-3 {
+          grid-template-columns: repeat(2, 1fr);
         }
       }
-    };
+      @media (max-width: 768px) {
+        .grid-2,
+        .grid-3,
+        .grid-4 {
+          grid-template-columns: 1fr;
+        }
+      }
 
-    function updateCounter() {
-      document.getElementById('webgl-count').textContent = globes.size;
-    }
+      .variant {
+        background: #0a0a0f;
+        border: 1px solid #1a1a25;
+        border-radius: 6px;
+        overflow: hidden;
+      }
+      .variant-header {
+        padding: 6px 10px;
+        background: #0f0f15;
+        border-bottom: 1px solid #1a1a25;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .variant-title {
+        font-weight: 500;
+        color: #888;
+        font-size: 12px;
+      }
+      .variant-meta {
+        font-size: 9px;
+        color: #333;
+        font-family: monospace;
+      }
+      .variant-container {
+        position: relative;
+      }
 
-    function enforceLimit() {
-      if (globes.size >= MAX_ACTIVE_GLOBES) {
-        let furthestId = null;
-        let furthestDistance = -Infinity;
-        
-        for (const [id] of globes) {
-          const el = document.getElementById(id);
-          if (!el) continue;
-          const rect = el.getBoundingClientRect();
-          const dist = Math.abs(rect.top + rect.height / 2 - window.innerHeight / 2);
-          if (dist > furthestDistance) {
-            furthestDistance = dist;
-            furthestId = id;
+      .height-400 {
+        height: 400px;
+      }
+      .height-380 {
+        height: 380px;
+      }
+      .height-320 {
+        height: 320px;
+      }
+      .height-280 {
+        height: 280px;
+      }
+      .height-250 {
+        height: 250px;
+      }
+      .height-180 {
+        height: 180px;
+      }
+
+      /* Globe toolbar - top right corner */
+      .globe-toolbar {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        display: flex;
+        gap: 4px;
+        z-index: 100;
+        opacity: 0;
+        transition: opacity 0.2s;
+      }
+      .globe-container:hover .globe-toolbar {
+        opacity: 1;
+      }
+      .globe-toolbar.always-visible {
+        opacity: 1;
+      }
+
+      .toolbar-btn {
+        width: 28px;
+        height: 28px;
+        border-radius: 4px;
+        background: rgba(0, 0, 0, 0.7);
+        border: 1px solid #333;
+        color: #666;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        transition: all 0.15s;
+      }
+      .toolbar-btn:hover {
+        background: rgba(68, 170, 255, 0.15);
+        color: #4af;
+        border-color: #4af;
+      }
+      .toolbar-btn.active {
+        background: rgba(68, 170, 255, 0.2);
+        color: #4af;
+        border-color: #4af;
+      }
+
+      /* Loading spinner */
+      .globe-loader {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 32px;
+        height: 32px;
+        border: 2px solid #222;
+        border-top-color: #4af;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+        z-index: 50;
+      }
+      .globe-loader.hidden {
+        display: none;
+      }
+      @keyframes spin {
+        to {
+          transform: translate(-50%, -50%) rotate(360deg);
+        }
+      }
+
+      /* Error state */
+      .globe-error {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: #f44;
+        font-size: 11px;
+        text-align: center;
+        display: none;
+      }
+      .globe-error.visible {
+        display: block;
+      }
+
+      .info-box {
+        background: #0f0f15;
+        border: 1px solid #1a1a25;
+        border-radius: 6px;
+        padding: 10px 14px;
+        margin-bottom: 12px;
+        max-width: 1400px;
+        margin-left: auto;
+        margin-right: auto;
+        font-size: 11px;
+        color: #555;
+      }
+      .info-box code {
+        background: #0a0a0f;
+        padding: 2px 4px;
+        border-radius: 3px;
+        font-size: 10px;
+        color: #4af;
+      }
+
+      .stat-gallery {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+        gap: 12px;
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+
+      footer {
+        padding: 30px 20px;
+        text-align: center;
+        color: #222;
+        font-size: 11px;
+      }
+      footer a {
+        color: #4af;
+        text-decoration: none;
+      }
+    </style>
+  </head>
+  <body>
+    <nav>
+      <span class="logo">gralobe</span>
+      <a href="#hero">Hero</a>
+      <a href="#statistics">Stats</a>
+      <a href="#sizes">Sizes</a>
+      <a href="#textures">Textures</a>
+      <a href="#effects">Effects</a>
+      <a href="#markers">Markers</a>
+      <a href="#custom">Custom</a>
+      <a href="#flat">Flat</a>
+      <a href="#tiny">Tiny</a>
+      <span class="webgl-count" id="webgl-count">0</span>
+    </nav>
+
+    <!-- Hero -->
+    <section id="hero">
+      <div class="section-header">
+        <h2 class="section-title">Interactive Globe</h2>
+        <p class="section-desc">
+          G: toggle view · F: fullscreen · Click ⚙ Controls to expand
+        </p>
+      </div>
+      <div class="hero-container">
+        <div
+          id="hero-globe"
+          class="globe-container"
+          data-config='{"labels":"major","effects":{"atmosphere":true,"clouds":true},"showControls":true}'
+          data-markers="capitals"
+        >
+          <div class="globe-loader"></div>
+          <div class="globe-error">Failed to load</div>
+          <div class="globe-toolbar always-visible">
+            <button
+              class="toolbar-btn"
+              onclick="toggleFullscreen('hero-globe')"
+              title="Fullscreen"
+            >
+              ⛶
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Markers -->
+    <section id="markers">
+      <div class="section-header">
+        <h2 class="section-title">3D Markers</h2>
+        <p class="section-desc">
+          City-level granularity with spikes, dots, and pins
+        </p>
+      </div>
+      <div class="grid grid-3">
+        <div class="variant">
+          <div class="variant-header">
+            <span class="variant-title">Glowing Spikes</span>
+            <span class="variant-meta">style: "spike"</span>
+          </div>
+          <div
+            class="variant-container height-320 globe-container"
+            id="globe-mark-spike"
+            data-config='{"labels":"none","effects":{"atmosphere":true,"clouds":false}}'
+            data-markers="cities_spike"
+          >
+            <div class="globe-loader"></div>
+            <div class="globe-toolbar">
+              <button
+                class="toolbar-btn"
+                onclick="toggleFullscreen('globe-mark-spike')"
+                title="Fullscreen"
+              >
+                ⛶
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="variant">
+          <div class="variant-header">
+            <span class="variant-title">Simple Dots</span>
+            <span class="variant-meta">style: "dot"</span>
+          </div>
+          <div
+            class="variant-container height-320 globe-container"
+            id="globe-mark-dot"
+            data-config='{"labels":"none","effects":{"atmosphere":false,"clouds":false}}'
+            data-markers="cities_dot"
+          >
+            <div class="globe-loader"></div>
+            <div class="globe-toolbar">
+              <button
+                class="toolbar-btn"
+                onclick="toggleFullscreen('globe-mark-dot')"
+                title="Fullscreen"
+              >
+                ⛶
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="variant">
+          <div class="variant-header">
+            <span class="variant-title">Pins / Cones</span>
+            <span class="variant-meta">style: "pin"</span>
+          </div>
+          <div
+            class="variant-container height-320 globe-container"
+            id="globe-mark-pin"
+            data-config='{"labels":"none","effects":{"atmosphere":true,"clouds":true}}'
+            data-markers="cities_pin"
+          >
+            <div class="globe-loader"></div>
+            <div class="globe-toolbar">
+              <button
+                class="toolbar-btn"
+                onclick="toggleFullscreen('globe-mark-pin')"
+                title="Fullscreen"
+              >
+                ⛶
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Statistics Gallery -->
+    <section id="statistics">
+      <div class="section-header">
+        <h2 class="section-title">Built-in Statistics</h2>
+        <p class="section-desc">12 statistics · Lazy loaded on scroll</p>
+      </div>
+      <div class="stat-gallery" id="stats-gallery"></div>
+    </section>
+
+    <!-- Sizes -->
+    <section id="sizes">
+      <div class="section-header">
+        <h2 class="section-title">Responsive Sizing</h2>
+        <p class="section-desc">Legend scales with container</p>
+      </div>
+      <div class="grid grid-2">
+        <div class="variant">
+          <div class="variant-header">
+            <span class="variant-title">Half Width</span>
+            <span class="variant-meta">showControls: true</span>
+          </div>
+          <div
+            class="variant-container height-400 globe-container"
+            id="globe-size-half"
+            data-config='{"labels":"major","showControls":true}'
+          >
+            <div class="globe-loader"></div>
+            <div class="globe-toolbar">
+              <button
+                class="toolbar-btn"
+                onclick="toggleFullscreen('globe-size-half')"
+                title="Fullscreen"
+              >
+                ⛶
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="variant">
+          <div class="variant-header">
+            <span class="variant-title">Half Width - All Labels</span>
+            <span class="variant-meta">labels: "all"</span>
+          </div>
+          <div
+            class="variant-container height-400 globe-container"
+            id="globe-size-half2"
+            data-config='{"labels":"all"}'
+          >
+            <div class="globe-loader"></div>
+            <div class="globe-toolbar">
+              <button
+                class="toolbar-btn"
+                onclick="toggleFullscreen('globe-size-half2')"
+                title="Fullscreen"
+              >
+                ⛶
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="grid grid-3" style="margin-top: 12px">
+        <div class="variant">
+          <div class="variant-header">
+            <span class="variant-title">Third Width</span>
+            <span class="variant-meta">320px</span>
+          </div>
+          <div
+            class="variant-container height-320 globe-container"
+            id="globe-size-third1"
+            data-config='{"labels":"major","showControls":true}'
+          >
+            <div class="globe-loader"></div>
+            <div class="globe-toolbar">
+              <button
+                class="toolbar-btn"
+                onclick="toggleFullscreen('globe-size-third1')"
+                title="Fullscreen"
+              >
+                ⛶
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="variant">
+          <div class="variant-header">
+            <span class="variant-title">Minimal Labels</span>
+            <span class="variant-meta">labels: "minimal"</span>
+          </div>
+          <div
+            class="variant-container height-320 globe-container"
+            id="globe-size-third2"
+            data-config='{"labels":"minimal"}'
+          >
+            <div class="globe-loader"></div>
+            <div class="globe-toolbar">
+              <button
+                class="toolbar-btn"
+                onclick="toggleFullscreen('globe-size-third2')"
+                title="Fullscreen"
+              >
+                ⛶
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="variant">
+          <div class="variant-header">
+            <span class="variant-title">No Legend</span>
+            <span class="variant-meta">showLegend: false</span>
+          </div>
+          <div
+            class="variant-container height-320 globe-container"
+            id="globe-size-third3"
+            data-config='{"labels":"major","showLegend":false}'
+          >
+            <div class="globe-loader"></div>
+            <div class="globe-toolbar">
+              <button
+                class="toolbar-btn"
+                onclick="toggleFullscreen('globe-size-third3')"
+                title="Fullscreen"
+              >
+                ⛶
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Textures -->
+    <section id="textures">
+      <div class="section-header">
+        <h2 class="section-title">Earth Textures</h2>
+        <p class="section-desc">6 presets</p>
+      </div>
+      <div class="grid grid-3">
+        <div class="variant">
+          <div class="variant-header">
+            <span class="variant-title">Satellite</span>
+            <span class="variant-meta">"satellite"</span>
+          </div>
+          <div
+            class="variant-container height-280 globe-container"
+            id="globe-tex-satellite"
+            data-config='{"texture":"satellite","labels":"none","showControls":true}'
+          >
+            <div class="globe-loader"></div>
+            <div class="globe-toolbar">
+              <button
+                class="toolbar-btn"
+                onclick="toggleFullscreen('globe-tex-satellite')"
+                title="Fullscreen"
+              >
+                ⛶
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="variant">
+          <div class="variant-header">
+            <span class="variant-title">Natural</span>
+            <span class="variant-meta">"natural"</span>
+          </div>
+          <div
+            class="variant-container height-280 globe-container"
+            id="globe-tex-natural"
+            data-config='{"texture":"natural","labels":"none"}'
+          >
+            <div class="globe-loader"></div>
+            <div class="globe-toolbar">
+              <button
+                class="toolbar-btn"
+                onclick="toggleFullscreen('globe-tex-natural')"
+                title="Fullscreen"
+              >
+                ⛶
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="variant">
+          <div class="variant-header">
+            <span class="variant-title">Night</span>
+            <span class="variant-meta">"night"</span>
+          </div>
+          <div
+            class="variant-container height-280 globe-container"
+            id="globe-tex-night"
+            data-config='{"texture":"night","labels":"none"}'
+          >
+            <div class="globe-loader"></div>
+            <div class="globe-toolbar">
+              <button
+                class="toolbar-btn"
+                onclick="toggleFullscreen('globe-tex-night')"
+                title="Fullscreen"
+              >
+                ⛶
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="variant">
+          <div class="variant-header">
+            <span class="variant-title">Topographic</span>
+            <span class="variant-meta">"topographic"</span>
+          </div>
+          <div
+            class="variant-container height-280 globe-container"
+            id="globe-tex-topo"
+            data-config='{"texture":"topographic","labels":"none"}'
+          >
+            <div class="globe-loader"></div>
+            <div class="globe-toolbar">
+              <button
+                class="toolbar-btn"
+                onclick="toggleFullscreen('globe-tex-topo')"
+                title="Fullscreen"
+              >
+                ⛶
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="variant">
+          <div class="variant-header">
+            <span class="variant-title">Light</span>
+            <span class="variant-meta">"light"</span>
+          </div>
+          <div
+            class="variant-container height-280 globe-container"
+            id="globe-tex-light"
+            data-config='{"texture":"light","labels":"none"}'
+          >
+            <div class="globe-loader"></div>
+            <div class="globe-toolbar">
+              <button
+                class="toolbar-btn"
+                onclick="toggleFullscreen('globe-tex-light')"
+                title="Fullscreen"
+              >
+                ⛶
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="variant">
+          <div class="variant-header">
+            <span class="variant-title">Dark</span>
+            <span class="variant-meta">"dark"</span>
+          </div>
+          <div
+            class="variant-container height-280 globe-container"
+            id="globe-tex-dark"
+            data-config='{"texture":"dark","labels":"none"}'
+          >
+            <div class="globe-loader"></div>
+            <div class="globe-toolbar">
+              <button
+                class="toolbar-btn"
+                onclick="toggleFullscreen('globe-tex-dark')"
+                title="Fullscreen"
+              >
+                ⛶
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Effects -->
+    <section id="effects">
+      <div class="section-header">
+        <h2 class="section-title">Visual Effects</h2>
+        <p class="section-desc">Atmosphere, clouds, and more</p>
+      </div>
+      <div class="grid grid-3">
+        <div class="variant">
+          <div class="variant-header">
+            <span class="variant-title">Full Effects</span>
+            <span class="variant-meta">atmosphere + clouds</span>
+          </div>
+          <div
+            class="variant-container height-320 globe-container"
+            id="globe-fx-full"
+            data-config='{"effects":{"atmosphere":true,"clouds":true},"showControls":true}'
+          >
+            <div class="globe-loader"></div>
+            <div class="globe-toolbar">
+              <button
+                class="toolbar-btn"
+                onclick="toggleFullscreen('globe-fx-full')"
+                title="Fullscreen"
+              >
+                ⛶
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="variant">
+          <div class="variant-header">
+            <span class="variant-title">Atmosphere Only</span>
+            <span class="variant-meta">clouds: false</span>
+          </div>
+          <div
+            class="variant-container height-320 globe-container"
+            id="globe-fx-atmo"
+            data-config='{"effects":{"atmosphere":true,"clouds":false}}'
+          >
+            <div class="globe-loader"></div>
+            <div class="globe-toolbar">
+              <button
+                class="toolbar-btn"
+                onclick="toggleFullscreen('globe-fx-atmo')"
+                title="Fullscreen"
+              >
+                ⛶
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="variant">
+          <div class="variant-header">
+            <span class="variant-title">Clean</span>
+            <span class="variant-meta">no effects</span>
+          </div>
+          <div
+            class="variant-container height-320 globe-container"
+            id="globe-fx-clean"
+            data-config='{"effects":{"atmosphere":false,"clouds":false}}'
+          >
+            <div class="globe-loader"></div>
+            <div class="globe-toolbar">
+              <button
+                class="toolbar-btn"
+                onclick="toggleFullscreen('globe-fx-clean')"
+                title="Fullscreen"
+              >
+                ⛶
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Custom Statistics -->
+    <section id="custom">
+      <div class="section-header">
+        <h2 class="section-title">Custom Statistics</h2>
+        <p class="section-desc">API simulation - no format function</p>
+      </div>
+      <div class="info-box">
+        Tests <code>StatisticData</code> from JSON (no
+        <code>format</code> function). Legend auto-generates formatters.
+      </div>
+      <div class="grid grid-2">
+        <div class="variant">
+          <div class="variant-header">
+            <span class="variant-title">Coffee Consumption</span>
+            <span class="variant-meta">kg/capita</span>
+          </div>
+          <div
+            class="variant-container height-380 globe-container"
+            id="globe-custom-coffee"
+            data-config='{"labels":"major","showControls":true}'
+            data-custom-stat="coffee"
+          >
+            <div class="globe-loader"></div>
+            <div class="globe-toolbar">
+              <button
+                class="toolbar-btn"
+                onclick="toggleFullscreen('globe-custom-coffee')"
+                title="Fullscreen"
+              >
+                ⛶
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="variant">
+          <div class="variant-header">
+            <span class="variant-title">Happiness Index</span>
+            <span class="variant-meta">score</span>
+          </div>
+          <div
+            class="variant-container height-380 globe-container"
+            id="globe-custom-happiness"
+            data-config='{"labels":"major"}'
+            data-custom-stat="happiness"
+          >
+            <div class="globe-loader"></div>
+            <div class="globe-toolbar">
+              <button
+                class="toolbar-btn"
+                onclick="toggleFullscreen('globe-custom-happiness')"
+                title="Fullscreen"
+              >
+                ⛶
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Flat View -->
+    <section id="flat">
+      <div class="section-header">
+        <h2 class="section-title">Flat Map</h2>
+        <p class="section-desc">Mercator projection · Press G to morph</p>
+      </div>
+      <div class="grid grid-2">
+        <div class="variant">
+          <div class="variant-header">
+            <span class="variant-title">Flat Default</span>
+            <span class="variant-meta">initialView: "flat"</span>
+          </div>
+          <div
+            class="variant-container height-380 globe-container"
+            id="globe-flat1"
+            data-config='{"initialView":"flat","labels":"major","showControls":true}'
+          >
+            <div class="globe-loader"></div>
+            <div class="globe-toolbar">
+              <button
+                class="toolbar-btn"
+                onclick="toggleFullscreen('globe-flat1')"
+                title="Fullscreen"
+              >
+                ⛶
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="variant">
+          <div class="variant-header">
+            <span class="variant-title">Flat Clean</span>
+            <span class="variant-meta">no effects</span>
+          </div>
+          <div
+            class="variant-container height-380 globe-container"
+            id="globe-flat2"
+            data-config='{"initialView":"flat","labels":"none","effects":{"atmosphere":false,"clouds":false}}'
+          >
+            <div class="globe-loader"></div>
+            <div class="globe-toolbar">
+              <button
+                class="toolbar-btn"
+                onclick="toggleFullscreen('globe-flat2')"
+                title="Fullscreen"
+              >
+                ⛶
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tiny Widgets -->
+    <section id="tiny">
+      <div class="section-header">
+        <h2 class="section-title">Tiny Widgets</h2>
+        <p class="section-desc">Minimal footprint</p>
+      </div>
+      <div class="grid grid-4">
+        <div class="variant">
+          <div class="variant-header">
+            <span class="variant-title">GDP</span>
+          </div>
+          <div
+            class="variant-container height-180 globe-container"
+            id="globe-tiny1"
+            data-config='{"statistic":"gdpPerCapita","labels":"none","showLegend":true,"effects":{"atmosphere":false,"clouds":false}}'
+          >
+            <div class="globe-loader"></div>
+            <div class="globe-toolbar">
+              <button
+                class="toolbar-btn"
+                onclick="toggleFullscreen('globe-tiny1')"
+                title="Fullscreen"
+              >
+                ⛶
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="variant">
+          <div class="variant-header">
+            <span class="variant-title">CO2</span>
+          </div>
+          <div
+            class="variant-container height-180 globe-container"
+            id="globe-tiny2"
+            data-config='{"statistic":"co2Emissions","labels":"none","showLegend":true,"effects":{"atmosphere":false,"clouds":false}}'
+          >
+            <div class="globe-loader"></div>
+            <div class="globe-toolbar">
+              <button
+                class="toolbar-btn"
+                onclick="toggleFullscreen('globe-tiny2')"
+                title="Fullscreen"
+              >
+                ⛶
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="variant">
+          <div class="variant-header">
+            <span class="variant-title">Internet</span>
+          </div>
+          <div
+            class="variant-container height-180 globe-container"
+            id="globe-tiny3"
+            data-config='{"statistic":"internetUsers","labels":"none","showLegend":true,"effects":{"atmosphere":false,"clouds":false}}'
+          >
+            <div class="globe-loader"></div>
+            <div class="globe-toolbar">
+              <button
+                class="toolbar-btn"
+                onclick="toggleFullscreen('globe-tiny3')"
+                title="Fullscreen"
+              >
+                ⛶
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="variant">
+          <div class="variant-header">
+            <span class="variant-title">Forest</span>
+          </div>
+          <div
+            class="variant-container height-180 globe-container"
+            id="globe-tiny4"
+            data-config='{"statistic":"forestArea","labels":"none","showLegend":true,"effects":{"atmosphere":false,"clouds":false}}'
+          >
+            <div class="globe-loader"></div>
+            <div class="globe-toolbar">
+              <button
+                class="toolbar-btn"
+                onclick="toggleFullscreen('globe-tiny4')"
+                title="Fullscreen"
+              >
+                ⛶
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      gralobe · <a href="https://github.com/batikanor/gralobe">GitHub</a> ·
+      <a href="https://npmjs.com/package/gralobe">npm</a>
+    </footer>
+
+    <script type="module">
+      import { GlobeViz } from "./src/lib/GlobeViz.ts";
+
+      const globes = new Map();
+      const MAX_ACTIVE_GLOBES = 6;
+
+      const customStats = {
+        coffee: {
+          definition: {
+            id: "coffee_consumption",
+            name: "Coffee Consumption",
+            unit: "kg/capita",
+            description: "Annual per capita",
+            colorScale: ["#f7e6d5", "#c9a87c", "#3d2314"],
+            domain: [0, 12],
+          },
+          values: {
+            246: 12.0,
+            578: 9.9,
+            208: 8.7,
+            528: 8.4,
+            752: 8.2,
+            756: 7.9,
+            "056": 6.8,
+            276: 6.5,
+            124: 6.5,
+            "040": 6.1,
+            "076": 6.1,
+            380: 5.9,
+            250: 5.4,
+            300: 5.7,
+            620: 4.3,
+            203: 4.5,
+            840: 4.2,
+            348: 3.8,
+            392: 3.4,
+            616: 3.2,
+          },
+        },
+        happiness: {
+          definition: {
+            id: "happiness_index",
+            name: "World Happiness",
+            unit: "score",
+            description: "UN Report 2024",
+            colorScale: ["#fde0dd", "#fa9fb5", "#c51b8a"],
+            domain: [3, 8],
+          },
+          values: {
+            246: 7.8,
+            208: 7.6,
+            352: 7.5,
+            756: 7.5,
+            528: 7.4,
+            578: 7.3,
+            752: 7.3,
+            "040": 7.2,
+            "036": 7.1,
+            554: 7.1,
+            124: 7.0,
+            826: 6.9,
+            276: 6.9,
+            "056": 6.8,
+            840: 6.7,
+          },
+        },
+      };
+
+      const markerDatasets = {
+        capitals: {
+          data: [
+            {
+              lat: 38.9,
+              lng: -77.0,
+              value: 1,
+              label: "Washington DC",
+              color: "#22d3ee",
+            },
+            {
+              lat: 51.5,
+              lng: -0.1,
+              value: 1,
+              label: "London",
+              color: "#22d3ee",
+            },
+            {
+              lat: 35.7,
+              lng: 139.7,
+              value: 1,
+              label: "Tokyo",
+              color: "#22d3ee",
+            },
+            {
+              lat: -33.9,
+              lng: 151.2,
+              value: 1,
+              label: "Sydney",
+              color: "#22d3ee",
+            },
+            {
+              lat: 55.7,
+              lng: 37.6,
+              value: 1,
+              label: "Moscow",
+              color: "#22d3ee",
+            },
+            {
+              lat: -22.9,
+              lng: -43.2,
+              value: 1,
+              label: "Rio",
+              color: "#22d3ee",
+            },
+            {
+              lat: 25.2,
+              lng: 55.3,
+              value: 1,
+              label: "Dubai",
+              color: "#22d3ee",
+            },
+          ],
+          config: {
+            style: "spike",
+            color: "#0ea5e9",
+            maxHeight: 10,
+            pulseAnimation: true,
+          },
+        },
+        cities_spike: {
+          data: [
+            { lat: 40.7, lng: -74.0, value: 1.0, label: "New York" },
+            { lat: 34.0, lng: -118.2, value: 0.8, label: "Los Angeles" },
+            { lat: 41.8, lng: -87.6, value: 0.7, label: "Chicago" },
+            { lat: 29.7, lng: -95.3, value: 0.6, label: "Houston" },
+            { lat: 33.4, lng: -112.0, value: 0.5, label: "Phoenix" },
+            { lat: 48.8, lng: 2.3, value: 1.0, label: "Paris" },
+            { lat: 52.5, lng: 13.4, value: 0.9, label: "Berlin" },
+            { lat: 41.9, lng: 12.5, value: 0.8, label: "Rome" },
+            { lat: 40.4, lng: -3.7, value: 0.7, label: "Madrid" },
+          ],
+          config: {
+            style: "spike",
+            color: "#f43f5e",
+            maxHeight: 15,
+            pulseAnimation: true,
+          },
+        },
+        cities_dot: {
+          data: [
+            { lat: 19.0, lng: 72.8, value: 1.0, label: "Mumbai" },
+            { lat: 28.6, lng: 77.2, value: 0.9, label: "Delhi" },
+            { lat: 12.9, lng: 77.5, value: 0.8, label: "Bangalore" },
+            { lat: 1.3, lng: 103.8, value: 1.0, label: "Singapore" },
+            { lat: 13.7, lng: 100.5, value: 0.9, label: "Bangkok" },
+            { lat: 31.2, lng: 121.5, value: 1.0, label: "Shanghai" },
+            { lat: 39.9, lng: 116.4, value: 0.9, label: "Beijing" },
+          ],
+          config: { style: "dot", color: "#fbbf24", opacity: 1.0 },
+        },
+        cities_pin: {
+          data: [
+            { lat: -34.6, lng: -58.3, value: 1.0, label: "Buenos Aires" },
+            { lat: -33.4, lng: -70.6, value: 0.9, label: "Santiago" },
+            { lat: 4.7, lng: -74.0, value: 0.8, label: "Bogota" },
+            { lat: -12.0, lng: -77.0, value: 0.8, label: "Lima" },
+            { lat: 19.4, lng: -99.1, value: 1.0, label: "Mexico City" },
+            { lat: 6.5, lng: 3.3, value: 1.0, label: "Lagos" },
+            { lat: -1.2, lng: 36.8, value: 0.9, label: "Nairobi" },
+            { lat: 30.0, lng: 31.2, value: 1.0, label: "Cairo" },
+          ],
+          config: {
+            style: "pin",
+            color: "#a855f7",
+            maxHeight: 8,
+            pulseAnimation: true,
+          },
+        },
+      };
+
+      function updateCounter() {
+        document.getElementById("webgl-count").textContent = globes.size;
+      }
+
+      function enforceLimit() {
+        if (globes.size >= MAX_ACTIVE_GLOBES) {
+          let furthestId = null;
+          let furthestDistance = -Infinity;
+
+          for (const [id] of globes) {
+            const el = document.getElementById(id);
+            if (!el) continue;
+            const rect = el.getBoundingClientRect();
+            const dist = Math.abs(
+              rect.top + rect.height / 2 - window.innerHeight / 2
+            );
+            if (dist > furthestDistance) {
+              furthestDistance = dist;
+              furthestId = id;
+            }
           }
+          if (furthestId) destroyGlobe(furthestId);
         }
-        if (furthestId) destroyGlobe(furthestId);
       }
-    }
 
-    async function createGlobe(containerId) {
-      const container = document.getElementById(containerId);
-      if (!container || globes.has(containerId)) return;
-      
-      const loader = container.querySelector('.globe-loader');
-      const error = container.querySelector('.globe-error');
+      async function createGlobe(containerId) {
+        const container = document.getElementById(containerId);
+        if (!container || globes.has(containerId)) return;
 
-      try {
-        enforceLimit();
+        const loader = container.querySelector(".globe-loader");
+        const error = container.querySelector(".globe-error");
 
-        const config = JSON.parse(container.dataset.config || '{}');
-        const fullConfig = {
-          autoRotate: true,
-          showControls: false,
-          showLegend: true,
-          labels: 'major',
-          effects: { atmosphere: false, clouds: false },
-          ...config
-        };
+        try {
+          enforceLimit();
 
-        const globe = new GlobeViz(container, fullConfig);
-        globes.set(containerId, globe);
+          const config = JSON.parse(container.dataset.config || "{}");
+          const fullConfig = {
+            autoRotate: true,
+            showControls: false,
+            showLegend: true,
+            labels: "major",
+            effects: { atmosphere: false, clouds: false },
+            ...config,
+          };
+
+          const globe = new GlobeViz(container, fullConfig);
+          globes.set(containerId, globe);
+          updateCounter();
+
+          await globe.ready;
+
+          const customStatKey = container.dataset.customStat;
+          if (customStatKey && customStats[customStatKey]) {
+            globe.setStatistic(customStats[customStatKey]);
+          }
+
+          const markerKey = container.dataset.markers;
+          if (markerKey && markerDatasets[markerKey]) {
+            const { data, config } = markerDatasets[markerKey];
+            globe.setMarkers(data, config);
+          }
+
+          loader?.classList.add("hidden");
+        } catch (err) {
+          console.error(`Failed: ${containerId}`, err);
+          loader?.classList.add("hidden");
+          error?.classList.add("visible");
+        }
+      }
+
+      function destroyGlobe(containerId) {
+        const globe = globes.get(containerId);
+        if (!globe) return;
+
+        globe.destroy();
+        globes.delete(containerId);
         updateCounter();
 
-        await globe.ready;
-
-        const customStatKey = container.dataset.customStat;
-        if (customStatKey && customStats[customStatKey]) {
-          globe.setStatistic(customStats[customStatKey]);
+        const container = document.getElementById(containerId);
+        if (container) {
+          const loader = container.querySelector(".globe-loader");
+          loader?.classList.remove("hidden");
         }
-
-        loader?.classList.add('hidden');
-      } catch (err) {
-        console.error(`Failed: ${containerId}`, err);
-        loader?.classList.add('hidden');
-        error?.classList.add('visible');
       }
-    }
 
-    function destroyGlobe(containerId) {
-      const globe = globes.get(containerId);
-      if (!globe) return;
+      window.toggleFullscreen = async (containerId) => {
+        if (!globes.has(containerId)) await createGlobe(containerId);
+        globes.get(containerId)?.toggleFullscreen();
+      };
 
-      globe.destroy();
-      globes.delete(containerId);
-      updateCounter();
+      // toggleControls removed - GUI now has its own clickable header
 
-      const container = document.getElementById(containerId);
-      if (container) {
-        const loader = container.querySelector('.globe-loader');
-        loader?.classList.remove('hidden');
-      }
-    }
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting && !globes.has(entry.target.id)) {
+              createGlobe(entry.target.id);
+            }
+          });
+        },
+        { rootMargin: "100px", threshold: 0.1 }
+      );
 
-    window.toggleFullscreen = async (containerId) => {
-      if (!globes.has(containerId)) await createGlobe(containerId);
-      globes.get(containerId)?.toggleFullscreen();
-    };
+      // Generate stats gallery
+      const stats = [
+        "lifeExpectancy",
+        "humanDevIndex",
+        "gdpPerCapita",
+        "co2Emissions",
+        "renewableEnergy",
+        "internetUsers",
+        "urbanPopulation",
+        "healthExpenditure",
+        "forestArea",
+        "population",
+        "accessElectricity",
+        "educationExpenditure",
+      ];
 
-    // toggleControls removed - GUI now has its own clickable header
-
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting && !globes.has(entry.target.id)) {
-          createGlobe(entry.target.id);
-        }
-      });
-    }, { rootMargin: '100px', threshold: 0.1 });
-
-    // Generate stats gallery
-    const stats = [
-      'lifeExpectancy', 'humanDevIndex', 'gdpPerCapita', 'co2Emissions',
-      'renewableEnergy', 'internetUsers', 'urbanPopulation', 'healthExpenditure',
-      'forestArea', 'population', 'accessElectricity', 'educationExpenditure'
-    ];
-
-    const gallery = document.getElementById('stats-gallery');
-    stats.forEach((id, i) => {
-      const showControls = i % 3 === 0; // Every 3rd one has controls
-      gallery.insertAdjacentHTML('beforeend', `
+      const gallery = document.getElementById("stats-gallery");
+      stats.forEach((id, i) => {
+        const showControls = i % 3 === 0; // Every 3rd one has controls
+        gallery.insertAdjacentHTML(
+          "beforeend",
+          `
         <div class="variant">
           <div class="variant-header">
             <span class="variant-title">${id}</span>
-            <span class="variant-meta">${showControls ? '⚙' : ''}</span>
+            <span class="variant-meta">${showControls ? "⚙" : ""}</span>
           </div>
           <div class="variant-container height-250 globe-container" id="globe-stat-${id}" 
                data-config='{"statistic":"${id}","labels":"none","effects":{"atmosphere":false,"clouds":false},"showControls":${showControls}}'>
             <div class="globe-loader"></div>
             <div class="globe-toolbar">
-              ${showControls ? `` : ''}
+              ${showControls ? `` : ""}
               <button class="toolbar-btn" onclick="toggleFullscreen('globe-stat-${id}')" title="Fullscreen">⛶</button>
             </div>
           </div>
         </div>
-      `);
-    });
+      `
+        );
+      });
 
-    document.querySelectorAll('.globe-container').forEach(c => observer.observe(c));
-  </script>
-</body>
+      document
+        .querySelectorAll(".globe-container")
+        .forEach((c) => observer.observe(c));
+    </script>
+  </body>
 </html>
