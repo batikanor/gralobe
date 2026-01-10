@@ -296,7 +296,7 @@
       <a href="#sizes">Sizes</a>
       <a href="#textures">Textures</a>
       <a href="#effects">Effects</a>
-      <a href="#markers">Markers</a>
+
       <a href="#custom">Custom</a>
       <a href="#flat">Flat</a>
       <a href="#tiny">Tiny</a>
@@ -316,7 +316,6 @@
           id="hero-globe"
           class="globe-container"
           data-config='{"labels":"major","effects":{"atmosphere":true,"clouds":true},"showControls":true}'
-          data-markers="capitals"
         >
           <div class="globe-loader"></div>
           <div class="globe-error">Failed to load</div>
@@ -333,77 +332,36 @@
       </div>
     </section>
 
-    <!-- Markers -->
-    <section id="markers">
+    <!-- City Stats (Custom Topology) -->
+    <section id="city-stats">
       <div class="section-header">
-        <h2 class="section-title">3D Markers</h2>
+        <h2 class="section-title">City Level Statistics</h2>
         <p class="section-desc">
-          City-level granularity with spikes, dots, and pins
+          Using custom topology with <code>disableNormalization: true</code> to
+          map arbitrary IDs (FIPS codes)
         </p>
       </div>
-      <div class="grid grid-3">
+      <div class="info-box">
+        Loads US Counties (10m) and maps unemployment data to FIPS codes.
+        Markers are NOT used.
+      </div>
+      <div class="grid">
         <div class="variant">
           <div class="variant-header">
-            <span class="variant-title">Glowing Spikes</span>
-            <span class="variant-meta">style: "spike"</span>
+            <span class="variant-title">US Unemployment (Counties)</span>
+            <span class="variant-meta">Custom TopoJSON</span>
           </div>
           <div
-            class="variant-container height-320 globe-container"
-            id="globe-mark-spike"
-            data-config='{"labels":"none","effects":{"atmosphere":true,"clouds":false}}'
-            data-markers="cities_spike"
+            class="variant-container height-400 globe-container"
+            id="globe-city-stats"
+            data-config='{"labels":"none","effects":{"atmosphere":false},"showControls":true}'
+            data-custom-topology="us_counties"
           >
             <div class="globe-loader"></div>
             <div class="globe-toolbar">
               <button
                 class="toolbar-btn"
-                onclick="toggleFullscreen('globe-mark-spike')"
-                title="Fullscreen"
-              >
-                ⛶
-              </button>
-            </div>
-          </div>
-        </div>
-        <div class="variant">
-          <div class="variant-header">
-            <span class="variant-title">Simple Dots</span>
-            <span class="variant-meta">style: "dot"</span>
-          </div>
-          <div
-            class="variant-container height-320 globe-container"
-            id="globe-mark-dot"
-            data-config='{"labels":"none","effects":{"atmosphere":false,"clouds":false}}'
-            data-markers="cities_dot"
-          >
-            <div class="globe-loader"></div>
-            <div class="globe-toolbar">
-              <button
-                class="toolbar-btn"
-                onclick="toggleFullscreen('globe-mark-dot')"
-                title="Fullscreen"
-              >
-                ⛶
-              </button>
-            </div>
-          </div>
-        </div>
-        <div class="variant">
-          <div class="variant-header">
-            <span class="variant-title">Pins / Cones</span>
-            <span class="variant-meta">style: "pin"</span>
-          </div>
-          <div
-            class="variant-container height-320 globe-container"
-            id="globe-mark-pin"
-            data-config='{"labels":"none","effects":{"atmosphere":true,"clouds":true}}'
-            data-markers="cities_pin"
-          >
-            <div class="globe-loader"></div>
-            <div class="globe-toolbar">
-              <button
-                class="toolbar-btn"
-                onclick="toggleFullscreen('globe-mark-pin')"
+                onclick="toggleFullscreen('globe-city-stats')"
                 title="Fullscreen"
               >
                 ⛶
@@ -1042,115 +1000,27 @@
             840: 6.7,
           },
         },
-      };
-
-      const markerDatasets = {
-        capitals: {
-          data: [
-            {
-              lat: 38.9,
-              lng: -77.0,
-              value: 1,
-              label: "Washington DC",
-              color: "#22d3ee",
-            },
-            {
-              lat: 51.5,
-              lng: -0.1,
-              value: 1,
-              label: "London",
-              color: "#22d3ee",
-            },
-            {
-              lat: 35.7,
-              lng: 139.7,
-              value: 1,
-              label: "Tokyo",
-              color: "#22d3ee",
-            },
-            {
-              lat: -33.9,
-              lng: 151.2,
-              value: 1,
-              label: "Sydney",
-              color: "#22d3ee",
-            },
-            {
-              lat: 55.7,
-              lng: 37.6,
-              value: 1,
-              label: "Moscow",
-              color: "#22d3ee",
-            },
-            {
-              lat: -22.9,
-              lng: -43.2,
-              value: 1,
-              label: "Rio",
-              color: "#22d3ee",
-            },
-            {
-              lat: 25.2,
-              lng: 55.3,
-              value: 1,
-              label: "Dubai",
-              color: "#22d3ee",
-            },
-          ],
-          config: {
-            style: "spike",
-            color: "#0ea5e9",
-            maxHeight: 10,
-            pulseAnimation: true,
+        us_unemployment: {
+          definition: {
+            id: "us_unemployment",
+            name: "US Unemployment",
+            unit: "%",
+            description: "BLS 2023 (Sample)",
+            colorScale: ["#f7fbff", "#6baed6", "#08306b"],
+            domain: [2, 10],
           },
-        },
-        cities_spike: {
-          data: [
-            { lat: 40.7, lng: -74.0, value: 1.0, label: "New York" },
-            { lat: 34.0, lng: -118.2, value: 0.8, label: "Los Angeles" },
-            { lat: 41.8, lng: -87.6, value: 0.7, label: "Chicago" },
-            { lat: 29.7, lng: -95.3, value: 0.6, label: "Houston" },
-            { lat: 33.4, lng: -112.0, value: 0.5, label: "Phoenix" },
-            { lat: 48.8, lng: 2.3, value: 1.0, label: "Paris" },
-            { lat: 52.5, lng: 13.4, value: 0.9, label: "Berlin" },
-            { lat: 41.9, lng: 12.5, value: 0.8, label: "Rome" },
-            { lat: 40.4, lng: -3.7, value: 0.7, label: "Madrid" },
-          ],
-          config: {
-            style: "spike",
-            color: "#f43f5e",
-            maxHeight: 15,
-            pulseAnimation: true,
-          },
-        },
-        cities_dot: {
-          data: [
-            { lat: 19.0, lng: 72.8, value: 1.0, label: "Mumbai" },
-            { lat: 28.6, lng: 77.2, value: 0.9, label: "Delhi" },
-            { lat: 12.9, lng: 77.5, value: 0.8, label: "Bangalore" },
-            { lat: 1.3, lng: 103.8, value: 1.0, label: "Singapore" },
-            { lat: 13.7, lng: 100.5, value: 0.9, label: "Bangkok" },
-            { lat: 31.2, lng: 121.5, value: 1.0, label: "Shanghai" },
-            { lat: 39.9, lng: 116.4, value: 0.9, label: "Beijing" },
-          ],
-          config: { style: "dot", color: "#fbbf24", opacity: 1.0 },
-        },
-        cities_pin: {
-          data: [
-            { lat: -34.6, lng: -58.3, value: 1.0, label: "Buenos Aires" },
-            { lat: -33.4, lng: -70.6, value: 0.9, label: "Santiago" },
-            { lat: 4.7, lng: -74.0, value: 0.8, label: "Bogota" },
-            { lat: -12.0, lng: -77.0, value: 0.8, label: "Lima" },
-            { lat: 19.4, lng: -99.1, value: 1.0, label: "Mexico City" },
-            { lat: 6.5, lng: 3.3, value: 1.0, label: "Lagos" },
-            { lat: -1.2, lng: 36.8, value: 0.9, label: "Nairobi" },
-            { lat: 30.0, lng: 31.2, value: 1.0, label: "Cairo" },
-          ],
-          config: {
-            style: "pin",
-            color: "#a855f7",
-            maxHeight: 8,
-            pulseAnimation: true,
+          values: {
+            "06037": 5.4, // Los Angeles, CA
+            17031: 4.5, // Cook, IL (Chicago)
+            48201: 3.8, // Harris, TX (Houston)
+            "04013": 2.9, // Maricopa, AZ (Phoenix)
+            36061: 4.1, // New York, NY
+            12086: 2.6, // Miami-Dade, FL
+            53033: 3.4, // King, WA (Seattle)
+            "06075": 3.0, // San Francisco, CA
+            25025: 2.8, // Suffolk, MA (Boston)
+            42101: 4.0, // Philadelphia, PA
+            11001: 5.1, // District of Columbia
           },
         },
       };
@@ -1200,21 +1070,35 @@
             ...config,
           };
 
+          if (container.dataset.customTopology === "us_counties") {
+            fullConfig.topology = {
+              url: "https://cdn.jsdelivr.net/npm/us-atlas@3/counties-10m.json",
+              objectName: "counties",
+              disableNormalization: true,
+            };
+            // Set initial view to focus on US
+            fullConfig.autoRotate = false;
+            // Apply the unemployment statistic immediately
+            fullConfig.statistic = customStats.us_unemployment;
+          }
+
           const globe = new GlobeViz(container, fullConfig);
           globes.set(containerId, globe);
           updateCounter();
 
           await globe.ready;
 
+          // If we just loaded the US topology, rotate to it
+          if (container.dataset.customTopology === "us_counties") {
+            // Rough approximation for US view
+            globe.controls.autoRotate = false;
+            // Can't easily set rotation programmatically without exposing camera controls better,
+            // but user can drag.
+          }
+
           const customStatKey = container.dataset.customStat;
           if (customStatKey && customStats[customStatKey]) {
             globe.setStatistic(customStats[customStatKey]);
-          }
-
-          const markerKey = container.dataset.markers;
-          if (markerKey && markerDatasets[markerKey]) {
-            const { data, config } = markerDatasets[markerKey];
-            globe.setMarkers(data, config);
           }
 
           loader?.classList.add("hidden");
