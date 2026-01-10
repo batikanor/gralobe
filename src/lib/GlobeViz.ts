@@ -812,6 +812,7 @@ export class GlobeViz implements GlobeVizAPI {
         this.controls.maxAzimuthAngle = 0;
         this.controls.minPolarAngle = Math.PI / 2;
         this.controls.maxPolarAngle = Math.PI / 2;
+        this.controls.target.set(0, 0, 0);
         this.controls.update();
       },
     });

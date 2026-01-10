@@ -36,7 +36,14 @@ const WORKER_CODE = `
       const objects = topology.objects[objectName];
       
       if (!objects) {
-        throw new Error('Object "' + objectName + '" not found in topology');
+        // Fallback to first object if specific name not found
+        const firstKey = Object.keys(topology.objects)[0];
+        if (firstKey) {
+          console.warn('Object "' + objectName + '" not found, falling back to "' + firstKey + '"');
+          objects = topology.objects[firstKey];
+        } else {
+          throw new Error('Object "' + objectName + '" not found and no objects available');
+        }
       }
 
       // Convert to GeoJSON features
