@@ -181,6 +181,8 @@ export class ChoroplethRenderer {
     } catch (error) {
       ChoroplethRenderer.cache.delete(cacheKey);
       console.error("Error loading cached topology:", error);
+      // Ensure we don't hang indefinitely even if load failed
+      this.loaded = true;
     }
   }
 

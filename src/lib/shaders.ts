@@ -513,7 +513,7 @@ void main() {
 export const atmosphereFragmentShader = `
 varying vec3 vNormal;
 varying vec3 vPosition;
-uniform float uMorph;
+uniform float uOpacity;
 
 void main() {
     float intensity = pow(0.65 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 2.0);
@@ -523,7 +523,7 @@ void main() {
     vec3 outerColor = vec3(0.1, 0.2, 0.5);
     vec3 color = mix(innerColor, outerColor, intensity);
 
-    gl_FragColor = vec4(color, intensity * 0.6);
+    gl_FragColor = vec4(color, intensity * 0.6 * uOpacity);
 }
 `;
 
@@ -549,6 +549,7 @@ void main() {
 
 // Star fragment shader
 export const starFragmentShader = `
+uniform float uOpacity;
 varying float vOpacity;
 
 void main() {
@@ -556,6 +557,6 @@ void main() {
     float dist = length(center);
     float alpha = 1.0 - smoothstep(0.3, 0.5, dist);
 
-    gl_FragColor = vec4(1.0, 1.0, 1.0, alpha * vOpacity * 0.9);
+    gl_FragColor = vec4(1.0, 1.0, 1.0, alpha * vOpacity * 0.9 * uOpacity);
 }
 `;

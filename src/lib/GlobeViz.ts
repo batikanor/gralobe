@@ -356,65 +356,71 @@ export class GlobeViz implements GlobeVizAPI {
     this.controls.maxDistance = 400;
 
     // Initialize components
-    this.choropleth = new ChoroplethRenderer(
-      this.config.topology,
-      this.config.onLoadProgress,
-      () => {
-        // Texture updated
-        if (this.material && this.material.uniforms.uDataTexture.value) {
-          this.material.uniforms.uDataTexture.value.needsUpdate = true;
-          this.material.uniforms.uDataOverlay.value = 1;
+    try {
+      this.choropleth = new ChoroplethRenderer(
+        this.config.topology,
+        this.config.onLoadProgress,
+        () => {
+          // Texture updated
+          if (this.material && this.material.uniforms.uDataTexture.value) {
+            this.material.uniforms.uDataTexture.value.needsUpdate = true;
+            this.material.uniforms.uDataOverlay.value = 1;
 
-          // If we receive an update and data opacity is 0, fade it in
-          if (this.material.uniforms.uDataOpacity.value === 0) {
-            gsap.to(this.material.uniforms.uDataOpacity, {
-              value: 0.7,
-              duration: 1.0,
-            });
+            // If we receive an update and data opacity is 0, fade it in
+            if (this.material.uniforms.uDataOpacity.value === 0) {
+              gsap.to(this.material.uniforms.uDataOpacity, {
+                value: 0.7,
+                duration: 1.0,
+              });
+            }
           }
         }
+      );
+
+      if (this.config.showLegend) {
+        this.legend = new Legend(this.container);
       }
-    );
 
-    if (this.config.showLegend) {
-      this.legend = new Legend(this.container);
+      // Create globe with shaders
+      await this.createGlobe();
+      this.createStars();
+      if (this.config.effects.atmosphere) {
+        this.createAtmosphere();
+      }
+
+      // Initialize country labels
+      this.countryLabels = new CountryLabels(this.container, SPHERE_RADIUS);
+      this.scene.add(this.countryLabels.getGroup());
+      if (this.globe) {
+        this.countryLabels.setGlobe(this.globe);
+      }
+      this.countryLabels.setCamera(this.camera);
+      this.countryLabels.setStyle(this.config.labels);
+
+      // Initialize exporter with overlay elements
+      this.exporter = new Exporter(this.renderer, this.scene, this.camera);
+      if (this.legend) {
+        this.exporter.setLegendElement(this.legend.getElement());
+      }
+      if (this.countryLabels) {
+        this.exporter.setCountryLabels(this.countryLabels);
+      }
+
+      // Setup controls GUI if enabled
+      if (this.config.showControls) {
+        this.createGUI();
+      }
+
+      // Wait for choropleth data
+      await this.choropleth.waitForLoad();
+
+      // Set initial statistic
+      this.setStatistic(this.config.statistic);
+    } catch (err) {
+      console.error("GlobeViz init failed:", err);
+      // Ensure specific error UI handling if needed, but always resolve ready
+      // so the loader can be hidden (or error displayed by consumer)
     }
-
-    // Create globe with shaders
-    await this.createGlobe();
-    this.createStars();
-    if (this.config.effects.atmosphere) {
-      this.createAtmosphere();
-    }
-
-    // Initialize country labels
-    this.countryLabels = new CountryLabels(this.container, SPHERE_RADIUS);
-    this.scene.add(this.countryLabels.getGroup());
-    if (this.globe) {
-      this.countryLabels.setGlobe(this.globe);
-    }
-    this.countryLabels.setCamera(this.camera);
-    this.countryLabels.setStyle(this.config.labels);
-
-    // Initialize exporter with overlay elements
-    this.exporter = new Exporter(this.renderer, this.scene, this.camera);
-    if (this.legend) {
-      this.exporter.setLegendElement(this.legend.getElement());
-    }
-    if (this.countryLabels) {
-      this.exporter.setCountryLabels(this.countryLabels);
-    }
-
-    // Setup controls GUI if enabled
-    if (this.config.showControls) {
-      this.createGUI();
-    }
-
-    // Wait for choropleth data
-    await this.choropleth.waitForLoad();
-
-    // Set initial statistic
-    this.setStatistic(this.config.statistic);
 
     // Set initial view
     this.morph = this.config.initialView === "globe" ? 1 : 0;
@@ -559,6 +565,7 @@ export class GlobeViz implements GlobeVizAPI {
       fragmentShader: atmosphereFragmentShader,
       uniforms: {
         uMorph: { value: 0 },
+        uOpacity: { value: 1.0 },
       },
       side: THREE.BackSide,
       transparent: true,
@@ -600,6 +607,7 @@ export class GlobeViz implements GlobeVizAPI {
       uniforms: {
         uTime: { value: 0 },
         uTwinkle: { value: this.config.effects.starTwinkle ? 1 : 0 },
+        uOpacity: { value: 1.0 },
       },
       transparent: true,
       blending: THREE.AdditiveBlending,
@@ -728,6 +736,13 @@ export class GlobeViz implements GlobeVizAPI {
   // Public API Implementation
 
   toGlobe(): void {
+    // Unlock controls
+    this.controls.enableRotate = true;
+    this.controls.minAzimuthAngle = -Infinity;
+    this.controls.maxAzimuthAngle = Infinity;
+    this.controls.minPolarAngle = 0;
+    this.controls.maxPolarAngle = Math.PI;
+
     gsap.to(this, {
       morph: 1,
       duration: 2.5,
@@ -752,6 +767,23 @@ export class GlobeViz implements GlobeVizAPI {
       duration: 2.5,
       ease: "power2.inOut",
     });
+
+    // Restore space elements
+    if (this.stars) {
+      gsap.to((this.stars.material as THREE.ShaderMaterial).uniforms.uOpacity, {
+        value: 1,
+        duration: 1.0,
+      });
+    }
+    if (this.atmosphere) {
+      gsap.to(
+        (this.atmosphere.material as THREE.ShaderMaterial).uniforms.uOpacity,
+        {
+          value: 1,
+          duration: 1.0,
+        }
+      );
+    }
   }
 
   toFlat(): void {
@@ -772,13 +804,45 @@ export class GlobeViz implements GlobeVizAPI {
         this.markerLayer?.setMorph(this.morph);
         this.config.onViewChange?.("flat", this.morph);
       },
+      onComplete: () => {
+        // Lock controls to 2D view
+        this.controls.enableRotate = false;
+        // Face front
+        this.controls.minAzimuthAngle = 0;
+        this.controls.maxAzimuthAngle = 0;
+        this.controls.minPolarAngle = Math.PI / 2;
+        this.controls.maxPolarAngle = Math.PI / 2;
+        this.controls.update();
+      },
     });
 
+    // Animate camera to front view
     gsap.to(this.camera.position, {
+      x: 0,
+      y: 0,
       z: 350,
       duration: 2.5,
       ease: "power2.inOut",
     });
+
+    // Fade out space elements
+    if (this.stars) {
+      gsap.to((this.stars.material as THREE.ShaderMaterial).uniforms.uOpacity, {
+        value: 0,
+        duration: 1.0,
+      });
+    }
+    if (this.atmosphere) {
+      gsap.to(
+        (this.atmosphere.material as THREE.ShaderMaterial).uniforms.uOpacity,
+        {
+          value: 0,
+          duration: 1.0,
+        }
+      );
+    }
+    // Change background to black/dark for clean "map" look
+    // this.scene.background = new THREE.Color(0x000000);
   }
 
   setMorph(value: number): void {
