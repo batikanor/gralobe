@@ -32,27 +32,37 @@ const WORKER_CODE = `
       const response = await fetch(url);
       if (!response.ok) throw new Error('Fetch failed: ' + response.statusText);
       
-      const topology = await response.json();
-      const objects = topology.objects[objectName];
-      
-      if (!objects) {
-        // Fallback to first object if specific name not found
-        const firstKey = Object.keys(topology.objects)[0];
-        if (firstKey) {
-          console.warn('Object "' + objectName + '" not found, falling back to "' + firstKey + '"');
-          objects = topology.objects[firstKey];
-        } else {
-          throw new Error('Object "' + objectName + '" not found and no objects available');
-        }
-      }
+      const data = await response.json();
+      let features;
 
-      // Convert to GeoJSON features
-      // @ts-ignore - topojson is loaded via importScripts
-      const geojson = topojson.feature(topology, objects);
+      // Check if it's already GeoJSON
+      if (data.type === 'FeatureCollection') {
+        features = data.features;
+      } else {
+        // Assume TopoJSON
+        const topology = data;
+        let objects = topology.objects[objectName];
+        
+        if (!objects) {
+          // Fallback to first object if specific name not found
+          const firstKey = Object.keys(topology.objects)[0];
+          if (firstKey) {
+            console.warn('Object "' + objectName + '" not found, falling back to "' + firstKey + '"');
+            objects = topology.objects[firstKey];
+          } else {
+            throw new Error('Object "' + objectName + '" not found and no objects available');
+          }
+        }
+
+        // Convert to GeoJSON features
+        // @ts-ignore - topojson is loaded via importScripts
+        const geojson = topojson.feature(topology, objects);
+        features = geojson.features;
+      }
       
       self.postMessage({ 
         success: true, 
-        features: geojson.features 
+        features: features 
       });
     } catch (error) {
       self.postMessage({ 

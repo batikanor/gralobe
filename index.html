@@ -1271,8 +1271,9 @@
             fullConfig.statistic = customStats.us_unemployment;
           } else if (container.dataset.customTopology === "germany_districts") {
             fullConfig.topology = {
-              url: "https://raw.githubusercontent.com/AliceWi/TopoJSON-Germany/master/germany.json",
-              objectName: "counties",
+              // Now using GeoJSON directly (supported by updated ChoroplethRenderer)
+              url: "https://raw.githubusercontent.com/isellsoap/deutschlandGeoJSON/main/4_kreise/2_hoch.geo.json",
+              objectName: "counties", // Ignored for GeoJSON but kept for type safety
               disableNormalization: true,
             };
             fullConfig.autoRotate = false;
@@ -1280,36 +1281,97 @@
             if (!customStats.germany_population) {
               customStats.germany_population = {
                 key: "germany_pop",
-                label: "Population Mock",
+                label: "Population (Mock)",
                 colorScale: ["#f7fbff", "#08306b"], // Blues
                 domain: [0, 100],
                 accessor: (d) => d,
                 values: {
                   "08425": 85, // Alb-Donau-Kreis
-                  "08115": 30, // Böblingen
-                  "08211": 70, // Baden-Baden
-                  "08426": 60, // Biberach
-                  "08435": 40, // Bodenseekreis
-                  "08315": 55, // Breisgau-Hochschwarzwald
-                  "08235": 20, // Calw
-                  "08316": 45, // Emmendingen
-                  "08236": 65, // Enzkreis
-                  "08116": 90, // Esslingen
-                  11000: 100, // Berlin (State/City level often grouped)
-                  // Mocking more for visual density
+                  "05315": 90, // Cologne (Köln)
+                  11000: 95, // Berlin
                   "09162": 95, // Munich
-                  "05111": 80, // Düsseldorf
-                  "02000": 90, // Hamburg
+                  "02000": 80, // Hamburg
+                  "08111": 88, // Stuttgart
                 },
               };
-              // Fill some randoms
-              for (let i = 1000; i < 16000; i += 13) {
-                customStats.germany_population.values["0" + i] = Math.floor(
-                  Math.random() * 100
-                );
-              }
             }
             fullConfig.statistic = customStats.germany_population;
+          } else if (container.dataset.customTopology === "world_cities") {
+            // CIty-Based Demo
+            fullConfig.texture = "dark";
+            fullConfig.effects = {
+              atmosphere: true,
+              glowPulse: true,
+              cityLights: true,
+            };
+            fullConfig.statistic = undefined; // No choropleth
+
+            // Add markers after init
+            setTimeout(() => {
+              const cityData = [
+                {
+                  id: "nyc",
+                  lat: 40.71,
+                  lng: -74.0,
+                  value: 85,
+                  name: "New York",
+                  color: "#0ea5e9",
+                },
+                {
+                  id: "lon",
+                  lat: 51.5,
+                  lng: -0.12,
+                  value: 75,
+                  name: "London",
+                  color: "#a855f7",
+                },
+                {
+                  id: "tyo",
+                  lat: 35.67,
+                  lng: 139.65,
+                  value: 100,
+                  name: "Tokyo",
+                  color: "#f43f5e",
+                },
+                {
+                  id: "par",
+                  lat: 48.85,
+                  lng: 2.35,
+                  value: 65,
+                  name: "Paris",
+                  color: "#ec4899",
+                },
+                {
+                  id: "ber",
+                  lat: 52.52,
+                  lng: 13.4,
+                  value: 60,
+                  name: "Berlin",
+                  color: "#fbbf24",
+                },
+                {
+                  id: "syd",
+                  lat: -33.86,
+                  lng: 151.2,
+                  value: 55,
+                  name: "Sydney",
+                  color: "#22c55e",
+                },
+                {
+                  id: "cpt",
+                  lat: -33.92,
+                  lng: 18.42,
+                  value: 50,
+                  name: "Cape Town",
+                  color: "#f97316",
+                },
+              ];
+              globe.setMarkers(cityData, {
+                style: "spike",
+                maxHeight: 25,
+                pulseAnimation: true,
+              });
+            }, 1000);
           } else if (container.dataset.customTopology === "us_election_2020") {
             fullConfig.topology = {
               url: "https://cdn.jsdelivr.net/npm/us-atlas@3/counties-10m.json",
