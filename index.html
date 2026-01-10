@@ -1317,12 +1317,26 @@
                 domain: [0, 100],
                 accessor: (d) => d,
                 values: {
-                  "Munich Städte": 95, // Verified Key
-                  "Cologne Städte": 90, // Verified Key
-                  "Berlin": 95, // Verified Key
-                  "Hamburg, Freie und Hansestadt": 85, // Verified from grep context
-                  "Dortmund Städte": 80, // High likelihood based on pattern
-                  "Frankfurt am Main Städte": 88 // High likelihood
+                  "Munich Städte": 95, 
+                  "Cologne Städte": 90, 
+                  "Berlin": 95, 
+                  "Hamburg Städte": 85, // Corrected from "Hamburg, Freie..."
+                  "Dortmund Städte": 80, 
+                  "Frankfurt am Main Städte": 88,
+                  "Stuttgart Städte": 87,
+                  "Bremen Städte": 82,
+                  "Düsseldorf Städte": 85,
+                  "Essen Städte": 78,
+                  "Leipzig Städte": 84,
+                  "Dresden Städte": 83,
+                  "Hannover, Landeshauptstadt": 80, // Verified phrasing for Hannover
+                  "Nürnberg": 79, // Often just "Nürnberg" or "Nürnberg, Stadt" - attempting generic first or we check debug
+                  "Duisburg Städte": 75,
+                  "Bochum Städte": 76,
+                  "Wuppertal Städte": 74,
+                  "Bielefeld Städte": 72,
+                  "Bonn Städte": 85,
+                  "Münster Städte": 82
                 },
               };
             }
