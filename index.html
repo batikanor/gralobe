@@ -1305,7 +1305,7 @@
               url: "https://raw.githubusercontent.com/isellsoap/deutschlandGeoJSON/main/4_kreise/2_hoch.geo.json",
               objectName: "counties", 
               disableNormalization: true,
-              idProperty: "NAME_3" // Verified property in the GeoJSON (e.g. "Berlin", "Munich Städte")
+              // Removed idProperty: "NAME_3". Using default root "id" (Integers) for stability.
             };
             fullConfig.autoRotate = false;
             // Add Germany Stats defined below
@@ -1317,26 +1317,25 @@
                 domain: [0, 100],
                 accessor: (d) => d,
                 values: {
-                  "Munich Städte": 95, 
-                  "Cologne Städte": 90, 
-                  "Berlin": 95, 
-                  "Hamburg Städte": 85, // Corrected from "Hamburg, Freie..."
-                  "Dortmund Städte": 80, 
-                  "Frankfurt am Main Städte": 88,
-                  "Stuttgart Städte": 87,
-                  "Bremen Städte": 82,
-                  "Düsseldorf Städte": 85,
-                  "Essen Städte": 78,
-                  "Leipzig Städte": 84,
-                  "Dresden Städte": 83,
-                  "Hannover, Landeshauptstadt": 80, // Verified phrasing for Hannover
-                  "Nürnberg": 79, // Often just "Nürnberg" or "Nürnberg, Stadt" - attempting generic first or we check debug
-                  "Duisburg Städte": 75,
-                  "Bochum Städte": 76,
-                  "Wuppertal Städte": 74,
-                  "Bielefeld Städte": 72,
-                  "Bonn Städte": 85,
-                  "Münster Städte": 82
+                  100: 95, // Munich (Munich Städte)
+                  287: 90, // Cologne (Cologne Städte)
+                  157: 95, // Berlin
+                  177: 85, // Hamburg (Hamburg Städte)
+                  8: 80,   // Dortmund (Dortmund Städte)
+                  181: 88, // Frankfurt am Main (Städte)
+                  20: 87,  // Stuttgart (Stuttgart Städte)
+                  176: 82, // Bremen (Bremen Städte)
+                  271: 85, // Düsseldorf (Düsseldorf Städte)
+                  272: 78, // Essen (Essen Städte)
+                  393: 84, // Leipzig (Leipzig Städte)
+                  382: 83, // Dresden (Dresden Städte)
+                  163: 75, // Frankfurt am Oder (Städte)
+                  7: 76,   // Bochum (Städte)
+                  270: 75, // Duisburg (Städte)
+                  283: 74, // Wuppertal (Städte)
+                  262: 72, // Bielefeld (Städte)
+                  286: 85, // Bonn (Städte)
+                  300: 82  // Münster (Städte)
                 },
               };
             }
