@@ -186,3 +186,15 @@ export interface MarkerConfig {
   /** Callback when marker is clicked */
   onMarkerClick?: (marker: MarkerData) => void;
 }
+
+/**
+ * Configuration for custom map topology (GeoJSON/TopoJSON)
+ */
+export interface TopologyConfig {
+  /** URL to the TopoJSON/GeoJSON file */
+  url?: string;
+  /** Name of the object in TopoJSON objects (files can containing multiple) */
+  objectName?: string;
+  /** Property key to use as ID (default: "id" or "ISO_A3") */
+  idProperty?: string;
+}

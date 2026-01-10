@@ -32,6 +32,7 @@ import type {
   MarkerData,
   StatisticData,
   TexturePreset,
+  TopologyConfig,
 } from "./types";
 
 /**
@@ -60,6 +61,12 @@ export interface GlobeVizConfig {
    * @default 'satellite' (NASA Blue Marble)
    */
   texture?: TexturePreset;
+
+  /**
+   * Custom map topology configuration
+   * Allows loading custom borders (cities, states) instead of countries
+   */
+  topology?: TopologyConfig;
 
   /**
    * Country label display style
@@ -186,7 +193,7 @@ export interface GlobeVizAPI {
 const DEFAULT_CONFIG: Required<
   Omit<
     GlobeVizConfig,
-    "data" | "onCountryClick" | "onViewChange" | "width" | "height"
+    "data" | "onCountryClick" | "onViewChange" | "width" | "height" | "topology"
   >
 > = {
   texture: "satellite",
@@ -231,7 +238,12 @@ export class GlobeViz implements GlobeVizAPI {
   private config: Required<
     Omit<
       GlobeVizConfig,
-      "data" | "onCountryClick" | "onViewChange" | "width" | "height"
+      | "data"
+      | "onCountryClick"
+      | "onViewChange"
+      | "width"
+      | "height"
+      | "topology"
     >
   > & {
     data?: CountryData[];
@@ -239,6 +251,7 @@ export class GlobeViz implements GlobeVizAPI {
     onViewChange?: GlobeVizConfig["onViewChange"];
     width?: number;
     height?: number;
+    topology?: TopologyConfig;
   };
 
   // Three.js core
@@ -330,7 +343,7 @@ export class GlobeViz implements GlobeVizAPI {
     this.controls.maxDistance = 400;
 
     // Initialize components
-    this.choropleth = new ChoroplethRenderer();
+    this.choropleth = new ChoroplethRenderer(this.config.topology);
 
     if (this.config.showLegend) {
       this.legend = new Legend(this.container);

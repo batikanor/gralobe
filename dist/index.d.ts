@@ -259,6 +259,11 @@ export declare interface GlobeVizConfig {
      */
     texture?: TexturePreset;
     /**
+     * Custom map topology configuration
+     * Allows loading custom borders (cities, states) instead of countries
+     */
+    topology?: TopologyConfig;
+    /**
      * Country label display style
      * @default 'all'
      */
@@ -443,6 +448,18 @@ export declare type TexturePreset = "satellite" | "natural" | "dark" | "light" |
  * Supports: numeric codes, alpha-2, alpha-3, and common names
  */
 export declare function toNumericCode(input: string): string;
+
+/**
+ * Configuration for custom map topology (GeoJSON/TopoJSON)
+ */
+declare interface TopologyConfig {
+    /** URL to the TopoJSON/GeoJSON file */
+    url?: string;
+    /** Name of the object in TopoJSON objects (files can containing multiple) */
+    objectName?: string;
+    /** Property key to use as ID (default: "id" or "ISO_A3") */
+    idProperty?: string;
+}
 
 export declare const WORLD_STATISTICS: CountryStatistics[];
 
