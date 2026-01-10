@@ -506,10 +506,17 @@ export class ChoroplethRenderer {
   getBounds(): [number, number, number, number] | null {
     if (this.countries.length === 0) return null;
 
-    let minLon = Infinity;
-    let minLat = Infinity;
-    let maxLon = -Infinity;
-    let maxLat = -Infinity;
+    // Track bounds for Western (< 0) and Eastern (>= 0) hemispheres separately
+    let wMinLon = Infinity,
+      wMaxLon = -Infinity,
+      wMinLat = Infinity,
+      wMaxLat = -Infinity,
+      wCount = 0;
+    let eMinLon = Infinity,
+      eMaxLon = -Infinity,
+      eMinLat = Infinity,
+      eMaxLat = -Infinity,
+      eCount = 0;
 
     // Helper to process coords
     const processCoords = (coords: any[]) => {
@@ -517,10 +524,20 @@ export class ChoroplethRenderer {
       if (typeof coords[0] === "number") {
         const lon = coords[0];
         const lat = coords[1];
-        if (lon < minLon) minLon = lon;
-        if (lon > maxLon) maxLon = lon;
-        if (lat < minLat) minLat = lat;
-        if (lat > maxLat) maxLat = lat;
+
+        if (lon < 0) {
+          if (lon < wMinLon) wMinLon = lon;
+          if (lon > wMaxLon) wMaxLon = lon;
+          if (lat < wMinLat) wMinLat = lat;
+          if (lat > wMaxLat) wMaxLat = lat;
+          wCount++;
+        } else {
+          if (lon < eMinLon) eMinLon = lon;
+          if (lon > eMaxLon) eMaxLon = lon;
+          if (lat < eMinLat) eMinLat = lat;
+          if (lat > eMaxLat) eMaxLat = lat;
+          eCount++;
+        }
       } else {
         coords.forEach(processCoords);
       }
@@ -533,8 +550,31 @@ export class ChoroplethRenderer {
       }
     });
 
-    if (minLon === Infinity) return null;
+    // If one side is empty, return the other
+    if (wCount === 0 && eCount === 0) return null;
+    if (wCount === 0) return [eMinLon, eMinLat, eMaxLon, eMaxLat];
+    if (eCount === 0) return [wMinLon, wMinLat, wMaxLon, wMaxLat];
 
-    return [minLon, minLat, maxLon, maxLat];
+    // Both have points. Check total width.
+    const fullMinLon = Math.min(wMinLon, eMinLon);
+    const fullMaxLon = Math.max(wMaxLon, eMaxLon);
+    const width = fullMaxLon - fullMinLon;
+
+    // If width is huge (> 180), we likely have a dateline crossing (e.g. US with Aleutian islands).
+    // In this case, we pick the "dominant" side to prevent zooming out to the whole world.
+    if (width > 180) {
+      if (wCount > eCount * 2) {
+        // Western is dominant (e.g. US Mainland)
+        return [wMinLon, wMinLat, wMaxLon, wMaxLat];
+      } else if (eCount > wCount * 2) {
+        // Eastern is dominant
+        return [eMinLon, eMinLat, eMaxLon, eMaxLat];
+      }
+    }
+
+    // Otherwise, return combined bounds
+    const minLat = Math.min(wMinLat, eMinLat);
+    const maxLat = Math.max(wMaxLat, eMaxLat);
+    return [fullMinLon, minLat, fullMaxLon, maxLat];
   }
 }
