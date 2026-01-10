@@ -787,10 +787,22 @@ export class GlobeViz implements GlobeVizAPI {
   }
 
   toFlat(): void {
+    // Determine optimal Z distance to fill screen based on FOV and map size
+    // mapHeight = PI * RADIUS = 3.14 * 50 = 157
+    // FOV = 45 (or 75? default is 75 in constructor)
+    // distance = (height/2) / tan(FOV/2)
+    // At FOV 75, tan(37.5) ~= 0.767. dist = 78.5 / 0.767 ~= 102.
+    // We add a bit of padding (130) to ensure corners aren't cut off if aspect ratio is wide.
+    const fitZ = 130;
+
+    // Disable controls during animation to prevent fighting
+    this.controls.enabled = false;
+
+    // Animate Morph
     gsap.to(this, {
       morph: 0,
-      duration: 2.5,
-      ease: "power2.inOut",
+      duration: 2.0, // Slightly faster for snappiness
+      ease: "power3.inOut", // Smoother ease
       onUpdate: () => {
         if (this.material) {
           this.material.uniforms.uMorph.value = this.morph;
@@ -805,25 +817,38 @@ export class GlobeViz implements GlobeVizAPI {
         this.config.onViewChange?.("flat", this.morph);
       },
       onComplete: () => {
-        // Lock controls to 2D view
+        // Re-enable and lock controls to 2D view
+        this.controls.enabled = true;
         this.controls.enableRotate = false;
-        // Face front
+        this.controls.enableZoom = true;
+        this.controls.enablePan = true;
+
+        // Strict Constraints for Front View
         this.controls.minAzimuthAngle = 0;
         this.controls.maxAzimuthAngle = 0;
         this.controls.minPolarAngle = Math.PI / 2;
         this.controls.maxPolarAngle = Math.PI / 2;
-        this.controls.target.set(0, 0, 0);
+
+        // Force update to lock in
         this.controls.update();
       },
     });
 
-    // Animate camera to front view
+    // Animate Camera Position & Target simultaneously
     gsap.to(this.camera.position, {
       x: 0,
       y: 0,
-      z: 350,
-      duration: 2.5,
-      ease: "power2.inOut",
+      z: fitZ,
+      duration: 2.0,
+      ease: "power3.inOut",
+    });
+
+    gsap.to(this.controls.target, {
+      x: 0,
+      y: 0,
+      z: 0,
+      duration: 2.0,
+      ease: "power3.inOut",
     });
 
     // Fade out space elements
@@ -842,8 +867,6 @@ export class GlobeViz implements GlobeVizAPI {
         }
       );
     }
-    // Change background to black/dark for clean "map" look
-    // this.scene.background = new THREE.Color(0x000000);
   }
 
   setMorph(value: number): void {
