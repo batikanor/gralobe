@@ -817,8 +817,8 @@ export class GlobeViz implements GlobeVizAPI {
     // Animate Morph
     gsap.to(this, {
       morph: 0,
-      duration: 2.0, // Slightly faster for snappiness
-      ease: "power3.inOut", // Smoother ease
+      duration: 2.0,
+      ease: "power3.inOut",
       onUpdate: () => {
         if (this.material) {
           this.material.uniforms.uMorph.value = this.morph;
@@ -848,6 +848,54 @@ export class GlobeViz implements GlobeVizAPI {
         // Force update to lock in
         this.controls.update();
       },
+    });
+
+    // CRITICAL FIX: Reset the object's rotation.
+    // If the user rotated the globe, the 'flat' plane would be tilted.
+    // We must reset it to (0,0,0) to align with the camera.
+    if (this.globe) {
+      gsap.to(this.globe.rotation, {
+        x: 0,
+        y: 0,
+        z: 0,
+        duration: 2.0,
+        ease: "power3.inOut",
+      });
+    }
+    // Also reset atmosphere rotation if it exists and isn't a child of globe
+    if (this.atmosphere) {
+      gsap.to(this.atmosphere.rotation, {
+        x: 0,
+        y: 0,
+        z: 0,
+        duration: 2.0,
+        ease: "power3.inOut",
+      });
+    }
+
+    // Animate Camera Position & Target & Up Vector
+    gsap.to(this.camera.position, {
+      x: 0,
+      y: 0,
+      z: fitZ,
+      duration: 2.0,
+      ease: "power3.inOut",
+    });
+
+    gsap.to(this.controls.target, {
+      x: 0,
+      y: 0,
+      z: 0,
+      duration: 2.0,
+      ease: "power3.inOut",
+    });
+
+    gsap.to(this.camera.up, {
+      x: 0,
+      y: 1,
+      z: 0,
+      duration: 2.0,
+      ease: "power3.inOut",
     });
 
     // Animate Camera Position & Target simultaneously
