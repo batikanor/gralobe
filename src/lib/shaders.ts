@@ -514,6 +514,7 @@ export const atmosphereFragmentShader = `
 varying vec3 vNormal;
 varying vec3 vPosition;
 uniform float uOpacity;
+uniform float uMorph;
 
 void main() {
     float intensity = pow(0.65 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 2.0);

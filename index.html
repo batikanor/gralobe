@@ -1311,11 +1311,14 @@
             // Add Germany Stats defined below
             if (!customStats.germany_population) {
               customStats.germany_population = {
-                key: "germany_pop",
-                label: "Population (Mock)",
-                colorScale: ["#f7fbff", "#6baed6", "#08306b"], // Blues
-                domain: [0, 100],
-                accessor: (d) => d,
+                definition: {
+                  id: "germany_pop",
+                  name: "Population (Mock)",
+                  unit: "people",
+                  description: "Mock Population Data for German Districts",
+                  colorScale: ["#f7fbff", "#6baed6", "#08306b"], // Blues
+                  domain: [0, 100],
+                },
                 values: {
                   100: 95, // Munich (Munich Städte)
                   287: 90, // Cologne (Cologne Städte)
@@ -1347,11 +1350,14 @@
              // Define stats for major urban areas
              if (!customStats.world_cities_pop) {
                customStats.world_cities_pop = {
-                 key: "world_cities_pop",
-                 label: "Metro Population",
-                 colorScale: ["#fee5d9", "#fcae91", "#cb181d"], // Red Heatmap
-                 domain: [0, 50],
-                 accessor: (d) => d,
+                 definition: {
+                   id: "world_cities_pop",
+                   name: "Metro Population",
+                   unit: "million",
+                   description: "Major Urban Areas Population",
+                   colorScale: ["#fee5d9", "#fcae91", "#cb181d"], // Red Heatmap
+                   domain: [0, 50],
+                 },
                  values: {
                    "New York": 20,
                    "Tokyo": 38,
