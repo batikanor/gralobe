@@ -1,4 +1,6 @@
-export const customStats: Record<string, any> = {
+import type { StatisticData } from "../lib/types";
+
+export const customStats: Record<string, StatisticData> = {
   coffee: {
     definition: {
       id: "coffee_consumption",

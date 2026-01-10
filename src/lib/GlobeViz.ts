@@ -8,7 +8,7 @@ import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 
 import { ChoroplethRenderer } from "../components/ChoroplethRenderer";
-import { CountryLabels, type LabelStyle } from "../components/CountryLabels";
+import { CountryLabels } from "../components/CountryLabels";
 import { Exporter } from "../components/Exporter";
 import { Legend } from "../components/Legend";
 import { MarkerLayer } from "../components/MarkerLayer";
@@ -28,6 +28,8 @@ import type {
   CountryData,
   EffectsConfig,
   ExportOptions,
+  GlobeVizConfig,
+  LabelStyle,
   MarkerConfig,
   MarkerData,
   StatisticData,
@@ -52,105 +54,6 @@ const EARTH_TEXTURES: Record<TexturePreset, string> = {
     "https://eoimages.gsfc.nasa.gov/images/imagerecords/74000/74117/world.topo.200407.3x5400x2700.jpg",
 };
 
-/**
- * Configuration options for GlobeViz
- */
-export interface GlobeVizConfig {
-  /**
-   * Earth texture preset
-   * @default 'satellite' (NASA Blue Marble)
-   */
-  texture?: TexturePreset;
-
-  /**
-   * Custom map topology configuration
-   * Allows loading custom borders (cities, states) instead of countries
-   */
-  topology?: TopologyConfig;
-
-  /**
-   * Country label display style
-   * @default 'all'
-   */
-  labels?: LabelStyle;
-
-  /**
-   * Initial statistic to display
-   * Can be a built-in statistic ID or a custom StatisticData object
-   * @default 'lifeExpectancy'
-   */
-  statistic?: string | StatisticData;
-
-  /**
-   * Custom statistics data (country values)
-   * If not provided, uses built-in world statistics
-   */
-  data?: CountryData[];
-
-  /**
-   * Enable auto-rotation
-   * @default false
-   */
-  autoRotate?: boolean;
-
-  /**
-   * Initial view: 'globe' or 'flat'
-   * @default 'globe'
-   */
-  initialView?: "globe" | "flat";
-
-  /**
-   * Show control panel (lil-gui)
-   * @default true
-   */
-  showControls?: boolean;
-
-  /**
-   * Show legend
-   * @default true
-   */
-  showLegend?: boolean;
-
-  /**
-   * Visual effects configuration
-   */
-  effects?: EffectsConfig;
-
-  /**
-   * Enable 3D height extrusion based on data values
-   * @default false
-   */
-  extrudeHeight?: boolean;
-
-  /**
-   * Width of the container (defaults to container's width)
-   */
-  width?: number;
-
-  /**
-   * Height of the container (defaults to container's height)
-   */
-  height?: number;
-
-  /**
-   * Callback when a country is clicked
-   */
-  onCountryClick?: (
-    countryId: string,
-    countryName: string,
-    value?: number
-  ) => void;
-
-  /**
-   * Callback when view changes between flat and globe
-   */
-  onViewChange?: (view: "globe" | "flat", morph: number) => void;
-
-  /**
-   * Callback for loading progress (0-1)
-   */
-  onLoadProgress?: (progress: number) => void;
-}
 
 /**
  * Public API for controlling the globe

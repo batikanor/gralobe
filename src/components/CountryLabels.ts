@@ -1,8 +1,13 @@
-import * as THREE from 'three';
-import { CSS2DRenderer, CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
-import { WORLD_STATISTICS, type CountryStatistics } from '../data/worldStatistics';
-
-export type LabelStyle = 'none' | 'major' | 'all' | 'capitals' | 'minimal';
+import * as THREE from "three";
+import {
+  CSS2DObject,
+  CSS2DRenderer,
+} from "three/examples/jsm/renderers/CSS2DRenderer.js";
+import {
+  WORLD_STATISTICS,
+  type CountryStatistics,
+} from "../data/worldStatistics";
+import type { LabelStyle } from "../lib/types";
 
 interface CountryLabel {
   element: HTMLDivElement;
@@ -12,135 +17,223 @@ interface CountryLabel {
   lat: number;
   lon: number;
   // Size category for font scaling
-  sizeCategory: 'large' | 'medium' | 'small' | 'tiny';
+  sizeCategory: "large" | "medium" | "small" | "tiny";
 }
 
 // Country center coordinates (approximate centroids)
 const COUNTRY_CENTERS: { [code: string]: [number, number] } = {
   // Major economies
-  'CN': [35.0, 105.0],
-  'IN': [22.0, 78.0],
-  'US': [39.0, -98.0],
-  'ID': [-2.0, 118.0],
-  'PK': [30.0, 70.0],
-  'BR': [-10.0, -55.0],
-  'NG': [9.0, 8.0],
-  'BD': [24.0, 90.0],
-  'RU': [60.0, 100.0],
-  'MX': [23.0, -102.0],
-  'JP': [36.0, 138.0],
-  'ET': [9.0, 38.5],
-  'PH': [12.0, 122.0],
-  'EG': [27.0, 30.0],
-  'VN': [16.0, 108.0],
+  CN: [35.0, 105.0],
+  IN: [22.0, 78.0],
+  US: [39.0, -98.0],
+  ID: [-2.0, 118.0],
+  PK: [30.0, 70.0],
+  BR: [-10.0, -55.0],
+  NG: [9.0, 8.0],
+  BD: [24.0, 90.0],
+  RU: [60.0, 100.0],
+  MX: [23.0, -102.0],
+  JP: [36.0, 138.0],
+  ET: [9.0, 38.5],
+  PH: [12.0, 122.0],
+  EG: [27.0, 30.0],
+  VN: [16.0, 108.0],
   // Europe
-  'DE': [51.0, 10.0],
-  'TR': [39.0, 35.0],
-  'IR': [32.0, 53.0],
-  'TH': [15.0, 101.0],
-  'GB': [54.0, -2.0],
-  'FR': [46.0, 2.0],
-  'IT': [42.5, 12.5],
-  'ZA': [-29.0, 24.0],
-  'TZ': [-6.0, 35.0],
-  'KE': [0.0, 38.0],
-  'KR': [36.0, 128.0],
-  'CO': [4.0, -72.0],
-  'ES': [40.0, -4.0],
-  'AR': [-34.0, -64.0],
-  'UG': [1.0, 32.0],
-  'DZ': [28.0, 3.0],
-  'UA': [49.0, 32.0],
-  'IQ': [33.0, 44.0],
-  'PL': [52.0, 20.0],
-  'CA': [56.0, -106.0],
-  'MA': [32.0, -5.0],
-  'SA': [24.0, 45.0],
-  'PE': [-10.0, -76.0],
-  'AU': [-25.0, 134.0],
-  'MY': [4.0, 109.5],
-  'GH': [8.0, -1.0],
-  'NP': [28.0, 84.0],
-  'VE': [7.0, -66.0],
-  'MG': [-19.0, 47.0],
-  'CM': [6.0, 12.0],
+  DE: [51.0, 10.0],
+  TR: [39.0, 35.0],
+  IR: [32.0, 53.0],
+  TH: [15.0, 101.0],
+  GB: [54.0, -2.0],
+  FR: [46.0, 2.0],
+  IT: [42.5, 12.5],
+  ZA: [-29.0, 24.0],
+  TZ: [-6.0, 35.0],
+  KE: [0.0, 38.0],
+  KR: [36.0, 128.0],
+  CO: [4.0, -72.0],
+  ES: [40.0, -4.0],
+  AR: [-34.0, -64.0],
+  UG: [1.0, 32.0],
+  DZ: [28.0, 3.0],
+  UA: [49.0, 32.0],
+  IQ: [33.0, 44.0],
+  PL: [52.0, 20.0],
+  CA: [56.0, -106.0],
+  MA: [32.0, -5.0],
+  SA: [24.0, 45.0],
+  PE: [-10.0, -76.0],
+  AU: [-25.0, 134.0],
+  MY: [4.0, 109.5],
+  GH: [8.0, -1.0],
+  NP: [28.0, 84.0],
+  VE: [7.0, -66.0],
+  MG: [-19.0, 47.0],
+  CM: [6.0, 12.0],
   // Nordic & small high-HDI
-  'NL': [52.5, 5.5],
-  'CL': [-34.0, -71.0],
-  'SE': [62.0, 15.0],
-  'NO': [64.0, 10.0],
-  'SG': [1.3, 103.8],
-  'NZ': [-42.0, 174.0],
-  'IE': [53.0, -8.0],
-  'IL': [31.0, 35.0],
-  'AE': [24.0, 54.0],
-  'CH': [47.0, 8.0],
-  'AT': [47.5, 14.5],
-  'PT': [39.5, -8.0],
-  'GR': [39.0, 22.0],
-  'CZ': [49.8, 15.5],
-  'BE': [50.8, 4.0],
-  'HU': [47.0, 20.0],
-  'FI': [64.0, 26.0],
-  'DK': [56.0, 10.0],
-  'IS': [65.0, -18.0],
+  NL: [52.5, 5.5],
+  CL: [-34.0, -71.0],
+  SE: [62.0, 15.0],
+  NO: [64.0, 10.0],
+  SG: [1.3, 103.8],
+  NZ: [-42.0, 174.0],
+  IE: [53.0, -8.0],
+  IL: [31.0, 35.0],
+  AE: [24.0, 54.0],
+  CH: [47.0, 8.0],
+  AT: [47.5, 14.5],
+  PT: [39.5, -8.0],
+  GR: [39.0, 22.0],
+  CZ: [49.8, 15.5],
+  BE: [50.8, 4.0],
+  HU: [47.0, 20.0],
+  FI: [64.0, 26.0],
+  DK: [56.0, 10.0],
+  IS: [65.0, -18.0],
   // Africa
-  'CD': [-3.0, 22.0],
-  'SD': [16.0, 30.0],
-  'AO': [-12.5, 18.5],
-  'MZ': [-18.0, 35.0],
-  'CI': [7.5, -5.5],
-  'NE': [17.0, 10.0],
-  'BF': [12.0, -1.5],
-  'ML': [17.0, -4.0],
-  'SN': [14.5, -14.5],
-  'ZM': [-15.0, 28.0],
-  'ZW': [-19.0, 29.5],
-  'RW': [-2.0, 30.0],
+  CD: [-3.0, 22.0],
+  SD: [16.0, 30.0],
+  AO: [-12.5, 18.5],
+  MZ: [-18.0, 35.0],
+  CI: [7.5, -5.5],
+  NE: [17.0, 10.0],
+  BF: [12.0, -1.5],
+  ML: [17.0, -4.0],
+  SN: [14.5, -14.5],
+  ZM: [-15.0, 28.0],
+  ZW: [-19.0, 29.5],
+  RW: [-2.0, 30.0],
   // Asia
-  'AF': [33.0, 65.0],
-  'MM': [21.0, 96.0],
-  'KP': [40.0, 127.0],
-  'MN': [46.0, 105.0],
-  'LK': [7.8, 80.8],
-  'KZ': [48.0, 67.0],
-  'UZ': [41.0, 64.0],
+  AF: [33.0, 65.0],
+  MM: [21.0, 96.0],
+  KP: [40.0, 127.0],
+  MN: [46.0, 105.0],
+  LK: [7.8, 80.8],
+  KZ: [48.0, 67.0],
+  UZ: [41.0, 64.0],
   // Latin America
-  'CU': [22.0, -79.5],
-  'EC': [-1.5, -78.5],
-  'GT': [15.5, -90.3],
-  'BO': [-17.0, -65.0],
-  'HN': [15.0, -86.5],
-  'PY': [-23.0, -58.0],
-  'UY': [-33.0, -56.0],
-  'CR': [10.0, -84.0],
-  'PA': [9.0, -80.0],
+  CU: [22.0, -79.5],
+  EC: [-1.5, -78.5],
+  GT: [15.5, -90.3],
+  BO: [-17.0, -65.0],
+  HN: [15.0, -86.5],
+  PY: [-23.0, -58.0],
+  UY: [-33.0, -56.0],
+  CR: [10.0, -84.0],
+  PA: [9.0, -80.0],
 };
 
 // Major countries to show in "major" mode (top economies + large countries)
 const MAJOR_COUNTRIES = new Set([
-  'CN', 'IN', 'US', 'BR', 'RU', 'JP', 'DE', 'GB', 'FR', 'AU',
-  'CA', 'MX', 'ID', 'SA', 'ZA', 'EG', 'NG', 'AR', 'IT', 'ES',
-  'KR', 'TR', 'PL', 'NL', 'CH', 'SE', 'NO', 'PK', 'BD', 'VN'
+  "CN",
+  "IN",
+  "US",
+  "BR",
+  "RU",
+  "JP",
+  "DE",
+  "GB",
+  "FR",
+  "AU",
+  "CA",
+  "MX",
+  "ID",
+  "SA",
+  "ZA",
+  "EG",
+  "NG",
+  "AR",
+  "IT",
+  "ES",
+  "KR",
+  "TR",
+  "PL",
+  "NL",
+  "CH",
+  "SE",
+  "NO",
+  "PK",
+  "BD",
+  "VN",
 ]);
 
 // Minimal set - just the largest countries visible at any zoom
-const MINIMAL_COUNTRIES = new Set([
-  'CN', 'IN', 'US', 'BR', 'RU', 'AU', 'CA'
-]);
+const MINIMAL_COUNTRIES = new Set(["CN", "IN", "US", "BR", "RU", "AU", "CA"]);
 
 // Country size categories based on land area (for proportional font sizing)
-const LARGE_COUNTRIES = new Set(['RU', 'CA', 'US', 'CN', 'BR', 'AU']);
+const LARGE_COUNTRIES = new Set(["RU", "CA", "US", "CN", "BR", "AU"]);
 const MEDIUM_COUNTRIES = new Set([
-  'IN', 'AR', 'KZ', 'DZ', 'CD', 'SA', 'MX', 'ID', 'SD', 'LY',
-  'IR', 'MN', 'PE', 'TD', 'NE', 'AO', 'ML', 'ZA', 'CO', 'ET',
-  'BO', 'MR', 'EG', 'TZ', 'NG', 'VE', 'PK', 'TR', 'CL', 'MM'
+  "IN",
+  "AR",
+  "KZ",
+  "DZ",
+  "CD",
+  "SA",
+  "MX",
+  "ID",
+  "SD",
+  "LY",
+  "IR",
+  "MN",
+  "PE",
+  "TD",
+  "NE",
+  "AO",
+  "ML",
+  "ZA",
+  "CO",
+  "ET",
+  "BO",
+  "MR",
+  "EG",
+  "TZ",
+  "NG",
+  "VE",
+  "PK",
+  "TR",
+  "CL",
+  "MM",
 ]);
 const SMALL_COUNTRIES = new Set([
-  'AF', 'UA', 'MG', 'MZ', 'FR', 'ES', 'TH', 'CM', 'PG', 'JP',
-  'DE', 'VN', 'MY', 'CI', 'PL', 'IT', 'PH', 'EC', 'BF', 'NZ',
-  'GB', 'GH', 'RO', 'LA', 'GY', 'OM', 'BY', 'KH', 'SN', 'UG',
-  'NO', 'SE', 'FI', 'MR', 'ZM', 'ZW', 'NP', 'MA', 'IQ', 'BD'
+  "AF",
+  "UA",
+  "MG",
+  "MZ",
+  "FR",
+  "ES",
+  "TH",
+  "CM",
+  "PG",
+  "JP",
+  "DE",
+  "VN",
+  "MY",
+  "CI",
+  "PL",
+  "IT",
+  "PH",
+  "EC",
+  "BF",
+  "NZ",
+  "GB",
+  "GH",
+  "RO",
+  "LA",
+  "GY",
+  "OM",
+  "BY",
+  "KH",
+  "SN",
+  "UG",
+  "NO",
+  "SE",
+  "FI",
+  "MR",
+  "ZM",
+  "ZW",
+  "NP",
+  "MA",
+  "IQ",
+  "BD",
 ]);
 
 /**
@@ -150,7 +243,7 @@ export class CountryLabels {
   private labelRenderer: CSS2DRenderer;
   private labels: CountryLabel[] = [];
   private labelGroup: THREE.Group;
-  private currentStyle: LabelStyle = 'none';
+  private currentStyle: LabelStyle = "none";
   private sphereRadius: number;
   private currentMorph: number = 0;
   private globe: THREE.Mesh | null = null;
@@ -164,11 +257,11 @@ export class CountryLabels {
     const width = container.clientWidth || 800;
     const height = container.clientHeight || 600;
     this.labelRenderer.setSize(width, height);
-    this.labelRenderer.domElement.style.position = 'absolute';
-    this.labelRenderer.domElement.style.top = '0';
-    this.labelRenderer.domElement.style.left = '0';
-    this.labelRenderer.domElement.style.pointerEvents = 'none';
-    this.labelRenderer.domElement.style.zIndex = '5'; // Below legend (10) and UI controls
+    this.labelRenderer.domElement.style.position = "absolute";
+    this.labelRenderer.domElement.style.top = "0";
+    this.labelRenderer.domElement.style.left = "0";
+    this.labelRenderer.domElement.style.pointerEvents = "none";
+    this.labelRenderer.domElement.style.zIndex = "5"; // Below legend (10) and UI controls
     container.appendChild(this.labelRenderer.domElement);
 
     // Create group to hold label objects
@@ -182,7 +275,7 @@ export class CountryLabels {
   }
 
   private injectStyles(): void {
-    const style = document.createElement('style');
+    const style = document.createElement("style");
     style.textContent = `
       .country-label {
         font-family: system-ui, -apple-system, sans-serif;
@@ -272,15 +365,15 @@ export class CountryLabels {
     document.head.appendChild(style);
   }
 
-  private getSizeCategory(code: string): 'large' | 'medium' | 'small' | 'tiny' {
-    if (LARGE_COUNTRIES.has(code)) return 'large';
-    if (MEDIUM_COUNTRIES.has(code)) return 'medium';
-    if (SMALL_COUNTRIES.has(code)) return 'small';
-    return 'tiny';
+  private getSizeCategory(code: string): "large" | "medium" | "small" | "tiny" {
+    if (LARGE_COUNTRIES.has(code)) return "large";
+    if (MEDIUM_COUNTRIES.has(code)) return "medium";
+    if (SMALL_COUNTRIES.has(code)) return "small";
+    return "tiny";
   }
 
   private createLabels(): void {
-    WORLD_STATISTICS.forEach(country => {
+    WORLD_STATISTICS.forEach((country) => {
       const coords = COUNTRY_CENTERS[country.code];
       if (!coords) return; // Skip countries without coordinates
 
@@ -288,7 +381,7 @@ export class CountryLabels {
       const sizeCategory = this.getSizeCategory(country.code);
 
       // Create label element
-      const element = document.createElement('div');
+      const element = document.createElement("div");
       element.className = `country-label hidden size-${sizeCategory}`;
       element.textContent = country.name;
 
@@ -317,7 +410,11 @@ export class CountryLabels {
   private cameraDirection = new THREE.Vector3();
   private labelNormal = new THREE.Vector3();
 
-  private updateLabelPosition(object: CSS2DObject, label: CountryLabel, morph: number): void {
+  private updateLabelPosition(
+    object: CSS2DObject,
+    label: CountryLabel,
+    morph: number
+  ): void {
     const { lat, lon, element } = label;
 
     // Convert lat/lon to UV (same as shader)
@@ -367,14 +464,14 @@ export class CountryLabels {
         this.labelNormal.applyMatrix4(this.globe.matrixWorld).normalize();
 
         const dot = this.labelNormal.dot(this.cameraDirection);
-        element.style.opacity = dot > 0.15 ? '' : '0';
+        element.style.opacity = dot > 0.15 ? "" : "0";
       } else {
-        element.style.opacity = '';
+        element.style.opacity = "";
       }
     } else {
       // No globe - use local position directly
       object.position.copy(this.localPos);
-      element.style.opacity = '';
+      element.style.opacity = "";
     }
   }
 
@@ -392,28 +489,28 @@ export class CountryLabels {
     this.currentStyle = style;
 
     // Update visibility based on style
-    this.labels.forEach(label => {
+    this.labels.forEach((label) => {
       const code = label.country.code;
       let visible = false;
 
       switch (style) {
-        case 'none':
+        case "none":
           visible = false;
           break;
-        case 'minimal':
+        case "minimal":
           // Only the 7 largest countries
           visible = MINIMAL_COUNTRIES.has(code);
           break;
-        case 'major':
+        case "major":
           visible = MAJOR_COUNTRIES.has(code);
           break;
-        case 'all':
-        case 'capitals':
+        case "all":
+        case "capitals":
           visible = true;
           break;
       }
 
-      label.element.classList.toggle('hidden', !visible);
+      label.element.classList.toggle("hidden", !visible);
     });
 
     // Update container class for style-specific styling
@@ -445,10 +542,10 @@ export class CountryLabels {
    * Update label positions (call every frame to sync with globe rotation)
    */
   update(): void {
-    if (this.currentStyle === 'none') return;
+    if (this.currentStyle === "none") return;
 
     // Update all label positions to match current globe rotation
-    this.labels.forEach(label => {
+    this.labels.forEach((label) => {
       this.updateLabelPosition(label.object, label, this.currentMorph);
     });
   }
@@ -457,7 +554,7 @@ export class CountryLabels {
    * Render labels
    */
   render(scene: THREE.Scene, camera: THREE.Camera): void {
-    if (this.currentStyle === 'none') return;
+    if (this.currentStyle === "none") return;
     this.labelRenderer.render(scene, camera);
   }
 
@@ -478,25 +575,34 @@ export class CountryLabels {
   /**
    * Get visible labels with their screen positions for canvas rendering
    */
-  getVisibleLabelsForCanvas(camera: THREE.Camera, canvasWidth: number, canvasHeight: number): Array<{
+  getVisibleLabelsForCanvas(
+    camera: THREE.Camera,
+    canvasWidth: number,
+    canvasHeight: number
+  ): Array<{
     text: string;
     x: number;
     y: number;
     opacity: number;
   }> {
-    if (this.currentStyle === 'none') return [];
+    if (this.currentStyle === "none") return [];
 
-    const result: Array<{ text: string; x: number; y: number; opacity: number }> = [];
+    const result: Array<{
+      text: string;
+      x: number;
+      y: number;
+      opacity: number;
+    }> = [];
     const vector = new THREE.Vector3();
 
-    this.labels.forEach(label => {
+    this.labels.forEach((label) => {
       // Check if label is visible (has opacity > 0)
       // Empty string means default opacity (visible), so treat as 1
       const opacityStr = label.element.style.opacity;
-      const opacity = opacityStr === '' ? 1 : (parseFloat(opacityStr) || 0);
+      const opacity = opacityStr === "" ? 1 : parseFloat(opacityStr) || 0;
 
       // Also check if label has 'hidden' class
-      if (opacity < 0.1 || label.element.classList.contains('hidden')) return;
+      if (opacity < 0.1 || label.element.classList.contains("hidden")) return;
 
       // Get world position of the label
       label.object.getWorldPosition(vector);
@@ -509,12 +615,18 @@ export class CountryLabels {
       const y = (-vector.y * 0.5 + 0.5) * canvasHeight;
 
       // Only include if on screen
-      if (x >= 0 && x <= canvasWidth && y >= 0 && y <= canvasHeight && vector.z < 1) {
+      if (
+        x >= 0 &&
+        x <= canvasWidth &&
+        y >= 0 &&
+        y <= canvasHeight &&
+        vector.z < 1
+      ) {
         result.push({
           text: label.country.name,
           x,
           y,
-          opacity
+          opacity,
         });
       }
     });
@@ -526,7 +638,7 @@ export class CountryLabels {
    * Dispose resources
    */
   dispose(): void {
-    this.labels.forEach(label => {
+    this.labels.forEach((label) => {
       this.labelGroup.remove(label.object);
       label.element.remove();
     });

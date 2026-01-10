@@ -45,7 +45,7 @@ async function createGlobe(containerId: string) {
     enforceLimit();
 
     const config = JSON.parse(container.dataset.config || "{}");
-    const fullConfig: any = {
+    const fullConfig: GlobeVizConfig = {
       autoRotate: true,
       showControls: false,
       showLegend: true,
