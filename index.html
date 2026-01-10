@@ -1305,7 +1305,7 @@
               url: "https://raw.githubusercontent.com/isellsoap/deutschlandGeoJSON/main/4_kreise/2_hoch.geo.json",
               objectName: "counties", 
               disableNormalization: true,
-              idProperty: "ARS" // Amtlicher Regionalschlüssel (Official Region Key)
+              idProperty: "NAME_3" // Verified property in the GeoJSON (e.g. "Berlin", "Munich Städte")
             };
             fullConfig.autoRotate = false;
             // Add Germany Stats defined below
@@ -1317,12 +1317,12 @@
                 domain: [0, 100],
                 accessor: (d) => d,
                 values: {
-                  "08425": 85, // Alb-Donau-Kreis
-                  "05315": 90, // Cologne (Köln)
-                  11000: 95, // Berlin
-                  "09162": 95, // Munich
-                  "02000": 80, // Hamburg
-                  "08111": 88, // Stuttgart
+                  "Munich Städte": 95, // Verified Key
+                  "Cologne Städte": 90, // Verified Key
+                  "Berlin": 95, // Verified Key
+                  "Hamburg, Freie und Hansestadt": 85, // Verified from grep context
+                  "Dortmund Städte": 80, // High likelihood based on pattern
+                  "Frankfurt am Main Städte": 88 // High likelihood
                 },
               };
             }
