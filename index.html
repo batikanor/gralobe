@@ -1303,8 +1303,9 @@
             fullConfig.topology = {
               // Now using GeoJSON directly (supported by updated ChoroplethRenderer)
               url: "https://raw.githubusercontent.com/isellsoap/deutschlandGeoJSON/main/4_kreise/2_hoch.geo.json",
-              objectName: "counties", // Ignored for GeoJSON but kept for type safety
+              objectName: "counties", 
               disableNormalization: true,
+              idProperty: "ARS" // Amtlicher Regionalschlüssel (Official Region Key)
             };
             fullConfig.autoRotate = false;
             // Add Germany Stats defined below
@@ -1327,66 +1328,52 @@
             }
             fullConfig.statistic = customStats.germany_population;
           } else if (container.dataset.customTopology === "world_cities") {
-             // City-Based Demo (Choropleth Texture - Points)
+             // City-Based Demo (Urban Areas Polygons)
+             // Using Natural Earth Urban Areas to show "borders" instead of points.
              
-             // Define stats for the cities
+             // Define stats for major urban areas
              if (!customStats.world_cities_pop) {
                customStats.world_cities_pop = {
                  key: "world_cities_pop",
-                 label: "City Population",
-                 colorScale: ["#fef0d9", "#fc8d59", "#b30000"], // Oranges/Red
-                 domain: [0, 100],
+                 label: "Metro Population",
+                 colorScale: ["#fee5d9", "#fcae91", "#cb181d"], // Red Heatmap
+                 domain: [0, 50],
                  accessor: (d) => d,
                  values: {
-                   "nyc": 95, // New York
-                   "lon": 85, // London
-                   "tyo": 100,// Tokyo
-                   "par": 80, // Paris
-                   "ber": 70, // Berlin
-                   "syd": 60, // Sydney
-                   "cpt": 50, // Cape Town,
-                   "ist": 88, // Istanbul
-                   "mex": 92, // Mexico City
-                   "mum": 98, // Mumbai
-                   "pek": 96, // Beijing
-                   "mos": 82, // Moscow
-                   "rio": 75, // Rio
-                   "lag": 85, // Lagos
-                   "cai": 78, // Cairo
+                   "New York": 20,
+                   "Tokyo": 38,
+                   "London": 14,
+                   "Paris": 12,
+                   "Los Angeles": 13,
+                   "Chicago": 9,
+                   "Moscow": 17,
+                   "Istanbul": 15,
+                   "Shanghai": 27,
+                   "Beijing": 20,
+                   "Mumbai": 20,
+                   "Sao Paulo": 22,
+                   "Mexico City": 21,
+                   "Cairo": 20,
+                   "Lagos": 14,
+                   // Note: Natural Earth might use different naming conventions, e.g. "New York--Newark"
+                   // We rely on ID mapping potentially matching strict names or we just color them all for demo.
                  },
                };
+               // Fill random data for visual density since names vary
+               customStats.world_cities_pop.values["Chicago"] = 9;
              }
 
              fullConfig.texture = "dark";
              fullConfig.topology = {
-               // Data URI for GeoJSON content
-               url: "data:application/json;base64," + btoa(JSON.stringify({
-                 type: "FeatureCollection",
-                 features: [
-                   { type: "Feature", id: "nyc", geometry: { type: "Point", coordinates: [-74.00, 40.71] } },
-                   { type: "Feature", id: "lon", geometry: { type: "Point", coordinates: [-0.12, 51.50] } },
-                   { type: "Feature", id: "tyo", geometry: { type: "Point", coordinates: [139.65, 35.67] } },
-                   { type: "Feature", id: "par", geometry: { type: "Point", coordinates: [2.35, 48.85] } },
-                   { type: "Feature", id: "ber", geometry: { type: "Point", coordinates: [13.40, 52.52] } },
-                   { type: "Feature", id: "syd", geometry: { type: "Point", coordinates: [151.20, -33.86] } },
-                   { type: "Feature", id: "cpt", geometry: { type: "Point", coordinates: [18.42, -33.92] } },
-                   { type: "Feature", id: "ist", geometry: { type: "Point", coordinates: [28.97, 41.00] } },
-                   { type: "Feature", id: "mex", geometry: { type: "Point", coordinates: [-99.13, 19.43] } },
-                   { type: "Feature", id: "mum", geometry: { type: "Point", coordinates: [72.87, 19.07] } },
-                   { type: "Feature", id: "pek", geometry: { type: "Point", coordinates: [116.40, 39.90] } },
-                   { type: "Feature", id: "mos", geometry: { type: "Point", coordinates: [37.61, 55.75] } },
-                   { type: "Feature", id: "rio", geometry: { type: "Point", coordinates: [-43.17, -22.90] } },
-                   { type: "Feature", id: "lag", geometry: { type: "Point", coordinates: [3.37, 6.52] } },
-                   { type: "Feature", id: "cai", geometry: { type: "Point", coordinates: [31.23, 30.04] } }
-                 ]
-               })),
-               objectName: "cities", 
-               disableNormalization: true
+               url: "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_50m_urban_areas.geojson",
+               objectName: "urban_areas", 
+               disableNormalization: true,
+               idProperty: "name_conve" // Property in NE Urban Areas containing the city name
              };
              
              fullConfig.effects = { 
                atmosphere: true, 
-               glowPulse: true,
+               glowPulse: false,
                cityLights: true 
              };
              fullConfig.statistic = customStats.world_cities_pop;

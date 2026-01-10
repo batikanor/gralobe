@@ -26,7 +26,7 @@ const WORKER_CODE = `
   importScripts('https://unpkg.com/topojson-client@3.1.0/dist/topojson-client.min.js');
 
   self.onmessage = async (e) => {
-    const { url, objectName } = e.data;
+    const { url, objectName, idProperty } = e.data;
     
     try {
       const response = await fetch(url);
@@ -59,6 +59,15 @@ const WORKER_CODE = `
         const geojson = topojson.feature(topology, objects);
         features = geojson.features;
       }
+
+      // Map custom ID property if specified
+      if (idProperty && features) {
+        features.forEach(f => {
+          if (f.properties && f.properties[idProperty]) {
+            f.id = f.properties[idProperty];
+          }
+        });
+      }
       
       self.postMessage({ 
         success: true, 
@@ -86,6 +95,7 @@ export class ChoroplethRenderer {
     url: string;
     objectName: string;
     disableNormalization: boolean;
+    idProperty?: string;
   };
 
   // State for progressive rendering
@@ -104,6 +114,7 @@ export class ChoroplethRenderer {
       url?: string;
       objectName?: string;
       disableNormalization?: boolean;
+      idProperty?: string;
     },
     onProgress?: (progress: number) => void,
     onTextureUpdate?: () => void
@@ -122,6 +133,7 @@ export class ChoroplethRenderer {
         "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json",
       objectName: topologyConfig?.objectName || "countries",
       disableNormalization: topologyConfig?.disableNormalization || false,
+      idProperty: topologyConfig?.idProperty,
     };
 
     // Create lookup map for statistics by country ID
@@ -136,7 +148,7 @@ export class ChoroplethRenderer {
   private async loadCountries(): Promise<void> {
     const cacheKey = `${this.topologyConfig!.url}|${
       this.topologyConfig!.objectName
-    }`;
+    }|${this.topologyConfig!.idProperty || ""}`;
 
     // Report initial progress
     this.onProgress?.(0.1);
@@ -149,7 +161,8 @@ export class ChoroplethRenderer {
           // Use Worker for fetching and parsing to keep main thread responsive
           features = await this.loadInWorker(
             this.topologyConfig!.url,
-            this.topologyConfig!.objectName
+            this.topologyConfig!.objectName,
+            this.topologyConfig!.idProperty
           );
 
           // Report parsing done
@@ -208,7 +221,8 @@ export class ChoroplethRenderer {
    */
   private loadInWorker(
     url: string,
-    objectName: string
+    objectName: string,
+    idProperty?: string
   ): Promise<CountryFeature[]> {
     return new Promise((resolve, reject) => {
       const blob = new Blob([WORKER_CODE], { type: "application/javascript" });
