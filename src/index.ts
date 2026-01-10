@@ -22,30 +22,32 @@
  */
 
 // Main exports
-export { GlobeViz } from './lib/GlobeViz';
-export type { GlobeVizConfig, GlobeVizAPI } from './lib/GlobeViz';
+export { GlobeViz } from "./lib/GlobeViz";
+export type { GlobeVizAPI, GlobeVizConfig } from "./lib/GlobeViz";
 
 // Statistics types and utilities
 export type {
-  StatisticDefinition,
-  StatisticData,
   CountryData,
   EffectsConfig,
   ExportOptions,
-} from './lib/types';
+  MarkerConfig,
+  MarkerData,
+  StatisticData,
+  StatisticDefinition,
+} from "./lib/types";
 
 // Formatting utilities
-export { createFormatter, formatValue } from './lib/formatters';
+export { createFormatter, formatValue } from "./lib/formatters";
 
 // Built-in statistics
-export { BUILT_IN_STATISTICS } from './lib/statistics';
-export { WORLD_STATISTICS } from './data/worldStatistics';
+export { WORLD_STATISTICS } from "./data/worldStatistics";
+export { BUILT_IN_STATISTICS } from "./lib/statistics";
 
 // Label styles
-export type { LabelStyle } from './components/CountryLabels';
+export type { LabelStyle } from "./components/CountryLabels";
 
 // Texture presets
-export type { TexturePreset } from './lib/types';
+export type { TexturePreset } from "./lib/types";
 
 // Country code utilities
-export { toNumericCode, normalizeCountryValues } from './lib/countryCodes';
+export { normalizeCountryValues, toNumericCode } from "./lib/countryCodes";

@@ -163,6 +163,7 @@ export declare class GlobeViz implements GlobeVizAPI {
     private legend;
     private exporter;
     private countryLabels;
+    private markerLayer;
     private textureLoader;
     private dataTexture;
     private morph;
@@ -199,6 +200,7 @@ export declare class GlobeViz implements GlobeVizAPI {
     recordGif(options?: ExportOptions): Promise<void>;
     recordVideo(options?: ExportOptions): Promise<void>;
     setEffects(effects: Partial<EffectsConfig>): void;
+    setMarkers(data: MarkerData[], config?: MarkerConfig): void;
     resize(width: number, height: number): void;
     toggleFullscreen(): Promise<void>;
     isFullscreen(): boolean;
@@ -235,6 +237,8 @@ export declare interface GlobeVizAPI {
     recordVideo(options?: ExportOptions): Promise<void>;
     /** Update effects configuration */
     setEffects(effects: Partial<EffectsConfig>): void;
+    /** Set marker data for city-level visualization */
+    setMarkers(data: MarkerData[], config?: MarkerConfig): void;
     /** Resize the visualization */
     resize(width: number, height: number): void;
     /** Toggle fullscreen mode */
@@ -279,7 +283,7 @@ export declare interface GlobeVizConfig {
      * Initial view: 'globe' or 'flat'
      * @default 'globe'
      */
-    initialView?: 'globe' | 'flat';
+    initialView?: "globe" | "flat";
     /**
      * Show control panel (lil-gui)
      * @default true
@@ -314,10 +318,46 @@ export declare interface GlobeVizConfig {
     /**
      * Callback when view changes between flat and globe
      */
-    onViewChange?: (view: 'globe' | 'flat', morph: number) => void;
+    onViewChange?: (view: "globe" | "flat", morph: number) => void;
 }
 
 export declare type LabelStyle = 'none' | 'major' | 'all' | 'capitals' | 'minimal';
+
+/**
+ * Configuration for marker layer rendering
+ */
+export declare interface MarkerConfig {
+    /** Marker visual style */
+    style?: "spike" | "dot" | "pin";
+    /** Default marker color (hex) */
+    color?: string;
+    /** Maximum spike height (for 'spike' style) */
+    maxHeight?: number;
+    /** Enable pulsing glow animation */
+    pulseAnimation?: boolean;
+    /** Marker opacity (0-1) */
+    opacity?: number;
+    /** Callback when marker is clicked */
+    onMarkerClick?: (marker: MarkerData) => void;
+}
+
+/**
+ * Data for a single marker point on the globe
+ */
+export declare interface MarkerData {
+    /** Latitude in degrees (-90 to 90) */
+    lat: number;
+    /** Longitude in degrees (-180 to 180) */
+    lng: number;
+    /** Value for sizing/coloring the marker */
+    value: number;
+    /** Optional label to show on hover */
+    label?: string;
+    /** Optional custom color (hex) */
+    color?: string;
+    /** Optional unique identifier */
+    id?: string;
+}
 
 /**
  * Normalize a values object/map to use numeric codes
@@ -392,7 +432,7 @@ export declare interface StatisticDefinition {
 /**
  * Available texture presets for the globe
  */
-export declare type TexturePreset = 'satellite' | 'natural' | 'dark' | 'light' | 'night' | 'topographic';
+export declare type TexturePreset = "satellite" | "natural" | "dark" | "light" | "night" | "topographic";
 
 /**
  * ISO 3166-1 country code mappings

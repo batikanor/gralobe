@@ -9,12 +9,12 @@
  * Available texture presets for the globe
  */
 export type TexturePreset =
-  | 'satellite'      // NASA Blue Marble (default)
-  | 'natural'        // Natural Earth colors
-  | 'dark'           // Dark theme
-  | 'light'          // Light/minimal theme
-  | 'night'          // Night lights view
-  | 'topographic';   // Terrain/elevation
+  | "satellite" // NASA Blue Marble (default)
+  | "natural" // Natural Earth colors
+  | "dark" // Dark theme
+  | "light" // Light/minimal theme
+  | "night" // Night lights view
+  | "topographic"; // Terrain/elevation
 
 /**
  * Country data with a value for visualization.
@@ -149,4 +149,40 @@ export interface ExportOptions {
   fps?: number;
   /** Output filename */
   filename?: string;
+}
+
+/**
+ * Data for a single marker point on the globe
+ */
+export interface MarkerData {
+  /** Latitude in degrees (-90 to 90) */
+  lat: number;
+  /** Longitude in degrees (-180 to 180) */
+  lng: number;
+  /** Value for sizing/coloring the marker */
+  value: number;
+  /** Optional label to show on hover */
+  label?: string;
+  /** Optional custom color (hex) */
+  color?: string;
+  /** Optional unique identifier */
+  id?: string;
+}
+
+/**
+ * Configuration for marker layer rendering
+ */
+export interface MarkerConfig {
+  /** Marker visual style */
+  style?: "spike" | "dot" | "pin";
+  /** Default marker color (hex) */
+  color?: string;
+  /** Maximum spike height (for 'spike' style) */
+  maxHeight?: number;
+  /** Enable pulsing glow animation */
+  pulseAnimation?: boolean;
+  /** Marker opacity (0-1) */
+  opacity?: number;
+  /** Callback when marker is clicked */
+  onMarkerClick?: (marker: MarkerData) => void;
 }

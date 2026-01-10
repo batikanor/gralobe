@@ -2,16 +2,17 @@
  * GlobeViz - Main class for creating interactive globe visualizations
  */
 
-import { gsap } from 'gsap';
-import GUI from 'lil-gui';
-import * as THREE from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { gsap } from "gsap";
+import GUI from "lil-gui";
+import * as THREE from "three";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 
-import { ChoroplethRenderer } from '../components/ChoroplethRenderer';
-import { CountryLabels, type LabelStyle } from '../components/CountryLabels';
-import { Exporter } from '../components/Exporter';
-import { Legend } from '../components/Legend';
-import { STATISTICS as INTERNAL_STATISTICS } from '../data/worldStatistics';
+import { ChoroplethRenderer } from "../components/ChoroplethRenderer";
+import { CountryLabels, type LabelStyle } from "../components/CountryLabels";
+import { Exporter } from "../components/Exporter";
+import { Legend } from "../components/Legend";
+import { MarkerLayer } from "../components/MarkerLayer";
+import { STATISTICS as INTERNAL_STATISTICS } from "../data/worldStatistics";
 import {
   atmosphereFragmentShader,
   atmosphereVertexShader,
@@ -20,27 +21,34 @@ import {
   starFragmentShader,
   starVertexShader,
   vertexShader,
-} from './shaders';
-import { BUILT_IN_STATISTICS } from './statistics';
+} from "./shaders";
+import { BUILT_IN_STATISTICS } from "./statistics";
 
 import type {
   CountryData,
   EffectsConfig,
   ExportOptions,
+  MarkerConfig,
+  MarkerData,
   StatisticData,
-  TexturePreset
-} from './types';
+  TexturePreset,
+} from "./types";
 
 /**
  * Earth texture URLs
  */
 const EARTH_TEXTURES: Record<TexturePreset, string> = {
-  satellite: 'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_atmos_2048.jpg',
-  natural: 'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_day_4096.jpg',
-  dark: 'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_lights_2048.png',
-  light: 'https://raw.githubusercontent.com/turban/webgl-earth/master/images/2_no_clouds_4k.jpg',
-  night: 'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_lights_2048.png',
-  topographic: 'https://eoimages.gsfc.nasa.gov/images/imagerecords/74000/74117/world.topo.200407.3x5400x2700.jpg',
+  satellite:
+    "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_atmos_2048.jpg",
+  natural:
+    "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_day_4096.jpg",
+  dark: "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_lights_2048.png",
+  light:
+    "https://raw.githubusercontent.com/turban/webgl-earth/master/images/2_no_clouds_4k.jpg",
+  night:
+    "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_lights_2048.png",
+  topographic:
+    "https://eoimages.gsfc.nasa.gov/images/imagerecords/74000/74117/world.topo.200407.3x5400x2700.jpg",
 };
 
 /**
@@ -82,7 +90,7 @@ export interface GlobeVizConfig {
    * Initial view: 'globe' or 'flat'
    * @default 'globe'
    */
-  initialView?: 'globe' | 'flat';
+  initialView?: "globe" | "flat";
 
   /**
    * Show control panel (lil-gui)
@@ -120,12 +128,16 @@ export interface GlobeVizConfig {
   /**
    * Callback when a country is clicked
    */
-  onCountryClick?: (countryId: string, countryName: string, value?: number) => void;
+  onCountryClick?: (
+    countryId: string,
+    countryName: string,
+    value?: number
+  ) => void;
 
   /**
    * Callback when view changes between flat and globe
    */
-  onViewChange?: (view: 'globe' | 'flat', morph: number) => void;
+  onViewChange?: (view: "globe" | "flat", morph: number) => void;
 }
 
 /**
@@ -158,6 +170,8 @@ export interface GlobeVizAPI {
   recordVideo(options?: ExportOptions): Promise<void>;
   /** Update effects configuration */
   setEffects(effects: Partial<EffectsConfig>): void;
+  /** Set marker data for city-level visualization */
+  setMarkers(data: MarkerData[], config?: MarkerConfig): void;
   /** Resize the visualization */
   resize(width: number, height: number): void;
   /** Toggle fullscreen mode */
@@ -169,12 +183,17 @@ export interface GlobeVizAPI {
 }
 
 // Default configuration
-const DEFAULT_CONFIG: Required<Omit<GlobeVizConfig, 'data' | 'onCountryClick' | 'onViewChange' | 'width' | 'height'>> = {
-  texture: 'satellite',
-  labels: 'all',
-  statistic: 'lifeExpectancy',
+const DEFAULT_CONFIG: Required<
+  Omit<
+    GlobeVizConfig,
+    "data" | "onCountryClick" | "onViewChange" | "width" | "height"
+  >
+> = {
+  texture: "satellite",
+  labels: "all",
+  statistic: "lifeExpectancy",
   autoRotate: false,
-  initialView: 'globe',
+  initialView: "globe",
   showControls: false,
   showLegend: true,
   effects: {
@@ -209,10 +228,15 @@ const DEFAULT_CONFIG: Required<Omit<GlobeVizConfig, 'data' | 'onCountryClick' | 
  */
 export class GlobeViz implements GlobeVizAPI {
   private container: HTMLElement;
-  private config: Required<Omit<GlobeVizConfig, 'data' | 'onCountryClick' | 'onViewChange' | 'width' | 'height'>> & {
+  private config: Required<
+    Omit<
+      GlobeVizConfig,
+      "data" | "onCountryClick" | "onViewChange" | "width" | "height"
+    >
+  > & {
     data?: CountryData[];
-    onCountryClick?: GlobeVizConfig['onCountryClick'];
-    onViewChange?: GlobeVizConfig['onViewChange'];
+    onCountryClick?: GlobeVizConfig["onCountryClick"];
+    onViewChange?: GlobeVizConfig["onViewChange"];
     width?: number;
     height?: number;
   };
@@ -235,6 +259,7 @@ export class GlobeViz implements GlobeVizAPI {
   private legend: Legend | null = null;
   private exporter: Exporter | null = null;
   private countryLabels: CountryLabels | null = null;
+  private markerLayer: MarkerLayer | null = null;
   private textureLoader: THREE.TextureLoader = new THREE.TextureLoader();
   private dataTexture: THREE.CanvasTexture | null = null;
 
@@ -255,7 +280,7 @@ export class GlobeViz implements GlobeVizAPI {
    */
   constructor(container: string | HTMLElement, config: GlobeVizConfig = {}) {
     // Get container element
-    if (typeof container === 'string') {
+    if (typeof container === "string") {
       const el = document.querySelector(container);
       if (!el) throw new Error(`Container not found: ${container}`);
       this.container = el as HTMLElement;
@@ -288,7 +313,11 @@ export class GlobeViz implements GlobeVizAPI {
     this.scene.background = new THREE.Color(0x000812);
 
     this.camera = new THREE.PerspectiveCamera(50, width / height, 1, 1000);
-    this.camera.position.set(0, 0, this.config.initialView === 'flat' ? 350 : 150);
+    this.camera.position.set(
+      0,
+      0,
+      this.config.initialView === "flat" ? 350 : 150
+    );
 
     this.renderer = new THREE.WebGLRenderer({ antialias: true });
     this.renderer.setSize(width, height);
@@ -344,29 +373,29 @@ export class GlobeViz implements GlobeVizAPI {
     this.setStatistic(this.config.statistic);
 
     // Set initial view
-    this.morph = this.config.initialView === 'globe' ? 1 : 0;
+    this.morph = this.config.initialView === "globe" ? 1 : 0;
     if (this.material) {
       this.material.uniforms.uMorph.value = this.morph;
     }
     this.countryLabels?.setMorph(this.morph);
 
     // Handle resize
-    window.addEventListener('resize', this.handleResize);
+    window.addEventListener("resize", this.handleResize);
 
     // Handle fullscreen changes
-    document.addEventListener('fullscreenchange', this.handleFullscreenChange);
+    document.addEventListener("fullscreenchange", this.handleFullscreenChange);
 
     // Make canvas focusable for keyboard events
     this.renderer.domElement.tabIndex = 0;
-    this.renderer.domElement.style.outline = 'none'; // Remove default focus outline
-    
+    this.renderer.domElement.style.outline = "none"; // Remove default focus outline
+
     // Focus on click
-    this.renderer.domElement.addEventListener('mousedown', () => {
+    this.renderer.domElement.addEventListener("mousedown", () => {
       this.renderer.domElement.focus();
     });
 
     // Handle keyboard shortcuts
-    this.renderer.domElement.addEventListener('keydown', this.handleKeydown);
+    this.renderer.domElement.addEventListener("keydown", this.handleKeydown);
 
     // Start animation loop
     this.animate();
@@ -383,7 +412,7 @@ export class GlobeViz implements GlobeVizAPI {
     // Only handle events if the canvas is focused
     if (document.activeElement !== this.renderer.domElement) return;
 
-    if (e.key === 'g' || e.key === 'G') {
+    if (e.key === "g" || e.key === "G") {
       if (this.morph > 0.5) {
         this.toFlat();
       } else {
@@ -391,7 +420,7 @@ export class GlobeViz implements GlobeVizAPI {
       }
     }
 
-    if (e.key === 'f' || e.key === 'F') {
+    if (e.key === "f" || e.key === "F") {
       this.toggleFullscreen();
     }
   };
@@ -407,7 +436,7 @@ export class GlobeViz implements GlobeVizAPI {
     baseTex.magFilter = THREE.LinearFilter;
 
     // Create empty data texture
-    const emptyCanvas = document.createElement('canvas');
+    const emptyCanvas = document.createElement("canvas");
     emptyCanvas.width = 2048;
     emptyCanvas.height = 1024;
     this.dataTexture = new THREE.CanvasTexture(emptyCanvas);
@@ -444,7 +473,9 @@ export class GlobeViz implements GlobeVizAPI {
         uClouds: { value: this.config.effects.clouds ? 1 : 0 },
         uCloudSpeed: { value: this.config.effects.cloudSpeed || 1.0 },
         uCloudOpacity: { value: this.config.effects.cloudOpacity || 0.6 },
-        uAtmosphereIntensity: { value: this.config.effects.atmosphereIntensity || 0 },
+        uAtmosphereIntensity: {
+          value: this.config.effects.atmosphereIntensity || 0,
+        },
         uAurora: { value: this.config.effects.aurora ? 1 : 0 },
         uAuroraIntensity: { value: 1.0 },
         uCityLights: { value: this.config.effects.cityLights ? 1 : 0 },
@@ -483,12 +514,12 @@ export class GlobeViz implements GlobeVizAPI {
       vertexShader: atmosphereVertexShader,
       fragmentShader: atmosphereFragmentShader,
       uniforms: {
-        uMorph: { value: 0 }
+        uMorph: { value: 0 },
       },
       side: THREE.BackSide,
       transparent: true,
       blending: THREE.AdditiveBlending,
-      depthWrite: false
+      depthWrite: false,
     });
 
     this.atmosphere = new THREE.Mesh(atmosGeometry, atmosMaterial);
@@ -515,9 +546,9 @@ export class GlobeViz implements GlobeVizAPI {
       phases[i] = Math.random() * Math.PI * 2;
     }
 
-    starsGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    starsGeo.setAttribute('aSize', new THREE.BufferAttribute(sizes, 1));
-    starsGeo.setAttribute('aPhase', new THREE.BufferAttribute(phases, 1));
+    starsGeo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+    starsGeo.setAttribute("aSize", new THREE.BufferAttribute(sizes, 1));
+    starsGeo.setAttribute("aPhase", new THREE.BufferAttribute(phases, 1));
 
     const starsMat = new THREE.ShaderMaterial({
       vertexShader: starVertexShader,
@@ -538,55 +569,66 @@ export class GlobeViz implements GlobeVizAPI {
   private createGUI(): void {
     // Ensure container has relative positioning for GUI
     const containerPosition = getComputedStyle(this.container).position;
-    if (containerPosition === 'static') {
-      this.container.style.position = 'relative';
+    if (containerPosition === "static") {
+      this.container.style.position = "relative";
     }
 
     // Create GUI attached to container, compact and closed by default
-    this.gui = new GUI({ 
+    this.gui = new GUI({
       container: this.container,
-      title: '⚙ Controls',
+      title: "⚙ Controls",
       width: 220,
       closeFolders: true,
     });
 
     // Style the GUI to be positioned within container
     const guiDom = this.gui.domElement;
-    guiDom.style.position = 'absolute';
-    guiDom.style.top = '8px';
-    guiDom.style.right = '8px';
-    guiDom.style.zIndex = '100';
+    guiDom.style.position = "absolute";
+    guiDom.style.top = "8px";
+    guiDom.style.right = "8px";
+    guiDom.style.zIndex = "100";
 
     // Start closed
     this.gui.close();
 
     // View controls
-    const viewFolder = this.gui.addFolder('View');
-    viewFolder.add({ toGlobe: () => this.toGlobe() }, 'toGlobe').name('→ Globe');
-    viewFolder.add({ toFlat: () => this.toFlat() }, 'toFlat').name('→ Flat');
-    viewFolder.add({ morph: this.morph }, 'morph', 0, 1).name('Morph').onChange((v: number) => this.setMorph(v));
+    const viewFolder = this.gui.addFolder("View");
+    viewFolder
+      .add({ toGlobe: () => this.toGlobe() }, "toGlobe")
+      .name("→ Globe");
+    viewFolder.add({ toFlat: () => this.toFlat() }, "toFlat").name("→ Flat");
+    viewFolder
+      .add({ morph: this.morph }, "morph", 0, 1)
+      .name("Morph")
+      .onChange((v: number) => this.setMorph(v));
 
     // Statistics
-    const statsFolder = this.gui.addFolder('Statistics');
+    const statsFolder = this.gui.addFolder("Statistics");
     const statOptions = Object.keys(BUILT_IN_STATISTICS);
-    statsFolder.add({ stat: this.config.statistic as string }, 'stat', statOptions)
-      .name('Statistic')
+    statsFolder
+      .add({ stat: this.config.statistic as string }, "stat", statOptions)
+      .name("Statistic")
       .onChange((id: string) => this.setStatistic(id));
 
     // Labels
-    const labelOptions: LabelStyle[] = ['none', 'minimal', 'major', 'all'];
-    this.gui.addFolder('Display')
-      .add({ labels: this.config.labels }, 'labels', labelOptions)
-      .name('Labels')
+    const labelOptions: LabelStyle[] = ["none", "minimal", "major", "all"];
+    this.gui
+      .addFolder("Display")
+      .add({ labels: this.config.labels }, "labels", labelOptions)
+      .name("Labels")
       .onChange((style: LabelStyle) => this.setLabels(style));
 
     // Auto rotate
-    this.gui.add(this.config, 'autoRotate').name('Auto Rotate');
+    this.gui.add(this.config, "autoRotate").name("Auto Rotate");
 
     // Export controls
-    const exportFolder = this.gui.addFolder('Export');
-    exportFolder.add({ screenshot: () => this.screenshot({ width: 1920, height: 1080 }) }, 'screenshot')
-      .name('📷 Screenshot');
+    const exportFolder = this.gui.addFolder("Export");
+    exportFolder
+      .add(
+        { screenshot: () => this.screenshot({ width: 1920, height: 1080 }) },
+        "screenshot"
+      )
+      .name("📷 Screenshot");
   }
 
   private handleResize = (): void => {
@@ -606,8 +648,6 @@ export class GlobeViz implements GlobeVizAPI {
     // Resize after fullscreen change
     setTimeout(() => this.handleResize(), 50);
   };
-
-
 
   private animate = (): void => {
     if (this.isDestroyed) return;
@@ -634,6 +674,9 @@ export class GlobeViz implements GlobeVizAPI {
     // Update labels
     this.countryLabels?.update();
 
+    // Update markers
+    this.markerLayer?.update(time);
+
     this.renderer.render(this.scene, this.camera);
     this.countryLabels?.render(this.scene, this.camera);
   };
@@ -644,23 +687,26 @@ export class GlobeViz implements GlobeVizAPI {
     gsap.to(this, {
       morph: 1,
       duration: 2.5,
-      ease: 'power2.inOut',
+      ease: "power2.inOut",
       onUpdate: () => {
         if (this.material) {
           this.material.uniforms.uMorph.value = this.morph;
         }
         if (this.atmosphere) {
-          (this.atmosphere.material as THREE.ShaderMaterial).uniforms.uMorph.value = this.morph;
+          (
+            this.atmosphere.material as THREE.ShaderMaterial
+          ).uniforms.uMorph.value = this.morph;
         }
         this.countryLabels?.setMorph(this.morph);
-        this.config.onViewChange?.('globe', this.morph);
+        this.markerLayer?.setMorph(this.morph);
+        this.config.onViewChange?.("globe", this.morph);
       },
     });
 
     gsap.to(this.camera.position, {
       z: 150,
       duration: 2.5,
-      ease: 'power2.inOut',
+      ease: "power2.inOut",
     });
   }
 
@@ -668,23 +714,26 @@ export class GlobeViz implements GlobeVizAPI {
     gsap.to(this, {
       morph: 0,
       duration: 2.5,
-      ease: 'power2.inOut',
+      ease: "power2.inOut",
       onUpdate: () => {
         if (this.material) {
           this.material.uniforms.uMorph.value = this.morph;
         }
         if (this.atmosphere) {
-          (this.atmosphere.material as THREE.ShaderMaterial).uniforms.uMorph.value = this.morph;
+          (
+            this.atmosphere.material as THREE.ShaderMaterial
+          ).uniforms.uMorph.value = this.morph;
         }
         this.countryLabels?.setMorph(this.morph);
-        this.config.onViewChange?.('flat', this.morph);
+        this.markerLayer?.setMorph(this.morph);
+        this.config.onViewChange?.("flat", this.morph);
       },
     });
 
     gsap.to(this.camera.position, {
       z: 350,
       duration: 2.5,
-      ease: 'power2.inOut',
+      ease: "power2.inOut",
     });
   }
 
@@ -694,9 +743,11 @@ export class GlobeViz implements GlobeVizAPI {
       this.material.uniforms.uMorph.value = this.morph;
     }
     if (this.atmosphere) {
-      (this.atmosphere.material as THREE.ShaderMaterial).uniforms.uMorph.value = this.morph;
+      (this.atmosphere.material as THREE.ShaderMaterial).uniforms.uMorph.value =
+        this.morph;
     }
     this.countryLabels?.setMorph(this.morph);
+    this.markerLayer?.setMorph(this.morph);
   }
 
   getMorph(): number {
@@ -704,7 +755,7 @@ export class GlobeViz implements GlobeVizAPI {
   }
 
   setStatistic(id: string | StatisticData): void {
-    if (typeof id === 'string') {
+    if (typeof id === "string") {
       const stat = BUILT_IN_STATISTICS[id];
       if (!stat) {
         console.warn(`Unknown statistic: ${id}`);
@@ -713,7 +764,7 @@ export class GlobeViz implements GlobeVizAPI {
       this.currentStatistic = id;
 
       // Find matching internal statistic and update choropleth
-      const internalStat = INTERNAL_STATISTICS.find(s => s.id === id);
+      const internalStat = INTERNAL_STATISTICS.find((s) => s.id === id);
       if (internalStat && this.choropleth) {
         const canvas = this.choropleth.renderTexture(internalStat);
         if (this.material && canvas) {
@@ -771,7 +822,7 @@ export class GlobeViz implements GlobeVizAPI {
       newTexture.magFilter = THREE.LinearFilter;
       this.material.uniforms.uTexture.value = newTexture;
     } catch (error) {
-      console.error('Failed to load texture:', preset, error);
+      console.error("Failed to load texture:", preset, error);
     }
   }
 
@@ -795,7 +846,7 @@ export class GlobeViz implements GlobeVizAPI {
     // Capture frames over duration
     for (let i = 0; i < totalFrames; i++) {
       this.exporter.captureGifFrame();
-      await new Promise(r => setTimeout(r, 1000 / fps));
+      await new Promise((r) => setTimeout(r, 1000 / fps));
     }
 
     await this.exporter.stopGifCapture(options);
@@ -809,7 +860,7 @@ export class GlobeViz implements GlobeVizAPI {
     await this.exporter.startVideoRecording(options);
 
     // Record for specified duration
-    await new Promise(r => setTimeout(r, duration * 1000));
+    await new Promise((r) => setTimeout(r, duration * 1000));
 
     this.exporter.stopVideoRecording();
   }
@@ -840,7 +891,8 @@ export class GlobeViz implements GlobeVizAPI {
       this.material.uniforms.uCloudOpacity.value = effects.cloudOpacity;
     }
     if (effects.atmosphereIntensity !== undefined) {
-      this.material.uniforms.uAtmosphereIntensity.value = effects.atmosphereIntensity;
+      this.material.uniforms.uAtmosphereIntensity.value =
+        effects.atmosphereIntensity;
     }
     if (effects.gridLines !== undefined) {
       this.material.uniforms.uGridLines.value = effects.gridLines ? 1 : 0;
@@ -852,8 +904,22 @@ export class GlobeViz implements GlobeVizAPI {
       this.material.uniforms.uGlowPulse.value = effects.glowPulse ? 1 : 0;
     }
     if (effects.starTwinkle !== undefined && this.stars) {
-      (this.stars.material as THREE.ShaderMaterial).uniforms.uTwinkle.value = effects.starTwinkle ? 1 : 0;
+      (this.stars.material as THREE.ShaderMaterial).uniforms.uTwinkle.value =
+        effects.starTwinkle ? 1 : 0;
     }
+  }
+
+  setMarkers(data: MarkerData[], config?: MarkerConfig): void {
+    // Create marker layer if it doesn't exist
+    if (!this.markerLayer) {
+      this.markerLayer = new MarkerLayer(config);
+      this.scene.add(this.markerLayer.getGroup());
+      this.markerLayer.setMorph(this.morph);
+    } else if (config) {
+      this.markerLayer.setConfig(config);
+    }
+
+    this.markerLayer.setMarkers(data);
   }
 
   resize(width: number, height: number): void {
@@ -884,13 +950,17 @@ export class GlobeViz implements GlobeVizAPI {
       cancelAnimationFrame(this.animationId);
     }
 
-    window.removeEventListener('resize', this.handleResize);
-    window.removeEventListener('keydown', this.handleKeydown);
-    document.removeEventListener('fullscreenchange', this.handleFullscreenChange);
+    window.removeEventListener("resize", this.handleResize);
+    window.removeEventListener("keydown", this.handleKeydown);
+    document.removeEventListener(
+      "fullscreenchange",
+      this.handleFullscreenChange
+    );
 
     this.gui?.destroy();
     this.legend?.dispose();
     this.countryLabels?.dispose();
+    this.markerLayer?.dispose();
 
     // Dispose Three.js objects
     this.globe?.geometry.dispose();
