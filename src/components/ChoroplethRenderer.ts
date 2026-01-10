@@ -71,8 +71,13 @@ export class ChoroplethRenderer {
     disableNormalization: boolean;
   };
 
+  // State for progressive rendering
+  private currentRenderId: number = 0;
+
   // Callback for loading progress (0-1)
   private onProgress?: (progress: number) => void;
+  // Callback when texture has been updated (for progressive rendering)
+  private onTextureUpdate?: () => void;
 
   // Static cache to share loaded topology data across instances
   private static cache: Map<string, Promise<CountryFeature[]>> = new Map();
@@ -83,13 +88,15 @@ export class ChoroplethRenderer {
       objectName?: string;
       disableNormalization?: boolean;
     },
-    onProgress?: (progress: number) => void
+    onProgress?: (progress: number) => void,
+    onTextureUpdate?: () => void
   ) {
     this.canvas = document.createElement("canvas");
     this.canvas.width = TEXTURE_WIDTH;
     this.canvas.height = TEXTURE_HEIGHT;
     this.ctx = this.canvas.getContext("2d", { willReadFrequently: true })!;
     this.onProgress = onProgress;
+    this.onTextureUpdate = onTextureUpdate;
 
     // Set topology config with defaults
     this.topologyConfig = {
@@ -221,41 +228,86 @@ export class ChoroplethRenderer {
 
   /**
    * Render a choropleth texture for the given statistic
+   * Now supporting Progressive Rendering to prevent UI freezes
    */
   renderTexture(stat: InternalStatisticDef): HTMLCanvasElement {
+    // Cancel any previous render job
+    this.currentRenderId++;
+    const renderId = this.currentRenderId;
+
+    // Clear canvas immediately
     this.ctx.fillStyle = "#1a3a5c";
     this.ctx.fillRect(0, 0, TEXTURE_WIDTH, TEXTURE_HEIGHT);
+
+    // Notify update immediately (cleared state)
+    this.onTextureUpdate?.();
 
     if (!this.loaded) {
       return this.canvas;
     }
 
+    // Determine performance settings
+    // If we have > 1500 features (like US Counties), stroke is too expensive and crowds the map
+    const shouldStroke = this.countries.length < 1500;
+
+    // Start progressive render
     this.ctx.lineWidth = 0.5;
     this.ctx.strokeStyle = "rgba(0, 0, 0, 0.3)";
 
-    this.countries.forEach((country) => {
-      const countryStats = this.statsMap.get(country.id);
-      let color = "#2a2a2a";
+    const BATCH_SIZE = 500;
+    const total = this.countries.length;
+    let index = 0;
 
-      if (countryStats) {
-        const value = stat.accessor(countryStats);
-        const normalized = getNormalizedValue(stat, value);
-        color = this.interpolateColor(stat.colorScale, normalized);
+    const renderBatch = () => {
+      // If a new render started, stop this one
+      if (this.currentRenderId !== renderId) return;
+
+      const end = Math.min(index + BATCH_SIZE, total);
+
+      for (let i = index; i < end; i++) {
+        const country = this.countries[i];
+        const countryStats = this.statsMap.get(country.id);
+        let color = "#2a2a2a";
+
+        if (countryStats) {
+          const value = stat.accessor(countryStats);
+          const normalized = getNormalizedValue(stat, value);
+          color = this.interpolateColor(stat.colorScale, normalized);
+        }
+
+        this.drawFeature(country, color, shouldStroke);
       }
 
-      this.drawFeature(country, color);
-    });
+      index = end;
+
+      // Notify texture update after this batch
+      this.onTextureUpdate?.();
+
+      if (index < total) {
+        // Schedule next batch
+        requestAnimationFrame(renderBatch);
+      }
+    };
+
+    // Kick off the rendering loop
+    requestAnimationFrame(renderBatch);
 
     return this.canvas;
   }
 
   // Optimized draw using cached Path2D
-  private drawFeature(country: CountryFeature, color: string): void {
+  private drawFeature(
+    country: CountryFeature,
+    color: string,
+    stroke: boolean
+  ): void {
     const path = (country as any).path as Path2D;
     if (path) {
       this.ctx.fillStyle = color;
       this.ctx.fill(path);
-      this.ctx.stroke(path);
+      if (stroke) {
+        this.ctx.stroke(path);
+      }
     }
   }
 
@@ -299,9 +351,6 @@ export class ChoroplethRenderer {
     });
   }
 
-  /**
-   * Project lat/lon to canvas coordinates (equirectangular projection)
-   */
   private projectPoint(lon: number, lat: number): [number, number] {
     const x = ((lon + 180) / 360) * TEXTURE_WIDTH;
     const y = ((90 - lat) / 180) * TEXTURE_HEIGHT;
@@ -341,8 +390,14 @@ export class ChoroplethRenderer {
     colorScale: [string, string, string],
     domain: [number, number]
   ): HTMLCanvasElement {
+    // Cancel any previous render job
+    this.currentRenderId++;
+    const renderId = this.currentRenderId;
+
     this.ctx.fillStyle = "#1a3a5c";
     this.ctx.fillRect(0, 0, TEXTURE_WIDTH, TEXTURE_HEIGHT);
+    // Initial notify
+    this.onTextureUpdate?.();
 
     if (!this.loaded) {
       return this.canvas;
@@ -354,20 +409,47 @@ export class ChoroplethRenderer {
         : values
       : normalizeCountryValues(values);
 
-    this.countries.forEach((country) => {
-      const value = valuesObj[country.id];
-      let color = "#2a2a2a";
+    // Determines if we should stroke borders (performance vs detail)
+    const shouldStroke = this.countries.length < 1500;
 
-      if (value !== undefined) {
-        const normalized = Math.max(
-          0,
-          Math.min(1, (value - domain[0]) / (domain[1] - domain[0]))
-        );
-        color = this.interpolateColor(colorScale, normalized);
+    this.ctx.lineWidth = 0.5;
+    this.ctx.strokeStyle = "rgba(0, 0, 0, 0.3)";
+
+    const BATCH_SIZE = 500;
+    const total = this.countries.length;
+    let index = 0;
+
+    // Progressive rendering loop
+    const renderBatch = () => {
+      if (this.currentRenderId !== renderId) return;
+
+      const end = Math.min(index + BATCH_SIZE, total);
+
+      for (let i = index; i < end; i++) {
+        const country = this.countries[i];
+        const value = valuesObj[country.id];
+        let color = "#2a2a2a";
+
+        if (value !== undefined) {
+          const normalized = Math.max(
+            0,
+            Math.min(1, (value - domain[0]) / (domain[1] - domain[0]))
+          );
+          color = this.interpolateColor(colorScale, normalized);
+        }
+
+        this.drawFeature(country, color, shouldStroke);
       }
 
-      this.drawFeature(country, color);
-    });
+      index = end;
+      this.onTextureUpdate?.();
+
+      if (index < total) {
+        requestAnimationFrame(renderBatch);
+      }
+    };
+
+    requestAnimationFrame(renderBatch);
 
     return this.canvas;
   }

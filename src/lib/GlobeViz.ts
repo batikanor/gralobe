@@ -358,7 +358,22 @@ export class GlobeViz implements GlobeVizAPI {
     // Initialize components
     this.choropleth = new ChoroplethRenderer(
       this.config.topology,
-      this.config.onLoadProgress
+      this.config.onLoadProgress,
+      () => {
+        // Texture updated
+        if (this.material && this.material.uniforms.uDataTexture.value) {
+          this.material.uniforms.uDataTexture.value.needsUpdate = true;
+          this.material.uniforms.uDataOverlay.value = 1;
+
+          // If we receive an update and data opacity is 0, fade it in
+          if (this.material.uniforms.uDataOpacity.value === 0) {
+            gsap.to(this.material.uniforms.uDataOpacity, {
+              value: 0.7,
+              duration: 1.0,
+            });
+          }
+        }
+      }
     );
 
     if (this.config.showLegend) {
