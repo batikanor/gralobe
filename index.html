@@ -1402,11 +1402,14 @@
               }
 
               customStats.us_2020_election = {
-                key: "us_election",
-                label: "Vote Share (Sim)",
-                colorScale: ["#ff0000", "#ffffff", "#0000ff"], // Red -> White -> Blue
-                domain: [0, 1],
-                accessor: (d) => d,
+                definition: {
+                  id: "us_election",
+                  name: "Vote Share (Sim)",
+                  unit: "share",
+                  description: "Simulated 2020 Election Data",
+                  colorScale: ["#ff0000", "#ffffff", "#0000ff"], // Red -> White -> Blue
+                  domain: [0, 1],
+                },
                 values: values,
               };
             }
