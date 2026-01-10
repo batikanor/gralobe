@@ -145,6 +145,11 @@ export interface GlobeVizConfig {
    * Callback when view changes between flat and globe
    */
   onViewChange?: (view: "globe" | "flat", morph: number) => void;
+
+  /**
+   * Callback for loading progress (0-1)
+   */
+  onLoadProgress?: (progress: number) => void;
 }
 
 /**
@@ -193,7 +198,13 @@ export interface GlobeVizAPI {
 const DEFAULT_CONFIG: Required<
   Omit<
     GlobeVizConfig,
-    "data" | "onCountryClick" | "onViewChange" | "width" | "height" | "topology"
+    | "data"
+    | "onCountryClick"
+    | "onViewChange"
+    | "onLoadProgress"
+    | "width"
+    | "height"
+    | "topology"
   >
 > = {
   texture: "satellite",
@@ -244,11 +255,13 @@ export class GlobeViz implements GlobeVizAPI {
       | "width"
       | "height"
       | "topology"
+      | "onLoadProgress"
     >
   > & {
     data?: CountryData[];
     onCountryClick?: GlobeVizConfig["onCountryClick"];
     onViewChange?: GlobeVizConfig["onViewChange"];
+    onLoadProgress?: GlobeVizConfig["onLoadProgress"];
     width?: number;
     height?: number;
     topology?: TopologyConfig;
@@ -343,7 +356,10 @@ export class GlobeViz implements GlobeVizAPI {
     this.controls.maxDistance = 400;
 
     // Initialize components
-    this.choropleth = new ChoroplethRenderer(this.config.topology);
+    this.choropleth = new ChoroplethRenderer(
+      this.config.topology,
+      this.config.onLoadProgress
+    );
 
     if (this.config.showLegend) {
       this.legend = new Legend(this.container);

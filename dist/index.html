@@ -210,26 +210,52 @@
         border-color: #4af;
       }
 
-      /* Loading spinner */
+      /* Loading spinner & progress */
       .globe-loader {
         position: absolute;
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
+        width: 140px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        z-index: 50;
+      }
+      .globe-loader.hidden {
+        display: none;
+      }
+      .globe-spinner {
         width: 32px;
         height: 32px;
         border: 2px solid #222;
         border-top-color: #4af;
         border-radius: 50%;
         animation: spin 0.8s linear infinite;
-        z-index: 50;
       }
-      .globe-loader.hidden {
-        display: none;
+      .globe-progress-track {
+        width: 100%;
+        height: 4px;
+        background: #222;
+        border-radius: 2px;
+        overflow: hidden;
       }
+      .globe-progress-bar {
+        width: 0%;
+        height: 100%;
+        background: #4af;
+        transition: width 0.1s linear;
+      }
+      .globe-progress-text {
+        font-size: 10px;
+        color: #666;
+        font-family: monospace;
+      }
+
       @keyframes spin {
         to {
-          transform: translate(-50%, -50%) rotate(360deg);
+          transform: rotate(360deg);
         }
       }
 
@@ -287,7 +313,7 @@
         text-decoration: none;
       }
     </style>
-    <script type="module" crossorigin src="/assets/index-C9Nv1ltJ.js"></script>
+    <script type="module" crossorigin src="/assets/index-DR3R9nw4.js"></script>
   </head>
   <body>
     <nav>
@@ -318,7 +344,13 @@
           class="globe-container"
           data-config='{"labels":"major","effects":{"atmosphere":true,"clouds":true},"showControls":true}'
         >
-          <div class="globe-loader"></div>
+          <div class="globe-loader">
+            <div class="globe-spinner"></div>
+            <div class="globe-progress-track">
+              <div class="globe-progress-bar"></div>
+            </div>
+            <div class="globe-progress-text">0%</div>
+          </div>
           <div class="globe-error">Failed to load</div>
           <div class="globe-toolbar always-visible">
             <button
@@ -358,7 +390,13 @@
             data-config='{"labels":"none","effects":{"atmosphere":false},"showControls":true}'
             data-custom-topology="us_counties"
           >
-            <div class="globe-loader"></div>
+            <div class="globe-loader">
+              <div class="globe-spinner"></div>
+              <div class="globe-progress-track">
+                <div class="globe-progress-bar"></div>
+              </div>
+              <div class="globe-progress-text">0%</div>
+            </div>
             <div class="globe-toolbar">
               <button
                 class="toolbar-btn"
@@ -382,7 +420,13 @@
             data-config='{"labels":"none","effects":{"atmosphere":false},"showControls":true}'
             data-custom-topology="germany_districts"
           >
-            <div class="globe-loader"></div>
+            <div class="globe-loader">
+              <div class="globe-spinner"></div>
+              <div class="globe-progress-track">
+                <div class="globe-progress-bar"></div>
+              </div>
+              <div class="globe-progress-text">0%</div>
+            </div>
             <div class="globe-toolbar">
               <button
                 class="toolbar-btn"
@@ -406,7 +450,13 @@
             data-config='{"labels":"none","effects":{"atmosphere":false},"showControls":true}'
             data-custom-topology="us_election_2020"
           >
-            <div class="globe-loader"></div>
+            <div class="globe-loader">
+              <div class="globe-spinner"></div>
+              <div class="globe-progress-track">
+                <div class="globe-progress-bar"></div>
+              </div>
+              <div class="globe-progress-text">0%</div>
+            </div>
             <div class="globe-toolbar">
               <button
                 class="toolbar-btn"
@@ -447,7 +497,13 @@
             id="globe-size-half"
             data-config='{"labels":"major","showControls":true}'
           >
-            <div class="globe-loader"></div>
+            <div class="globe-loader">
+              <div class="globe-spinner"></div>
+              <div class="globe-progress-track">
+                <div class="globe-progress-bar"></div>
+              </div>
+              <div class="globe-progress-text">0%</div>
+            </div>
             <div class="globe-toolbar">
               <button
                 class="toolbar-btn"
@@ -469,7 +525,13 @@
             id="globe-size-half2"
             data-config='{"labels":"all"}'
           >
-            <div class="globe-loader"></div>
+            <div class="globe-loader">
+              <div class="globe-spinner"></div>
+              <div class="globe-progress-track">
+                <div class="globe-progress-bar"></div>
+              </div>
+              <div class="globe-progress-text">0%</div>
+            </div>
             <div class="globe-toolbar">
               <button
                 class="toolbar-btn"
@@ -493,7 +555,13 @@
             id="globe-size-third1"
             data-config='{"labels":"major","showControls":true}'
           >
-            <div class="globe-loader"></div>
+            <div class="globe-loader">
+              <div class="globe-spinner"></div>
+              <div class="globe-progress-track">
+                <div class="globe-progress-bar"></div>
+              </div>
+              <div class="globe-progress-text">0%</div>
+            </div>
             <div class="globe-toolbar">
               <button
                 class="toolbar-btn"
@@ -515,7 +583,13 @@
             id="globe-size-third2"
             data-config='{"labels":"minimal"}'
           >
-            <div class="globe-loader"></div>
+            <div class="globe-loader">
+              <div class="globe-spinner"></div>
+              <div class="globe-progress-track">
+                <div class="globe-progress-bar"></div>
+              </div>
+              <div class="globe-progress-text">0%</div>
+            </div>
             <div class="globe-toolbar">
               <button
                 class="toolbar-btn"
@@ -537,7 +611,13 @@
             id="globe-size-third3"
             data-config='{"labels":"major","showLegend":false}'
           >
-            <div class="globe-loader"></div>
+            <div class="globe-loader">
+              <div class="globe-spinner"></div>
+              <div class="globe-progress-track">
+                <div class="globe-progress-bar"></div>
+              </div>
+              <div class="globe-progress-text">0%</div>
+            </div>
             <div class="globe-toolbar">
               <button
                 class="toolbar-btn"
@@ -569,7 +649,13 @@
             id="globe-tex-satellite"
             data-config='{"texture":"satellite","labels":"none","showControls":true}'
           >
-            <div class="globe-loader"></div>
+            <div class="globe-loader">
+              <div class="globe-spinner"></div>
+              <div class="globe-progress-track">
+                <div class="globe-progress-bar"></div>
+              </div>
+              <div class="globe-progress-text">0%</div>
+            </div>
             <div class="globe-toolbar">
               <button
                 class="toolbar-btn"
@@ -591,7 +677,13 @@
             id="globe-tex-natural"
             data-config='{"texture":"natural","labels":"none"}'
           >
-            <div class="globe-loader"></div>
+            <div class="globe-loader">
+              <div class="globe-spinner"></div>
+              <div class="globe-progress-track">
+                <div class="globe-progress-bar"></div>
+              </div>
+              <div class="globe-progress-text">0%</div>
+            </div>
             <div class="globe-toolbar">
               <button
                 class="toolbar-btn"
@@ -613,7 +705,13 @@
             id="globe-tex-night"
             data-config='{"texture":"night","labels":"none"}'
           >
-            <div class="globe-loader"></div>
+            <div class="globe-loader">
+              <div class="globe-spinner"></div>
+              <div class="globe-progress-track">
+                <div class="globe-progress-bar"></div>
+              </div>
+              <div class="globe-progress-text">0%</div>
+            </div>
             <div class="globe-toolbar">
               <button
                 class="toolbar-btn"
@@ -635,7 +733,13 @@
             id="globe-tex-topo"
             data-config='{"texture":"topographic","labels":"none"}'
           >
-            <div class="globe-loader"></div>
+            <div class="globe-loader">
+              <div class="globe-spinner"></div>
+              <div class="globe-progress-track">
+                <div class="globe-progress-bar"></div>
+              </div>
+              <div class="globe-progress-text">0%</div>
+            </div>
             <div class="globe-toolbar">
               <button
                 class="toolbar-btn"
@@ -657,7 +761,13 @@
             id="globe-tex-light"
             data-config='{"texture":"light","labels":"none"}'
           >
-            <div class="globe-loader"></div>
+            <div class="globe-loader">
+              <div class="globe-spinner"></div>
+              <div class="globe-progress-track">
+                <div class="globe-progress-bar"></div>
+              </div>
+              <div class="globe-progress-text">0%</div>
+            </div>
             <div class="globe-toolbar">
               <button
                 class="toolbar-btn"
@@ -679,7 +789,13 @@
             id="globe-tex-dark"
             data-config='{"texture":"dark","labels":"none"}'
           >
-            <div class="globe-loader"></div>
+            <div class="globe-loader">
+              <div class="globe-spinner"></div>
+              <div class="globe-progress-track">
+                <div class="globe-progress-bar"></div>
+              </div>
+              <div class="globe-progress-text">0%</div>
+            </div>
             <div class="globe-toolbar">
               <button
                 class="toolbar-btn"
@@ -711,7 +827,13 @@
             id="globe-fx-full"
             data-config='{"effects":{"atmosphere":true,"clouds":true},"showControls":true}'
           >
-            <div class="globe-loader"></div>
+            <div class="globe-loader">
+              <div class="globe-spinner"></div>
+              <div class="globe-progress-track">
+                <div class="globe-progress-bar"></div>
+              </div>
+              <div class="globe-progress-text">0%</div>
+            </div>
             <div class="globe-toolbar">
               <button
                 class="toolbar-btn"
@@ -733,7 +855,13 @@
             id="globe-fx-atmo"
             data-config='{"effects":{"atmosphere":true,"clouds":false}}'
           >
-            <div class="globe-loader"></div>
+            <div class="globe-loader">
+              <div class="globe-spinner"></div>
+              <div class="globe-progress-track">
+                <div class="globe-progress-bar"></div>
+              </div>
+              <div class="globe-progress-text">0%</div>
+            </div>
             <div class="globe-toolbar">
               <button
                 class="toolbar-btn"
@@ -755,7 +883,13 @@
             id="globe-fx-clean"
             data-config='{"effects":{"atmosphere":false,"clouds":false}}'
           >
-            <div class="globe-loader"></div>
+            <div class="globe-loader">
+              <div class="globe-spinner"></div>
+              <div class="globe-progress-track">
+                <div class="globe-progress-bar"></div>
+              </div>
+              <div class="globe-progress-text">0%</div>
+            </div>
             <div class="globe-toolbar">
               <button
                 class="toolbar-btn"

@@ -1,4 +1,3 @@
-import * as topojson from "topojson-client";
 import type {
   CountryStatistics,
   InternalStatisticDef,
@@ -20,6 +19,44 @@ interface CountryFeature {
 }
 
 /**
+ * Worker script for fetching and parsing TopoJSON off the main thread.
+ * We use a Blob URL to avoid needing a separate worker file build step.
+ */
+const WORKER_CODE = `
+  importScripts('https://unpkg.com/topojson-client@3.1.0/dist/topojson-client.min.js');
+
+  self.onmessage = async (e) => {
+    const { url, objectName } = e.data;
+    
+    try {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Fetch failed: ' + response.statusText);
+      
+      const topology = await response.json();
+      const objects = topology.objects[objectName];
+      
+      if (!objects) {
+        throw new Error('Object "' + objectName + '" not found in topology');
+      }
+
+      // Convert to GeoJSON features
+      // @ts-ignore - topojson is loaded via importScripts
+      const geojson = topojson.feature(topology, objects);
+      
+      self.postMessage({ 
+        success: true, 
+        features: geojson.features 
+      });
+    } catch (error) {
+      self.postMessage({ 
+        success: false, 
+        error: error.message 
+      });
+    }
+  };
+`;
+
+/**
  * Renders choropleth map textures by coloring countries based on statistics
  */
 export class ChoroplethRenderer {
@@ -34,19 +71,25 @@ export class ChoroplethRenderer {
     disableNormalization: boolean;
   };
 
+  // Callback for loading progress (0-1)
+  private onProgress?: (progress: number) => void;
+
   // Static cache to share loaded topology data across instances
   private static cache: Map<string, Promise<CountryFeature[]>> = new Map();
 
-  constructor(topologyConfig?: {
-    url?: string;
-    objectName?: string;
-    disableNormalization?: boolean;
-  }) {
+  constructor(
+    topologyConfig?: {
+      url?: string;
+      objectName?: string;
+      disableNormalization?: boolean;
+    },
+    onProgress?: (progress: number) => void
+  ) {
     this.canvas = document.createElement("canvas");
     this.canvas.width = TEXTURE_WIDTH;
     this.canvas.height = TEXTURE_HEIGHT;
-    // Optimize context for frequent reading if needed, though we mostly write to texture
     this.ctx = this.canvas.getContext("2d", { willReadFrequently: true })!;
+    this.onProgress = onProgress;
 
     // Set topology config with defaults
     this.topologyConfig = {
@@ -71,36 +114,40 @@ export class ChoroplethRenderer {
       this.topologyConfig!.objectName
     }`;
 
+    // Report initial progress
+    this.onProgress?.(0.1);
+
     if (!ChoroplethRenderer.cache.has(cacheKey)) {
       const loadPromise = (async () => {
         try {
-          const response = await fetch(this.topologyConfig!.url);
-          if (!response.ok)
-            throw new Error(`Failed to fetch ${this.topologyConfig!.url}`);
-          const topology = (await response.json()) as any;
+          let features: CountryFeature[];
 
-          const objects = topology.objects[this.topologyConfig!.objectName];
-          if (!objects) {
-            throw new Error(
-              `Topology object '${
-                this.topologyConfig!.objectName
-              }' not found in ${this.topologyConfig!.url}`
-            );
-          }
+          // Use Worker for fetching and parsing to keep main thread responsive
+          features = await this.loadInWorker(
+            this.topologyConfig!.url,
+            this.topologyConfig!.objectName
+          );
 
-          const geojson = topojson.feature(topology, objects);
-          const features = (geojson as any).features as CountryFeature[];
+          // Report parsing done
+          this.onProgress?.(0.4);
 
           // Pre-calculate paths for performance
           // We process this in chunks to avoid blocking the main thread for massive datasets
-          // This ensures the UI remains responsive during initial load
           const BATCH_SIZE = 200;
-          for (let i = 0; i < features.length; i += BATCH_SIZE) {
+          const totalFeatures = features.length;
+
+          for (let i = 0; i < totalFeatures; i += BATCH_SIZE) {
             const batch = features.slice(i, i + BATCH_SIZE);
             batch.forEach((feature) => {
-              // Store the Path2D object on the feature itself (cast to any to allow dynamic prop)
+              // Store the Path2D object on the feature itself
               (feature as any).path = this.createPath(feature);
             });
+
+            // Calculate progress for path generation (0.4 to 1.0)
+            const currentProgress =
+              0.4 + (0.6 * (i + BATCH_SIZE)) / totalFeatures;
+            this.onProgress?.(Math.min(0.99, currentProgress));
+
             // Yield to main thread every batch
             await new Promise((resolve) => setTimeout(resolve, 0));
           }
@@ -123,10 +170,44 @@ export class ChoroplethRenderer {
     try {
       this.countries = await ChoroplethRenderer.cache.get(cacheKey)!;
       this.loaded = true;
+      this.onProgress?.(1.0);
     } catch (error) {
-      ChoroplethRenderer.cache.delete(cacheKey); // Clear failed cache on error
+      ChoroplethRenderer.cache.delete(cacheKey);
       console.error("Error loading cached topology:", error);
     }
+  }
+
+  /**
+   * Run fetch and topojson conversion in a Web Worker
+   */
+  private loadInWorker(
+    url: string,
+    objectName: string
+  ): Promise<CountryFeature[]> {
+    return new Promise((resolve, reject) => {
+      const blob = new Blob([WORKER_CODE], { type: "application/javascript" });
+      const workerUrl = URL.createObjectURL(blob);
+      const worker = new Worker(workerUrl);
+
+      worker.onmessage = (e) => {
+        URL.revokeObjectURL(workerUrl);
+        worker.terminate();
+
+        if (e.data.success) {
+          resolve(e.data.features);
+        } else {
+          reject(new Error(e.data.error));
+        }
+      };
+
+      worker.onerror = (e) => {
+        URL.revokeObjectURL(workerUrl);
+        worker.terminate();
+        reject(new Error("Worker error: " + e.message));
+      };
+
+      worker.postMessage({ url, objectName });
+    });
   }
 
   /**
@@ -142,7 +223,6 @@ export class ChoroplethRenderer {
    * Render a choropleth texture for the given statistic
    */
   renderTexture(stat: InternalStatisticDef): HTMLCanvasElement {
-    // Clear canvas with ocean color
     this.ctx.fillStyle = "#1a3a5c";
     this.ctx.fillRect(0, 0, TEXTURE_WIDTH, TEXTURE_HEIGHT);
 
@@ -153,7 +233,6 @@ export class ChoroplethRenderer {
     this.ctx.lineWidth = 0.5;
     this.ctx.strokeStyle = "rgba(0, 0, 0, 0.3)";
 
-    // Draw each country
     this.countries.forEach((country) => {
       const countryStats = this.statsMap.get(country.id);
       let color = "#2a2a2a";
@@ -210,8 +289,6 @@ export class ChoroplethRenderer {
         if (i === 0) {
           path.moveTo(x, y);
         } else if (crossesAntimeridian) {
-          // Splitting logic for 2D canvas paths across dateline is complex
-          // Simple visual hack: move to new point without line
           path.moveTo(x, y);
         } else {
           path.lineTo(x, y);
@@ -226,8 +303,6 @@ export class ChoroplethRenderer {
    * Project lat/lon to canvas coordinates (equirectangular projection)
    */
   private projectPoint(lon: number, lat: number): [number, number] {
-    // Lon: -180 to 180 -> 0 to width
-    // Lat: 90 to -90 -> 0 to height
     const x = ((lon + 180) / 360) * TEXTURE_WIDTH;
     const y = ((90 - lat) / 180) * TEXTURE_HEIGHT;
     return [x, y];
@@ -266,7 +341,6 @@ export class ChoroplethRenderer {
     colorScale: [string, string, string],
     domain: [number, number]
   ): HTMLCanvasElement {
-    // Clear canvas with ocean color
     this.ctx.fillStyle = "#1a3a5c";
     this.ctx.fillRect(0, 0, TEXTURE_WIDTH, TEXTURE_HEIGHT);
 
@@ -274,23 +348,17 @@ export class ChoroplethRenderer {
       return this.canvas;
     }
 
-    this.ctx.lineWidth = 0.5;
-    this.ctx.strokeStyle = "rgba(0, 0, 0, 0.3)";
-
-    // Normalize country codes (supports alpha-2, alpha-3, names) unless disabled
     const valuesObj = this.topologyConfig?.disableNormalization
       ? values instanceof Map
         ? Object.fromEntries(values)
         : values
       : normalizeCountryValues(values);
 
-    // Draw each country
     this.countries.forEach((country) => {
       const value = valuesObj[country.id];
       let color = "#2a2a2a";
 
       if (value !== undefined) {
-        // Normalize value to 0-1 range
         const normalized = Math.max(
           0,
           Math.min(1, (value - domain[0]) / (domain[1] - domain[0]))
@@ -304,16 +372,10 @@ export class ChoroplethRenderer {
     return this.canvas;
   }
 
-  /**
-   * Get canvas for debugging
-   */
   getCanvas(): HTMLCanvasElement {
     return this.canvas;
   }
 
-  /**
-   * Get data URL of current texture
-   */
   getDataURL(): string {
     return this.canvas.toDataURL("image/png");
   }
