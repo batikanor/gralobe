@@ -260,6 +260,23 @@ export class ChoroplethRenderer {
   }
 
   /**
+   * manually set features (e.g. for Urban Mapper)
+   */
+  setFeatures(features: any[]): void {
+    // Process features to ensure they have paths
+    features.forEach((feature) => {
+      if (!(feature as any).path) {
+        (feature as any).path = this.createPath(feature as CountryFeature);
+      }
+    });
+    this.countries = features as CountryFeature[];
+    this.loaded = true;
+
+    // Clear cache for this instance if we override?
+    // No, local override is fine.
+  }
+
+  /**
    * Render a choropleth texture for the given statistic
    * Now supporting Progressive Rendering to prevent UI freezes
    */

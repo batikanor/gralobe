@@ -23,6 +23,7 @@ import {
   vertexShader,
 } from "./shaders";
 import { BUILT_IN_STATISTICS } from "./statistics";
+import { UrbanMapper } from "./UrbanMapper";
 
 import type {
   CountryData,
@@ -86,6 +87,10 @@ export interface GlobeVizAPI {
   setEffects(effects: Partial<EffectsConfig>): void;
   /** Set marker data for city-level visualization */
   setMarkers(data: MarkerData[], config?: MarkerConfig): void;
+  /** Set urban city data for visualization */
+  setUrbanData(
+    points: { lat: number; lon: number; value: number; id?: string }[]
+  ): Promise<void>;
   /** Resize the visualization */
   resize(width: number, height: number): void;
   /** Toggle fullscreen mode */
@@ -1160,6 +1165,45 @@ export class GlobeViz implements GlobeVizAPI {
     }
 
     this.markerLayer.setMarkers(data);
+  }
+
+  async setUrbanData(
+    points: { lat: number; lon: number; value: number; id?: string }[]
+  ): Promise<void> {
+    if (!this.choropleth) return;
+
+    // 1. Map points to urban topology
+    const urbanData = await UrbanMapper.mapPointsToTopology(points);
+
+    // 2. Inject features into ChoroplethRenderer
+    this.choropleth.setFeatures(urbanData.features);
+
+    // 3. Render the texture with the new data
+    // Use a default heatmap color scale if none provided?
+    // Logic: Hackathons are often one active per city, or count.
+    // Let's use a nice "Active" color scale.
+    // Red/Orange/Yellow heatmap style.
+    const colorScale: [string, string, string] = [
+      "#ffffb2",
+      "#fd8d3c",
+      "#bd0026",
+    ];
+
+    // Calculate max for domain
+    const values = Object.values(urbanData.statistics) as number[];
+    const max = Math.max(...values, 1); // Avoid 0/0
+
+    this.choropleth.renderCustomTexture(urbanData.statistics, colorScale, [
+      0,
+      max,
+    ]);
+
+    // 4. Set effects
+    if (this.material) {
+      // Enable city lights for urban feel
+      this.material.uniforms.uCityLights.value = 1;
+      this.config.effects.cityLights = true;
+    }
   }
 
   resize(width: number, height: number): void {
