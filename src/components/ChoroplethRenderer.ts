@@ -28,13 +28,25 @@ export class ChoroplethRenderer {
   private countries: CountryFeature[] = [];
   private loaded: boolean = false;
   private statsMap: Map<string, CountryStatistics>;
-  private topologyConfig?: { url: string; objectName: string };
+  private topologyConfig?: {
+    url: string;
+    objectName: string;
+    disableNormalization: boolean;
+  };
 
-  constructor(topologyConfig?: { url?: string; objectName?: string }) {
+  // Static cache to share loaded topology data across instances
+  private static cache: Map<string, Promise<CountryFeature[]>> = new Map();
+
+  constructor(topologyConfig?: {
+    url?: string;
+    objectName?: string;
+    disableNormalization?: boolean;
+  }) {
     this.canvas = document.createElement("canvas");
     this.canvas.width = TEXTURE_WIDTH;
     this.canvas.height = TEXTURE_HEIGHT;
-    this.ctx = this.canvas.getContext("2d")!;
+    // Optimize context for frequent reading if needed, though we mostly write to texture
+    this.ctx = this.canvas.getContext("2d", { willReadFrequently: true })!;
 
     // Set topology config with defaults
     this.topologyConfig = {
@@ -42,6 +54,7 @@ export class ChoroplethRenderer {
         topologyConfig?.url ||
         "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json",
       objectName: topologyConfig?.objectName || "countries",
+      disableNormalization: topologyConfig?.disableNormalization || false,
     };
 
     // Create lookup map for statistics by country ID
@@ -54,32 +67,65 @@ export class ChoroplethRenderer {
   }
 
   private async loadCountries(): Promise<void> {
+    const cacheKey = `${this.topologyConfig!.url}|${
+      this.topologyConfig!.objectName
+    }`;
+
+    if (!ChoroplethRenderer.cache.has(cacheKey)) {
+      const loadPromise = (async () => {
+        try {
+          const response = await fetch(this.topologyConfig!.url);
+          if (!response.ok)
+            throw new Error(`Failed to fetch ${this.topologyConfig!.url}`);
+          const topology = (await response.json()) as any;
+
+          const objects = topology.objects[this.topologyConfig!.objectName];
+          if (!objects) {
+            throw new Error(
+              `Topology object '${
+                this.topologyConfig!.objectName
+              }' not found in ${this.topologyConfig!.url}`
+            );
+          }
+
+          const geojson = topojson.feature(topology, objects);
+          const features = (geojson as any).features as CountryFeature[];
+
+          // Pre-calculate paths for performance
+          // We process this in chunks to avoid blocking the main thread for massive datasets
+          // This ensures the UI remains responsive during initial load
+          const BATCH_SIZE = 200;
+          for (let i = 0; i < features.length; i += BATCH_SIZE) {
+            const batch = features.slice(i, i + BATCH_SIZE);
+            batch.forEach((feature) => {
+              // Store the Path2D object on the feature itself (cast to any to allow dynamic prop)
+              (feature as any).path = this.createPath(feature);
+            });
+            // Yield to main thread every batch
+            await new Promise((resolve) => setTimeout(resolve, 0));
+          }
+
+          console.log(
+            `Loaded and processed ${features.length} boundaries from ${
+              this.topologyConfig!.objectName
+            }`
+          );
+          return features;
+        } catch (error) {
+          console.error("Failed to load map boundaries:", error);
+          throw error;
+        }
+      })();
+
+      ChoroplethRenderer.cache.set(cacheKey, loadPromise);
+    }
+
     try {
-      // Load TopoJSON from configured URL
-      const response = await fetch(this.topologyConfig!.url);
-      const topology = (await response.json()) as any;
-
-      // Convert TopoJSON to GeoJSON features using configured object name
-      const objects = topology.objects[this.topologyConfig!.objectName];
-      if (!objects) {
-        throw new Error(
-          `Topology object '${this.topologyConfig!.objectName}' not found in ${
-            this.topologyConfig!.url
-          }`
-        );
-      }
-
-      const geojson = topojson.feature(topology, objects);
-      this.countries = (geojson as any).features as CountryFeature[];
+      this.countries = await ChoroplethRenderer.cache.get(cacheKey)!;
       this.loaded = true;
-
-      console.log(
-        `Loaded ${this.countries.length} boundaries from ${
-          this.topologyConfig!.objectName
-        }`
-      );
     } catch (error) {
-      console.error("Failed to load map boundaries:", error);
+      ChoroplethRenderer.cache.delete(cacheKey); // Clear failed cache on error
+      console.error("Error loading cached topology:", error);
     }
   }
 
@@ -104,59 +150,52 @@ export class ChoroplethRenderer {
       return this.canvas;
     }
 
+    this.ctx.lineWidth = 0.5;
+    this.ctx.strokeStyle = "rgba(0, 0, 0, 0.3)";
+
     // Draw each country
     this.countries.forEach((country) => {
       const countryStats = this.statsMap.get(country.id);
+      let color = "#2a2a2a";
 
       if (countryStats) {
         const value = stat.accessor(countryStats);
         const normalized = getNormalizedValue(stat, value);
-        const color = this.interpolateColor(stat.colorScale, normalized);
-        this.ctx.fillStyle = color;
-      } else {
-        // Countries without data - dark gray
-        this.ctx.fillStyle = "#2a2a2a";
+        color = this.interpolateColor(stat.colorScale, normalized);
       }
 
-      this.drawCountry(country);
-    });
-
-    // Draw country borders
-    this.ctx.strokeStyle = "rgba(0, 0, 0, 0.3)";
-    this.ctx.lineWidth = 0.5;
-    this.countries.forEach((country) => {
-      this.strokeCountry(country);
+      this.drawFeature(country, color);
     });
 
     return this.canvas;
   }
 
-  private drawCountry(country: CountryFeature): void {
-    const { geometry } = country;
-
-    if (geometry.type === "Polygon") {
-      this.drawPolygon(geometry.coordinates as number[][][]);
-    } else if (geometry.type === "MultiPolygon") {
-      (geometry.coordinates as number[][][][]).forEach((polygon) => {
-        this.drawPolygon(polygon);
-      });
+  // Optimized draw using cached Path2D
+  private drawFeature(country: CountryFeature, color: string): void {
+    const path = (country as any).path as Path2D;
+    if (path) {
+      this.ctx.fillStyle = color;
+      this.ctx.fill(path);
+      this.ctx.stroke(path);
     }
   }
 
-  private strokeCountry(country: CountryFeature): void {
+  // Pre-calculate path for a feature
+  private createPath(country: CountryFeature): Path2D {
+    const path = new Path2D();
     const { geometry } = country;
 
     if (geometry.type === "Polygon") {
-      this.strokePolygon(geometry.coordinates as number[][][]);
+      this.addPolygonToPath(path, geometry.coordinates as number[][][]);
     } else if (geometry.type === "MultiPolygon") {
       (geometry.coordinates as number[][][][]).forEach((polygon) => {
-        this.strokePolygon(polygon);
+        this.addPolygonToPath(path, polygon);
       });
     }
+    return path;
   }
 
-  private drawPolygon(rings: number[][][]): void {
-    this.ctx.beginPath();
+  private addPolygonToPath(path: Path2D, rings: number[][][]): void {
     rings.forEach((ring) => {
       let prevLon: number | null = null;
       ring.forEach((point, i) => {
@@ -169,46 +208,17 @@ export class ChoroplethRenderer {
           prevLon !== null && Math.abs(lon - prevLon) > 180;
 
         if (i === 0) {
-          this.ctx.moveTo(x, y);
+          path.moveTo(x, y);
         } else if (crossesAntimeridian) {
-          // Skip drawing line across antimeridian - move instead
-          this.ctx.moveTo(x, y);
+          // Splitting logic for 2D canvas paths across dateline is complex
+          // Simple visual hack: move to new point without line
+          path.moveTo(x, y);
         } else {
-          this.ctx.lineTo(x, y);
+          path.lineTo(x, y);
         }
         prevLon = lon;
       });
-      this.ctx.closePath();
-    });
-    this.ctx.fill("evenodd");
-  }
-
-  private strokePolygon(rings: number[][][]): void {
-    rings.forEach((ring) => {
-      this.ctx.beginPath();
-      let prevLon: number | null = null;
-      ring.forEach((point, i) => {
-        const lon = point[0];
-        const lat = point[1];
-        const [x, y] = this.projectPoint(lon, lat);
-
-        // Detect antimeridian crossing (large longitude jump)
-        const crossesAntimeridian =
-          prevLon !== null && Math.abs(lon - prevLon) > 180;
-
-        if (i === 0) {
-          this.ctx.moveTo(x, y);
-        } else if (crossesAntimeridian) {
-          // Don't draw line across antimeridian
-          this.ctx.stroke();
-          this.ctx.beginPath();
-          this.ctx.moveTo(x, y);
-        } else {
-          this.ctx.lineTo(x, y);
-        }
-        prevLon = lon;
-      });
-      this.ctx.stroke();
+      path.closePath();
     });
   }
 
@@ -264,12 +274,20 @@ export class ChoroplethRenderer {
       return this.canvas;
     }
 
-    // Normalize country codes (supports alpha-2, alpha-3, names)
-    const valuesObj = normalizeCountryValues(values);
+    this.ctx.lineWidth = 0.5;
+    this.ctx.strokeStyle = "rgba(0, 0, 0, 0.3)";
+
+    // Normalize country codes (supports alpha-2, alpha-3, names) unless disabled
+    const valuesObj = this.topologyConfig?.disableNormalization
+      ? values instanceof Map
+        ? Object.fromEntries(values)
+        : values
+      : normalizeCountryValues(values);
 
     // Draw each country
     this.countries.forEach((country) => {
       const value = valuesObj[country.id];
+      let color = "#2a2a2a";
 
       if (value !== undefined) {
         // Normalize value to 0-1 range
@@ -277,21 +295,10 @@ export class ChoroplethRenderer {
           0,
           Math.min(1, (value - domain[0]) / (domain[1] - domain[0]))
         );
-        const color = this.interpolateColor(colorScale, normalized);
-        this.ctx.fillStyle = color;
-      } else {
-        // Countries without data - dark gray
-        this.ctx.fillStyle = "#2a2a2a";
+        color = this.interpolateColor(colorScale, normalized);
       }
 
-      this.drawCountry(country);
-    });
-
-    // Draw country borders
-    this.ctx.strokeStyle = "rgba(0, 0, 0, 0.3)";
-    this.ctx.lineWidth = 0.5;
-    this.countries.forEach((country) => {
-      this.strokeCountry(country);
+      this.drawFeature(country, color);
     });
 
     return this.canvas;
