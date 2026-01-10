@@ -197,6 +197,8 @@ export interface TopologyConfig {
   objectName?: string;
   /** Property key to use as ID (default: "id" or "ISO_A3") */
   idProperty?: string;
+  /** Disable value normalization (for pre-calculated stats) */
+  disableNormalization?: boolean;
 }
 
 /**

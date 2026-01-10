@@ -54,7 +54,6 @@ const EARTH_TEXTURES: Record<TexturePreset, string> = {
     "https://eoimages.gsfc.nasa.gov/images/imagerecords/74000/74117/world.topo.200407.3x5400x2700.jpg",
 };
 
-
 /**
  * Public API for controlling the globe
  */
@@ -255,7 +254,7 @@ export class GlobeViz implements GlobeVizAPI {
 
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
     this.controls.enableDamping = true;
-    this.controls.minDistance = 80;
+    this.controls.minDistance = 10;
     this.controls.maxDistance = 400;
 
     // Initialize components
@@ -701,31 +700,56 @@ export class GlobeViz implements GlobeVizAPI {
   }
 
   toFlat(): void {
-    // Determine optimal Z distance to fill screen ("Cover" logic)
-    // Map dimensions
-    const mapHeight = Math.PI * SPHERE_RADIUS;
-    const mapWidth = 2 * Math.PI * SPHERE_RADIUS;
+    // 1. Get Bounds from Choropleth (if region-specific)
+    const bounds = this.choropleth?.getBounds();
+
+    // Map dimensions (World)
+    const worldWidth = Math.PI * 2 * SPHERE_RADIUS;
+    const worldHeight = Math.PI * SPHERE_RADIUS;
+
+    let targetX = 0;
+    let targetY = 0;
+    let fitWidth = worldWidth;
+    let fitHeight = worldHeight;
+
+    if (bounds) {
+      const [minLon, minLat, maxLon, maxLat] = bounds;
+
+      // Convert to Map Coordinates
+      // Lon (-180 to 180) -> X (-width/2 to width/2)
+      // Lat (-90 to 90) -> Y (-height/2 to height/2)
+      const minX = (minLon / 180) * (worldWidth / 2);
+      const maxX = (maxLon / 180) * (worldWidth / 2);
+      const minY = (minLat / 90) * (worldHeight / 2);
+      const maxY = (maxLat / 90) * (worldHeight / 2);
+
+      targetX = (minX + maxX) / 2;
+      targetY = (minY + maxY) / 2;
+      fitWidth = (maxX - minX) * 1.2; // Add 20% padding
+      fitHeight = (maxY - minY) * 1.2;
+    }
 
     // Camera FOV calculation
-    // this.camera.fov is vertical FOV in degrees
     const fovRad = (this.camera.fov * Math.PI) / 180;
     const aspect = this.camera.aspect;
 
     // Distance to fit height
-    const distFitHeight = mapHeight / 2 / Math.tan(fovRad / 2);
+    const distFitHeight = fitHeight / 2 / Math.tan(fovRad / 2);
 
     // Distance to fit width
-    // Visible height at distance d: h = 2 * d * tan(fov/2)
-    // Visible width = h * aspect = 2 * d * tan(fov/2) * aspect
-    // We want VisibleWidth = MapWidth -> d = MapWidth / (2 * tan(fov/2) * aspect)
-    const distFitWidth = mapWidth / (2 * Math.tan(fovRad / 2) * aspect);
+    const distFitWidth = fitWidth / (2 * Math.tan(fovRad / 2) * aspect);
 
-    // To "Cover" the screen (no black bars), we need the map to be LARGER than the view.
-    // This implies zooming in until the smaller dimension matches.
-    // So we pick the MINIMUM distance.
-    const fitZ = Math.min(distFitHeight, distFitWidth);
+    // Pick minimum distance to ensuring coverage (or fit if it's a region?)
+    // If it's a region, we want to FIT it (see all of it).
+    // If it's the world, we want to COVER it (no black bars).
+    // But usually for stats, we want to see everything.
+    // "Cover" logic (used previously) zooms in. "Fit" logic zooms out.
+    // Let's use FIT for regions, COVER for world?
+    // Actually, "Constrain the 2d version... to only available places" calls for FIT.
+    // So let's use MAX distance to ensure the whole region fits.
+    const fitZ = Math.max(distFitHeight, distFitWidth);
 
-    // Disable controls during animation to prevent fighting
+    // Disable controls during animation
     this.controls.enabled = false;
 
     // Animate Morph
@@ -759,14 +783,12 @@ export class GlobeViz implements GlobeVizAPI {
         this.controls.minPolarAngle = Math.PI / 2;
         this.controls.maxPolarAngle = Math.PI / 2;
 
-        // Force update to lock in
+        this.controls.target.set(targetX, targetY, 0);
         this.controls.update();
       },
     });
 
-    // CRITICAL FIX: Reset the object's rotation.
-    // If the user rotated the globe, the 'flat' plane would be tilted.
-    // We must reset it to (0,0,0) to align with the camera.
+    // Reset rotation
     if (this.globe) {
       gsap.to(this.globe.rotation, {
         x: 0,
@@ -776,7 +798,6 @@ export class GlobeViz implements GlobeVizAPI {
         ease: "power3.inOut",
       });
     }
-    // Also reset atmosphere rotation if it exists and isn't a child of globe
     if (this.atmosphere) {
       gsap.to(this.atmosphere.rotation, {
         x: 0,
@@ -787,18 +808,18 @@ export class GlobeViz implements GlobeVizAPI {
       });
     }
 
-    // Animate Camera Position & Target & Up Vector
+    // Animate Camera Position & Target
     gsap.to(this.camera.position, {
-      x: 0,
-      y: 0,
+      x: targetX,
+      y: targetY,
       z: fitZ,
       duration: 2.0,
       ease: "power3.inOut",
     });
 
     gsap.to(this.controls.target, {
-      x: 0,
-      y: 0,
+      x: targetX,
+      y: targetY,
       z: 0,
       duration: 2.0,
       ease: "power3.inOut",
@@ -812,13 +833,12 @@ export class GlobeViz implements GlobeVizAPI {
       ease: "power3.inOut",
     });
 
-    // --- Flat Map Navigation Setup ---
-    // Enable "Google Maps" style navigation: Left-Click Pan, Right-Click Zoom/Rotate
+    // Setup Flat Map Navigation
     this.controls.screenSpacePanning = true;
     this.controls.mouseButtons = {
       LEFT: THREE.MOUSE.PAN,
       MIDDLE: THREE.MOUSE.DOLLY,
-      RIGHT: THREE.MOUSE.ROTATE, // Rotate is disabled anyway, but good to keep typical
+      RIGHT: THREE.MOUSE.ROTATE,
     };
 
     // Fade out space elements

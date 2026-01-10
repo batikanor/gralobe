@@ -5,8 +5,8 @@ import type {
 import { WORLD_STATISTICS, getNormalizedValue } from "../data/worldStatistics";
 import { normalizeCountryValues } from "../lib/countryCodes";
 
-const TEXTURE_WIDTH = 2048;
-const TEXTURE_HEIGHT = 1024;
+const TEXTURE_WIDTH = 4096;
+const TEXTURE_HEIGHT = 2048;
 
 interface CountryFeature {
   type: "Feature";
@@ -269,7 +269,8 @@ export class ChoroplethRenderer {
     const renderId = this.currentRenderId;
 
     // Clear canvas immediately
-    this.ctx.fillStyle = "#1a3a5c";
+    // Clear canvas immediately - Use dark background for high contrast
+    this.ctx.fillStyle = "rgba(10, 20, 30, 0.9)"; // Deep dark blue-black
     this.ctx.fillRect(0, 0, TEXTURE_WIDTH, TEXTURE_HEIGHT);
 
     // Notify update immediately (cleared state)
@@ -434,7 +435,7 @@ export class ChoroplethRenderer {
     this.currentRenderId++;
     const renderId = this.currentRenderId;
 
-    this.ctx.fillStyle = "#1a3a5c";
+    this.ctx.fillStyle = "rgba(10, 20, 30, 0.9)";
     this.ctx.fillRect(0, 0, TEXTURE_WIDTH, TEXTURE_HEIGHT);
     // Initial notify
     this.onTextureUpdate?.();
@@ -500,5 +501,40 @@ export class ChoroplethRenderer {
 
   getDataURL(): string {
     return this.canvas.toDataURL("image/png");
+  }
+
+  getBounds(): [number, number, number, number] | null {
+    if (this.countries.length === 0) return null;
+
+    let minLon = Infinity;
+    let minLat = Infinity;
+    let maxLon = -Infinity;
+    let maxLat = -Infinity;
+
+    // Helper to process coords
+    const processCoords = (coords: any[]) => {
+      // Basic check if it's a [lon, lat] pair or array of them
+      if (typeof coords[0] === "number") {
+        const lon = coords[0];
+        const lat = coords[1];
+        if (lon < minLon) minLon = lon;
+        if (lon > maxLon) maxLon = lon;
+        if (lat < minLat) minLat = lat;
+        if (lat > maxLat) maxLat = lat;
+      } else {
+        coords.forEach(processCoords);
+      }
+    };
+
+    // Iterate all features
+    this.countries.forEach((feature) => {
+      if (feature.geometry) {
+        processCoords(feature.geometry.coordinates);
+      }
+    });
+
+    if (minLon === Infinity) return null;
+
+    return [minLon, minLat, maxLon, maxLat];
   }
 }

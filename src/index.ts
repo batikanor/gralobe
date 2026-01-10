@@ -23,13 +23,14 @@
 
 // Main exports
 export { GlobeViz } from "./lib/GlobeViz";
-export type { GlobeVizAPI, GlobeVizConfig } from "./lib/GlobeViz";
+export type { GlobeVizAPI } from "./lib/GlobeViz";
 
 // Statistics types and utilities
 export type {
   CountryData,
   EffectsConfig,
   ExportOptions,
+  GlobeVizConfig,
   MarkerConfig,
   MarkerData,
   StatisticData,
@@ -44,7 +45,7 @@ export { WORLD_STATISTICS } from "./data/worldStatistics";
 export { BUILT_IN_STATISTICS } from "./lib/statistics";
 
 // Label styles
-export type { LabelStyle } from "./components/CountryLabels";
+export type { LabelStyle } from "./lib/types";
 
 // Texture presets
 export type { TexturePreset } from "./lib/types";

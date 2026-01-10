@@ -1,4 +1,5 @@
 import { GlobeViz } from "../lib/GlobeViz";
+import type { GlobeVizConfig } from "../lib/types";
 import { customStats } from "./data";
 
 const globes = new Map<string, GlobeViz>();
