@@ -411,6 +411,9 @@ export class GlobeViz implements GlobeVizAPI {
         this.createGUI();
       }
 
+      // Setup Interactions
+      this.setupInteraction();
+
       // Wait for choropleth data
       await this.choropleth.waitForLoad();
 
@@ -743,6 +746,14 @@ export class GlobeViz implements GlobeVizAPI {
     this.controls.minPolarAngle = 0;
     this.controls.maxPolarAngle = Math.PI;
 
+    // Restore Globe Navigation defaults
+    this.controls.screenSpacePanning = false;
+    this.controls.mouseButtons = {
+      LEFT: THREE.MOUSE.ROTATE,
+      MIDDLE: THREE.MOUSE.DOLLY,
+      RIGHT: THREE.MOUSE.PAN,
+    };
+
     gsap.to(this, {
       morph: 1,
       duration: 2.5,
@@ -898,22 +909,14 @@ export class GlobeViz implements GlobeVizAPI {
       ease: "power3.inOut",
     });
 
-    // Animate Camera Position & Target simultaneously
-    gsap.to(this.camera.position, {
-      x: 0,
-      y: 0,
-      z: fitZ,
-      duration: 2.0,
-      ease: "power3.inOut",
-    });
-
-    gsap.to(this.controls.target, {
-      x: 0,
-      y: 0,
-      z: 0,
-      duration: 2.0,
-      ease: "power3.inOut",
-    });
+    // --- Flat Map Navigation Setup ---
+    // Enable "Google Maps" style navigation: Left-Click Pan, Right-Click Zoom/Rotate
+    this.controls.screenSpacePanning = true;
+    this.controls.mouseButtons = {
+      LEFT: THREE.MOUSE.PAN,
+      MIDDLE: THREE.MOUSE.DOLLY,
+      RIGHT: THREE.MOUSE.ROTATE, // Rotate is disabled anyway, but good to keep typical
+    };
 
     // Fade out space elements
     if (this.stars) {
@@ -931,6 +934,88 @@ export class GlobeViz implements GlobeVizAPI {
         }
       );
     }
+  }
+
+  /**
+   * Setup mouse interactions (Click to Zoom, etc.)
+   */
+  private setupInteraction(): void {
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+    const plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
+    const planeIntersect = new THREE.Vector3();
+
+    let isDragging = false;
+    let mouseDownPos = new Date().getTime();
+
+    // Track dragging to distinguish from clicking
+    this.renderer.domElement.addEventListener("mousedown", () => {
+      isDragging = false;
+      mouseDownPos = new Date().getTime();
+    });
+
+    this.renderer.domElement.addEventListener("mousemove", () => {
+      isDragging = true;
+    });
+
+    // Handle Click (Zoom In)
+    this.renderer.domElement.addEventListener("click", (event) => {
+      // If drag occurred or long press, ignore
+      if (isDragging && new Date().getTime() - mouseDownPos > 200) return;
+
+      // Calculate mouse position
+      const rect = this.renderer.domElement.getBoundingClientRect();
+      mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+      mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+      // Only handle interaction in Flat mode
+      if (this.morph < 0.1) {
+        raycaster.setFromCamera(mouse, this.camera);
+
+        // Raycast against the mathematical plane at Z=0 (where the map is)
+        raycaster.ray.intersectPlane(plane, planeIntersect);
+
+        if (planeIntersect) {
+          // Check bounds (Map Width/Height from shader)
+          const mapLimitX = Math.PI * SPHERE_RADIUS;
+          const mapLimitY = (Math.PI * SPHERE_RADIUS) / 2;
+
+          if (
+            Math.abs(planeIntersect.x) <= mapLimitX &&
+            Math.abs(planeIntersect.y) <= mapLimitY
+          ) {
+            // Valid Map Click: Zoom to Point
+            const targetZ = 50; // Close zoom level
+
+            // Animate Target (Pan to point)
+            gsap.to(this.controls.target, {
+              x: planeIntersect.x,
+              y: planeIntersect.y,
+              z: 0,
+              duration: 1.5,
+              ease: "power2.inOut",
+            });
+
+            // Animate Camera (Zoom In)
+            gsap.to(this.camera.position, {
+              x: planeIntersect.x,
+              y: planeIntersect.y,
+              z: targetZ,
+              duration: 1.5,
+              ease: "power2.inOut",
+            });
+          }
+        }
+      }
+    });
+
+    // Handle Double Click (Reset View)
+    this.renderer.domElement.addEventListener("dblclick", () => {
+      if (this.morph < 0.1) {
+        // Reset to full view by calling toFlat again
+        this.toFlat();
+      }
+    });
   }
 
   setMorph(value: number): void {
@@ -1044,8 +1129,6 @@ export class GlobeViz implements GlobeVizAPI {
       this.exporter.captureGifFrame();
       await new Promise((r) => setTimeout(r, 1000 / fps));
     }
-
-    await this.exporter.stopGifCapture(options);
   }
 
   async recordVideo(options?: ExportOptions): Promise<void> {
