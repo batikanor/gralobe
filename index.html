@@ -369,6 +369,54 @@
             </div>
           </div>
         </div>
+
+        <div class="variant">
+          <div class="variant-header">
+            <span class="variant-title">Germany Population (Districts)</span>
+            <span class="variant-meta">Custom TopoJSON (Landkreise)</span>
+          </div>
+          <div
+            class="variant-container height-400 globe-container"
+            id="globe-germany"
+            data-config='{"labels":"none","effects":{"atmosphere":false},"showControls":true}'
+            data-custom-topology="germany_districts"
+          >
+            <div class="globe-loader"></div>
+            <div class="globe-toolbar">
+              <button
+                class="toolbar-btn"
+                onclick="toggleFullscreen('globe-germany')"
+                title="Fullscreen"
+              >
+                ⛶
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="variant">
+          <div class="variant-header">
+            <span class="variant-title">US 2020 Election (Simulated)</span>
+            <span class="variant-meta">~3000 Data Points</span>
+          </div>
+          <div
+            class="variant-container height-400 globe-container"
+            id="globe-us-election"
+            data-config='{"labels":"none","effects":{"atmosphere":false},"showControls":true}'
+            data-custom-topology="us_election_2020"
+          >
+            <div class="globe-loader"></div>
+            <div class="globe-toolbar">
+              <button
+                class="toolbar-btn"
+                onclick="toggleFullscreen('globe-us-election')"
+                title="Fullscreen"
+              >
+                ⛶
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -1070,16 +1118,90 @@
             ...config,
           };
 
+          // Handle Custom Topology
           if (container.dataset.customTopology === "us_counties") {
             fullConfig.topology = {
               url: "https://cdn.jsdelivr.net/npm/us-atlas@3/counties-10m.json",
               objectName: "counties",
               disableNormalization: true,
             };
-            // Set initial view to focus on US
             fullConfig.autoRotate = false;
-            // Apply the unemployment statistic immediately
             fullConfig.statistic = customStats.us_unemployment;
+          } else if (container.dataset.customTopology === "germany_districts") {
+            fullConfig.topology = {
+              url: "https://raw.githubusercontent.com/AliceWi/TopoJSON-Germany/master/germany.json",
+              objectName: "counties",
+              disableNormalization: true,
+            };
+            fullConfig.autoRotate = false;
+            // Add Germany Stats defined below
+            if (!customStats.germany_population) {
+              customStats.germany_population = {
+                key: "germany_pop",
+                label: "Population Mock",
+                colorScale: ["#f7fbff", "#08306b"], // Blues
+                domain: [0, 100],
+                accessor: (d) => d,
+                values: {
+                  "08425": 85, // Alb-Donau-Kreis
+                  "08115": 30, // Böblingen
+                  "08211": 70, // Baden-Baden
+                  "08426": 60, // Biberach
+                  "08435": 40, // Bodenseekreis
+                  "08315": 55, // Breisgau-Hochschwarzwald
+                  "08235": 20, // Calw
+                  "08316": 45, // Emmendingen
+                  "08236": 65, // Enzkreis
+                  "08116": 90, // Esslingen
+                  11000: 100, // Berlin (State/City level often grouped)
+                  // Mocking more for visual density
+                  "09162": 95, // Munich
+                  "05111": 80, // Düsseldorf
+                  "02000": 90, // Hamburg
+                },
+              };
+              // Fill some randoms
+              for (let i = 1000; i < 16000; i += 13) {
+                customStats.germany_population.values["0" + i] = Math.floor(
+                  Math.random() * 100
+                );
+              }
+            }
+            fullConfig.statistic = customStats.germany_population;
+          } else if (container.dataset.customTopology === "us_election_2020") {
+            fullConfig.topology = {
+              url: "https://cdn.jsdelivr.net/npm/us-atlas@3/counties-10m.json",
+              objectName: "counties",
+              disableNormalization: true,
+            };
+            fullConfig.autoRotate = false;
+
+            if (!customStats.us_2020_election) {
+              // Generate massive dataset
+              const values = {};
+              // Approx FIPS range
+              for (let fips = 1000; fips < 56046; fips++) {
+                // Bias towards red/blue based on arbitrary math to create clusters
+                const val =
+                  (Math.sin(fips * 0.1) + Math.cos(fips * 0.05)) * 0.5 + 0.5;
+                // Pad FIPS to 5 digits
+                const sFips = fips.toString().padStart(5, "0");
+                if (fips % 7 !== 0) {
+                  // Skip some to simulate real world sparsity/boundaries
+                  values[sFips] = val; // 0-1 (Dem % or similar)
+                }
+              }
+
+              customStats.us_2020_election = {
+                key: "us_election",
+                label: "Vote Share (Sim)",
+                colorScale: ["#ff0000", "#ffffff", "#0000ff"], // Red -> White -> Blue
+                domain: [0, 1],
+                accessor: (d) => d,
+                values: values,
+              };
+            }
+            fullConfig.statistic = customStats.us_2020_election;
           }
 
           const globe = new GlobeViz(container, fullConfig);
