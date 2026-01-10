@@ -656,6 +656,18 @@ export class GlobeViz implements GlobeVizAPI {
       RIGHT: THREE.MOUSE.PAN,
     };
 
+    // Calculate rotation to center the active region
+    let targetRotationY = 0;
+    const bounds = this.choropleth?.getBounds();
+    if (bounds) {
+      const [minLon, _, maxLon, __] = bounds;
+      // Center of the visible region
+      const centerLon = (minLon + maxLon) / 2;
+      // Rotate the globe so the center longitude faces the camera (Z-axis is view)
+      // Assuming standard mapping: -Lon brings it to center
+      targetRotationY = -centerLon * (Math.PI / 180);
+    }
+
     gsap.to(this, {
       morph: 1,
       duration: 2.5,
@@ -675,11 +687,37 @@ export class GlobeViz implements GlobeVizAPI {
       },
     });
 
+    // Reset Camera Position to standard distance
     gsap.to(this.camera.position, {
-      z: 150,
+      x: 0,
+      y: 0,
+      z: 200,
       duration: 2.5,
       ease: "power2.inOut",
     });
+
+    // Reset Controls Target to world center
+    gsap.to(this.controls.target, {
+      x: 0,
+      y: 0,
+      z: 0,
+      duration: 2.5,
+      ease: "power2.inOut",
+      onUpdate: () => {
+        this.controls.update();
+      },
+    });
+
+    // Rotate Globe to face the region
+    if (this.globe) {
+      gsap.to(this.globe.rotation, {
+        y: targetRotationY,
+        x: 0,
+        z: 0,
+        duration: 2.5,
+        ease: "power2.inOut",
+      });
+    }
 
     // Restore space elements
     if (this.stars) {
