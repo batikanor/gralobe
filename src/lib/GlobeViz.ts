@@ -1035,10 +1035,13 @@ export class GlobeViz implements GlobeVizAPI {
       }
 
       // Update data labels (for "data" label mode)
-      // Built-in stats use statsMap from choropleth
+      // Built-in stats use statsMap from choropleth - extract country codes (not numeric IDs)
       if (this.countryLabels && this.choropleth) {
         const statsMap = this.choropleth.getStatsMap();
-        const dataIds: string[] = statsMap ? Array.from(statsMap.keys()) : [];
+        // statsMap values have .code property (2-letter country code like "US")
+        const dataIds: string[] = statsMap
+          ? Array.from(statsMap.values()).map((c: any) => c.code)
+          : [];
         this.countryLabels.setDataIds(dataIds);
       }
     } else {
