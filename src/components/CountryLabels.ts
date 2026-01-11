@@ -421,12 +421,24 @@ export class CountryLabels {
   ): void {
     labels.forEach((customLabel) => {
       // Duplication check: skip if label with same ID or Name already exists
-      // This prevents "Switzerland" appearing twice (once from built-in, once from auto-generated topology)
-      const exists = this.labels.some(
-        (l) =>
-          l.country.id === customLabel.id ||
-          l.country.name.toLowerCase() === customLabel.name.toLowerCase()
-      );
+      // Normalize IDs (remove leading zeros from "036") and Names (remove "The " prefix)
+      const normalizeId = (id: string) =>
+        String(parseInt(id) || id).toLowerCase();
+      const normalizeName = (name: string) =>
+        name
+          .toLowerCase()
+          .replace(/^the\s+/, "")
+          .trim();
+
+      const customId = normalizeId(customLabel.id);
+      const customName = normalizeName(customLabel.name);
+
+      const exists = this.labels.some((l) => {
+        // Built-in ID might be "036", custom might be "36"
+        const lId = normalizeId(l.country.id);
+        const lName = normalizeName(l.country.name);
+        return lId === customId || lName === customName;
+      });
 
       if (exists) return;
 
