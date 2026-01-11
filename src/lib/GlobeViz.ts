@@ -584,6 +584,7 @@ export class GlobeViz implements GlobeVizAPI {
       "minimal",
       "major",
       "all",
+      "all-countries",
       "data",
     ];
     this.gui
