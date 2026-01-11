@@ -420,6 +420,16 @@ export class CountryLabels {
     }>
   ): void {
     labels.forEach((customLabel) => {
+      // Duplication check: skip if label with same ID or Name already exists
+      // This prevents "Switzerland" appearing twice (once from built-in, once from auto-generated topology)
+      const exists = this.labels.some(
+        (l) =>
+          l.country.id === customLabel.id ||
+          l.country.name.toLowerCase() === customLabel.name.toLowerCase()
+      );
+
+      if (exists) return;
+
       const sizeCategory = customLabel.size || "small";
 
       // Create label element
