@@ -344,8 +344,14 @@ export class ChoroplethRenderer {
           }
         }
 
+        // Determine ID: check configured idProperty first
+        let id = f.id || f.properties?.id;
+        if (this.topologyConfig?.idProperty) {
+          id = f.properties?.[this.topologyConfig.idProperty];
+        }
+
         return {
-          id: String(f.id || f.properties?.id || ""),
+          id: String(id || ""),
           name,
           lat: centroid[1],
           lon: centroid[0],

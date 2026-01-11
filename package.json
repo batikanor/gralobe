@@ -1,6 +1,6 @@
 {
   "name": "gralobe",
-  "version": "1.0.46",
+  "version": "1.0.47",
   "description": "Interactive 3D globe visualization with statistics, smooth flat map ↔ globe transitions, and country labels",
   "type": "module",
   "main": "./dist/gralobe.umd.cjs",
