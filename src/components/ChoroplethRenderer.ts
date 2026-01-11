@@ -272,6 +272,12 @@ export class ChoroplethRenderer {
     this.countries = features as CountryFeature[];
     this.loaded = true;
 
+    // When custom features are set, disable normalization
+    // because these features have custom IDs not matching country codes
+    if (this.topologyConfig) {
+      this.topologyConfig.disableNormalization = true;
+    }
+
     // Clear cache for this instance if we override?
     // No, local override is fine.
   }
