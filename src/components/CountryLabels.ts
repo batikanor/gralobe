@@ -284,43 +284,42 @@ export class CountryLabels {
         color: rgba(255, 255, 255, 0.9);
         text-shadow:
           0 1px 2px rgba(0, 0, 0, 1),
-          0 0 4px rgba(0, 0, 0, 0.9),
-          0 0 8px rgba(0, 0, 0, 0.7),
-          0 0 12px rgba(0, 0, 0, 0.5);
+          0 0 3px rgba(0, 0, 0, 0.9),
+          0 0 5px rgba(0, 0, 0, 0.7);
         white-space: nowrap;
         pointer-events: none;
         user-select: none;
         transform: translateX(-50%);
         transition: opacity 0.3s ease;
-        letter-spacing: 1px;
+        letter-spacing: 0.5px;
         text-transform: uppercase;
       }
 
       /* Size categories - proportional to country size */
       .country-label.size-large {
-        font-size: 11px;
+        font-size: 9px;
         font-weight: 600;
-        letter-spacing: 2.5px;
+        letter-spacing: 1.5px;
         color: rgba(255, 255, 255, 0.95);
       }
 
       .country-label.size-medium {
-        font-size: 9px;
+        font-size: 7px;
         font-weight: 500;
-        letter-spacing: 1.5px;
+        letter-spacing: 1px;
         color: rgba(255, 255, 255, 0.9);
       }
 
       .country-label.size-small {
-        font-size: 7px;
+        font-size: 6px;
         font-weight: 500;
-        letter-spacing: 1px;
+        letter-spacing: 0.5px;
         color: rgba(255, 255, 255, 0.8);
       }
 
       .country-label.size-tiny {
-        font-size: 6px;
-        letter-spacing: 0.5px;
+        font-size: 5px;
+        letter-spacing: 0.2px;
         color: rgba(255, 255, 255, 0.7);
       }
 
@@ -331,21 +330,20 @@ export class CountryLabels {
 
       /* Minimal style - bold for the 7 largest */
       .label-style-minimal .country-label.size-large {
-        font-size: 12px;
+        font-size: 10px;
         font-weight: 700;
-        letter-spacing: 3px;
+        letter-spacing: 2px;
         color: #fff;
       }
 
       /* Major style - balanced visibility */
       .label-style-major .country-label.size-large {
-        font-size: 10px;
+        font-size: 9px;
         font-weight: 600;
-        letter-spacing: 2px;
       }
 
       .label-style-major .country-label.size-medium {
-        font-size: 8px;
+        font-size: 7px;
       }
 
       /* All style - harmonized visibility */
@@ -354,12 +352,12 @@ export class CountryLabels {
       }
 
       .label-style-all .country-label.size-large {
-        font-size: 9px;
+        font-size: 8px;
         color: rgba(255, 255, 255, 0.95);
       }
 
       .label-style-all .country-label.size-tiny {
-        font-size: 5px;
+        font-size: 4.5px;
         color: rgba(255, 255, 255, 0.8);
       }
     `;
@@ -549,6 +547,7 @@ export class CountryLabels {
       object.position.copy(this.worldPos);
 
       // Hide labels facing away from camera (only in globe mode)
+      let backfaceOpacity = 1;
       if (this.camera && t > 0.5) {
         // Get camera direction
         this.cameraDirection.copy(this.camera.position).normalize();
@@ -558,14 +557,78 @@ export class CountryLabels {
         this.labelNormal.applyMatrix4(this.globe.matrixWorld).normalize();
 
         const dot = this.labelNormal.dot(this.cameraDirection);
-        element.style.opacity = dot > 0.15 ? "" : "0";
+        backfaceOpacity = dot > 0.15 ? 1 : 0;
+      }
+
+      // Distance-based decluttering (Zoom filtering)
+      let distanceOpacity = 1;
+      // We need to check both globe mode (distance from center) and flat mode (distance from plane)
+      if (this.camera) {
+        let dist = 150; // Default fallback
+        if (t > 0.5) {
+          // Globe mode: distance from center
+          dist = this.camera.position.length();
+        } else {
+          // Flat mode: distance from Z-plane (0)
+          dist = Math.abs(this.camera.position.z);
+        }
+
+        // Adjust distance scale for Flat mode if needed, but usually cameras are similar distance
+
+        // Thresholds for fading out labels based on size
+        // Zoomed in: dist ~ 50-100
+        // Zoomed out default: dist ~ 200
+        // Far out: dist > 300
+
+        switch (label.sizeCategory) {
+          case "tiny":
+            // Hide tiny labels quickly when zooming out
+            distanceOpacity = 1 - Math.min(1, Math.max(0, (dist - 120) / 30)); // Fade 120->150
+            break;
+          case "small":
+            distanceOpacity = 1 - Math.min(1, Math.max(0, (dist - 150) / 40)); // Fade 150->190
+            break;
+          case "medium":
+            distanceOpacity = 1 - Math.min(1, Math.max(0, (dist - 200) / 50)); // Fade 200->250
+            break;
+          case "large":
+            // Large labels stay visible much longer
+            distanceOpacity = 1 - Math.min(1, Math.max(0, (dist - 300) / 100)); // Fade 300->400
+            break;
+        }
+      }
+
+      // Combine opacities
+      const finalOpacity = backfaceOpacity * distanceOpacity;
+
+      // Optimization: Toggle visibility
+      if (finalOpacity < 0.05) {
+        element.style.opacity = "0";
       } else {
-        element.style.opacity = "";
+        element.style.opacity = String(finalOpacity);
       }
     } else {
-      // No globe - use local position directly
+      // No globe - use local position directly (Flat Mode when globe is null? rare)
       object.position.copy(this.localPos);
-      element.style.opacity = "";
+
+      // Also apply decluttering
+      let distanceOpacity = 1;
+      if (this.camera) {
+        const dist = Math.abs(this.camera.position.z);
+        switch (label.sizeCategory) {
+          case "tiny":
+            distanceOpacity = 1 - Math.min(1, Math.max(0, (dist - 120) / 30));
+            break;
+          case "small":
+            distanceOpacity = 1 - Math.min(1, Math.max(0, (dist - 150) / 40));
+            break;
+          case "medium":
+            distanceOpacity = 1 - Math.min(1, Math.max(0, (dist - 200) / 50));
+            break;
+        }
+      }
+      element.style.opacity =
+        distanceOpacity < 0.05 ? "0" : String(distanceOpacity);
     }
   }
 
