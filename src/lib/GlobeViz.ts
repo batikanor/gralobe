@@ -324,6 +324,12 @@ export class GlobeViz implements GlobeVizAPI {
       // Wait for choropleth data
       await this.choropleth.waitForLoad();
 
+      // Auto-label custom topology (e.g. for districts, counties)
+      const featureLabels = this.choropleth.getFeatureLabels();
+      if (featureLabels.length > 0) {
+        this.addCustomLabels(featureLabels);
+      }
+
       // Set initial statistic
       this.setStatistic(this.config.statistic);
     } catch (err) {
@@ -1225,6 +1231,12 @@ export class GlobeViz implements GlobeVizAPI {
 
     // 2. Inject features into ChoroplethRenderer
     this.choropleth.setFeatures(urbanData.features);
+
+    // Auto-label the new urban features
+    const featureLabels = this.choropleth.getFeatureLabels();
+    if (featureLabels.length > 0) {
+      this.addCustomLabels(featureLabels);
+    }
 
     // 3. Render the texture with the new data
     // Use a default heatmap color scale if none provided?

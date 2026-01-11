@@ -85,12 +85,21 @@ const WORKER_CODE = `
 /**
  * Renders choropleth map textures by coloring countries based on statistics
  */
+
+export interface FeatureLabel {
+  id: string;
+  name: string;
+  lat: number;
+  lon: number;
+}
+
 export class ChoroplethRenderer {
   private canvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
   private countries: CountryFeature[] = [];
   private loaded: boolean = false;
   private statsMap: Map<string, CountryStatistics>;
+  private featureLabels: FeatureLabel[] = [];
   private topologyConfig?: {
     url: string;
     objectName: string;
@@ -207,6 +216,10 @@ export class ChoroplethRenderer {
     try {
       this.countries = await ChoroplethRenderer.cache.get(cacheKey)!;
       this.loaded = true;
+
+      // Update feature labels for the loaded topology
+      this.updateFeatureLabels();
+
       this.onProgress?.(1.0);
     } catch (error) {
       ChoroplethRenderer.cache.delete(cacheKey);
@@ -278,8 +291,73 @@ export class ChoroplethRenderer {
       this.topologyConfig.disableNormalization = true;
     }
 
-    // Clear cache for this instance if we override?
-    // No, local override is fine.
+    // Extract feature labels with computed centroids
+    // Extract feature labels with computed centroids
+    this.updateFeatureLabels();
+  }
+
+  /**
+   * Update feature labels from current countries
+   */
+  private updateFeatureLabels(): void {
+    this.featureLabels = this.countries
+      .map((f: any) => {
+        const centroid = this.computeCentroid(f);
+        if (!centroid) return null;
+        return {
+          id: String(f.id || f.properties?.id || ""),
+          name:
+            f.properties?.name ||
+            f.properties?.NAME ||
+            f.properties?.Name ||
+            "",
+          lat: centroid[1],
+          lon: centroid[0],
+        };
+      })
+      .filter(
+        (l): l is FeatureLabel => l !== null && l.id !== "" && l.name !== ""
+      );
+  }
+
+  /**
+   * Get labels for all custom features (with centroids)
+   */
+  getFeatureLabels(): FeatureLabel[] {
+    return this.featureLabels;
+  }
+
+  /**
+   * Compute centroid of a GeoJSON feature (simple average for polygons)
+   */
+  private computeCentroid(feature: any): [number, number] | null {
+    const geometry = feature.geometry;
+    if (!geometry) return null;
+
+    let coords: number[][] = [];
+
+    if (geometry.type === "Point") {
+      return geometry.coordinates as [number, number];
+    } else if (geometry.type === "Polygon") {
+      // Flatten all rings
+      coords = geometry.coordinates.flat();
+    } else if (geometry.type === "MultiPolygon") {
+      // Flatten all polygons and rings
+      coords = geometry.coordinates.flat(2);
+    } else {
+      return null;
+    }
+
+    if (coords.length === 0) return null;
+
+    // Compute average of all coordinates
+    let sumLon = 0,
+      sumLat = 0;
+    for (const coord of coords) {
+      sumLon += coord[0];
+      sumLat += coord[1];
+    }
+    return [sumLon / coords.length, sumLat / coords.length];
   }
 
   /**
