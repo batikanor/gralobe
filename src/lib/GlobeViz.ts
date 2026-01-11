@@ -1200,9 +1200,13 @@ export class GlobeViz implements GlobeVizAPI {
 
     // 4. Set effects
     if (this.material) {
-      // Enable city lights for urban feel
       this.material.uniforms.uCityLights.value = 1;
       this.config.effects.cityLights = true;
+    }
+
+    // Hide country labels as they are confusing for city-level data
+    if (this.countryLabels) {
+      this.countryLabels.getGroup().visible = false;
     }
   }
 

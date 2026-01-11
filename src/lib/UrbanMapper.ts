@@ -54,7 +54,7 @@ export class UrbanMapper {
   static generateSyntheticBoundary(
     lat: number,
     lon: number,
-    radiusKm: number = 5
+    radiusKm: number = 20
   ): any {
     const steps = 16; // Low polygon count for performance
     const coordinates: number[][] = [];
