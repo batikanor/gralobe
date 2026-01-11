@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Gralobe - Development Preview</title>
-    <script type="module" crossorigin src="/assets/index-C19vRtOy.js"></script>
+    <script type="module" crossorigin src="/assets/index-B3X_YXlL.js"></script>
     <link rel="stylesheet" crossorigin href="/assets/index-DHoUf4YV.css">
   </head>
   <body>
@@ -17,6 +17,7 @@
       <a href="#effects">Effects</a>
 
       <a href="#custom">Custom</a>
+      <a href="#labels-demo">Labels</a>
       <a href="#flat">Flat</a>
       <a href="#tiny">Tiny</a>
       <span class="webgl-count" id="webgl-count">0</span>
@@ -183,6 +184,80 @@
               <button
                 class="toolbar-btn"
                 onclick="toggleFullscreen('globe-cities')"
+                title="Fullscreen"
+              >
+                ⛶
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Data Labels Demo -->
+    <section id="labels-demo">
+      <div class="section-header">
+        <h2 class="section-title">Data Labels Mode</h2>
+        <p class="section-desc">
+          Using <code>labels: "data"</code> to show only countries with statistics
+        </p>
+      </div>
+      <div class="info-box">
+        The "data" label mode shows labels <strong>only for countries that have data</strong>. 
+        Instead of cluttered global labels, you see just the relevant ones.
+      </div>
+      <div class="grid grid-2">
+        <div class="variant">
+          <div class="variant-header">
+            <span class="variant-title">Coffee Data (labels: "data")</span>
+            <span class="variant-meta">Only coffee-consuming countries labeled</span>
+          </div>
+          <div
+            class="variant-container height-400 globe-container"
+            id="globe-labels-data"
+            data-config='{"labels":"data","effects":{"atmosphere":true},"showControls":true}'
+            data-custom-stat="coffee"
+          >
+            <div class="globe-loader">
+              <div class="globe-spinner"></div>
+              <div class="globe-progress-track">
+                <div class="globe-progress-bar"></div>
+              </div>
+              <div class="globe-progress-text">0%</div>
+            </div>
+            <div class="globe-toolbar">
+              <button
+                class="toolbar-btn"
+                onclick="toggleFullscreen('globe-labels-data')"
+                title="Fullscreen"
+              >
+                ⛶
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="variant">
+          <div class="variant-header">
+            <span class="variant-title">Happiness Data (labels: "data")</span>
+            <span class="variant-meta">Only happy countries labeled</span>
+          </div>
+          <div
+            class="variant-container height-400 globe-container"
+            id="globe-labels-data2"
+            data-config='{"labels":"data","effects":{"atmosphere":true}}'
+            data-custom-stat="happiness"
+          >
+            <div class="globe-loader">
+              <div class="globe-spinner"></div>
+              <div class="globe-progress-track">
+                <div class="globe-progress-bar"></div>
+              </div>
+              <div class="globe-progress-text">0%</div>
+            </div>
+            <div class="globe-toolbar">
+              <button
+                class="toolbar-btn"
+                onclick="toggleFullscreen('globe-labels-data2')"
                 title="Fullscreen"
               >
                 ⛶

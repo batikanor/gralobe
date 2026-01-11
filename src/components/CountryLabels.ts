@@ -406,6 +406,77 @@ export class CountryLabels {
     });
   }
 
+  /**
+   * Add custom labels (for cities, states, or any geographic points)
+   * These are added to the existing country labels
+   */
+  addCustomLabels(
+    labels: Array<{
+      id: string;
+      name: string;
+      lat: number;
+      lon: number;
+      size?: "large" | "medium" | "small" | "tiny";
+    }>
+  ): void {
+    labels.forEach((customLabel) => {
+      const sizeCategory = customLabel.size || "small";
+
+      // Create label element
+      const element = document.createElement("div");
+      element.className = `country-label hidden size-${sizeCategory} custom-label`;
+      element.textContent = customLabel.name;
+
+      // Create CSS2D object
+      const labelObject = new CSS2DObject(element);
+
+      // Create a minimal CountryStatistics-like object for compatibility
+      const pseudoCountry = {
+        id: customLabel.id,
+        code: customLabel.id,
+        name: customLabel.name,
+      } as any;
+
+      const labelData: CountryLabel = {
+        element,
+        object: labelObject,
+        country: pseudoCountry,
+        lat: customLabel.lat,
+        lon: customLabel.lon,
+        sizeCategory,
+      };
+
+      this.labelGroup.add(labelObject);
+      this.labels.push(labelData);
+
+      // Add to dataIds so it shows in "data" mode
+      this.dataIds.add(customLabel.id);
+
+      // Calculate initial position
+      this.updateLabelPosition(labelObject, labelData, this.currentMorph);
+    });
+
+    // Reapply current style to update visibility
+    this.setStyle(this.currentStyle);
+  }
+
+  /**
+   * Clear all custom labels (keeps country labels)
+   */
+  clearCustomLabels(): void {
+    const toRemove = this.labels.filter((l) =>
+      l.element.classList.contains("custom-label")
+    );
+    toRemove.forEach((label) => {
+      this.labelGroup.remove(label.object);
+      label.element.remove();
+      this.dataIds.delete(label.country.code);
+    });
+    this.labels = this.labels.filter(
+      (l) => !l.element.classList.contains("custom-label")
+    );
+  }
+
   private localPos = new THREE.Vector3();
   private worldPos = new THREE.Vector3();
   private cameraDirection = new THREE.Vector3();

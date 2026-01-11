@@ -1075,6 +1075,28 @@ export class GlobeViz implements GlobeVizAPI {
     this.countryLabels?.setStyle(style);
   }
 
+  /**
+   * Add custom labels for cities, states, or any geographic points
+   */
+  addCustomLabels(
+    labels: Array<{
+      id: string;
+      name: string;
+      lat: number;
+      lon: number;
+      size?: "large" | "medium" | "small" | "tiny";
+    }>
+  ): void {
+    this.countryLabels?.addCustomLabels(labels);
+  }
+
+  /**
+   * Clear all custom labels (keeps country labels)
+   */
+  clearCustomLabels(): void {
+    this.countryLabels?.clearCustomLabels();
+  }
+
   async setTexture(preset: TexturePreset): Promise<void> {
     const url = EARTH_TEXTURES[preset];
     if (!url || !this.material) return;
