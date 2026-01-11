@@ -1,35 +1,40 @@
-import { defineConfig } from 'vite';
-import { resolve } from 'path';
-import dts from 'vite-plugin-dts';
+import { resolve } from "path";
+import { defineConfig } from "vite";
+import dts from "vite-plugin-dts";
 
 export default defineConfig(({ mode }) => {
   // Library build configuration
-  if (mode === 'lib') {
+  if (mode === "lib") {
     return {
       plugins: [
         dts({
-          include: ['src/index.ts', 'src/lib/**/*.ts', 'src/components/**/*.ts', 'src/data/**/*.ts'],
-          outDir: 'dist',
+          include: [
+            "src/index.ts",
+            "src/lib/**/*.ts",
+            "src/components/**/*.ts",
+            "src/data/**/*.ts",
+          ],
+          outDir: "dist",
           rollupTypes: true,
         }),
       ],
       build: {
         lib: {
-          entry: resolve(__dirname, 'src/index.ts'),
-          name: 'Gralobe',
-          fileName: 'gralobe',
-          formats: ['es', 'umd'],
+          entry: resolve(__dirname, "src/index.ts"),
+          name: "Gralobe",
+          fileName: "gralobe",
+          formats: ["es", "umd"],
         },
         rollupOptions: {
-          external: ['three'],
+          external: ["three", /^three\/.*/],
           output: {
             globals: {
-              three: 'THREE',
+              three: "THREE",
             },
           },
         },
-        target: 'esnext',
-        minify: 'esbuild',
+        target: "esnext",
+        minify: "esbuild",
         sourcemap: true,
       },
     };
@@ -37,11 +42,11 @@ export default defineConfig(({ mode }) => {
 
   // Development configuration
   return {
-    assetsInclude: ['**/*.glsl'],
+    assetsInclude: ["**/*.glsl"],
 
     build: {
-      target: 'esnext',
-      minify: 'esbuild',
+      target: "esnext",
+      minify: "esbuild",
       sourcemap: true,
     },
 
@@ -53,12 +58,12 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: {
         // Allow importing 'gralobe' in examples to resolve to local source
-        'gralobe': resolve(__dirname, 'src/index.ts'),
+        gralobe: resolve(__dirname, "src/index.ts"),
       },
     },
 
     optimizeDeps: {
-      include: ['three', 'gsap', 'lil-gui'],
+      include: ["three", "gsap", "lil-gui"],
     },
   };
 });

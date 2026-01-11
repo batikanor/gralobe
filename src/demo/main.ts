@@ -50,7 +50,7 @@ async function createGlobe(containerId: string) {
       autoRotate: true,
       showControls: false,
       showLegend: true,
-      labels: "major",
+      labels: "data",
       effects: { atmosphere: false, clouds: false },
       ...config,
       onLoadProgress: (progress: number) => {

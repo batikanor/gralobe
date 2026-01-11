@@ -115,7 +115,7 @@ const DEFAULT_CONFIG: Required<
   >
 > = {
   texture: "satellite",
-  labels: "all",
+  labels: "data",
   statistic: "lifeExpectancy",
   autoRotate: false,
   initialView: "globe",
