@@ -573,7 +573,13 @@ export class GlobeViz implements GlobeVizAPI {
       .onChange((id: string) => this.setStatistic(id));
 
     // Labels
-    const labelOptions: LabelStyle[] = ["none", "minimal", "major", "all"];
+    const labelOptions: LabelStyle[] = [
+      "none",
+      "minimal",
+      "major",
+      "all",
+      "data",
+    ];
     this.gui
       .addFolder("Display")
       .add({ labels: this.config.labels }, "labels", labelOptions)
