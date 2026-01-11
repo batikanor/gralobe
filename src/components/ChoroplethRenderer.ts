@@ -304,13 +304,38 @@ export class ChoroplethRenderer {
       .map((f: any) => {
         const centroid = this.computeCentroid(f);
         if (!centroid) return null;
+
+        // Smart name extraction: check standard keys first, then search for likely candidates
+        let name =
+          f.properties?.name ||
+          f.properties?.NAME ||
+          f.properties?.Name ||
+          f.properties?.label ||
+          f.properties?.LABEL ||
+          "";
+
+        // If no standard name found, look for likely keys in properties
+        if (!name && f.properties) {
+          const keys = Object.keys(f.properties);
+          for (const key of keys) {
+            const lowerKey = key.toLowerCase();
+            const val = f.properties[key];
+            // Check if key contains "name", "label", "title", "desc" and value is a string
+            if (
+              typeof val === "string" &&
+              (lowerKey.includes("name") ||
+                lowerKey.includes("label") ||
+                lowerKey.includes("title"))
+            ) {
+              name = val;
+              break; // Stop at first likely match
+            }
+          }
+        }
+
         return {
           id: String(f.id || f.properties?.id || ""),
-          name:
-            f.properties?.name ||
-            f.properties?.NAME ||
-            f.properties?.Name ||
-            "",
+          name,
           lat: centroid[1],
           lon: centroid[0],
         };

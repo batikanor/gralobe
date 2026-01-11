@@ -208,6 +208,7 @@ export type LabelStyle =
   | "none"
   | "major"
   | "all"
+  | "all-countries"
   | "capitals"
   | "minimal"
   | "data";

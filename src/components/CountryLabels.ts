@@ -580,10 +580,22 @@ export class CountryLabels {
         case "capitals":
           visible = true;
           break;
+        case "all-countries":
+          // Show all official countries, but we will filter out custom labels below
+          visible = true;
+          break;
         case "data":
           // Only show labels for entities that have data
           visible = this.dataIds.has(code);
           break;
+      }
+
+      // Special handling for "all-countries": hide custom labels
+      if (
+        style === "all-countries" &&
+        label.element.classList.contains("custom-label")
+      ) {
+        visible = false;
       }
 
       label.element.classList.toggle("hidden", !visible);
