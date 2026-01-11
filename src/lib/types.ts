@@ -204,7 +204,13 @@ export interface TopologyConfig {
 /**
  * Country label display styles
  */
-export type LabelStyle = "none" | "major" | "all" | "capitals" | "minimal";
+export type LabelStyle =
+  | "none"
+  | "major"
+  | "all"
+  | "capitals"
+  | "minimal"
+  | "data";
 
 /**
  * Configuration options for GlobeViz

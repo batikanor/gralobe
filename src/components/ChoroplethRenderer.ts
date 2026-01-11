@@ -526,6 +526,13 @@ export class ChoroplethRenderer {
     return this.canvas.toDataURL("image/png");
   }
 
+  /**
+   * Get the statistics map (for data label mode)
+   */
+  getStatsMap(): Map<string, any> {
+    return this.statsMap;
+  }
+
   getBounds(): [number, number, number, number] | null {
     if (this.countries.length === 0) return null;
 

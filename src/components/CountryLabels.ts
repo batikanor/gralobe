@@ -248,6 +248,7 @@ export class CountryLabels {
   private currentMorph: number = 0;
   private globe: THREE.Mesh | null = null;
   private camera: THREE.Camera | null = null;
+  private dataIds: Set<string> = new Set();
 
   constructor(container: HTMLElement, sphereRadius: number) {
     this.sphereRadius = sphereRadius;
@@ -508,6 +509,10 @@ export class CountryLabels {
         case "capitals":
           visible = true;
           break;
+        case "data":
+          // Only show labels for entities that have data
+          visible = this.dataIds.has(code);
+          break;
       }
 
       label.element.classList.toggle("hidden", !visible);
@@ -536,6 +541,17 @@ export class CountryLabels {
    */
   setCamera(camera: THREE.Camera): void {
     this.camera = camera;
+  }
+
+  /**
+   * Set which entity IDs have data (for "data" label mode)
+   */
+  setDataIds(ids: string[]): void {
+    this.dataIds = new Set(ids);
+    // If currently in "data" mode, reapply to update visibility
+    if (this.currentStyle === "data") {
+      this.setStyle("data");
+    }
   }
 
   /**

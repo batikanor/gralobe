@@ -1027,6 +1027,14 @@ export class GlobeViz implements GlobeVizAPI {
       if (this.legend && internalStat) {
         this.legend.show(internalStat);
       }
+
+      // Update data labels (for "data" label mode)
+      // Built-in stats use statsMap from choropleth
+      if (this.countryLabels && this.choropleth) {
+        const statsMap = this.choropleth.getStatsMap();
+        const dataIds: string[] = statsMap ? Array.from(statsMap.keys()) : [];
+        this.countryLabels.setDataIds(dataIds);
+      }
     } else {
       // Custom StatisticData object
       const customStat = id;
@@ -1050,6 +1058,15 @@ export class GlobeViz implements GlobeVizAPI {
       // Update legend with custom stat definition
       if (this.legend) {
         this.legend.show(customStat.definition as any);
+      }
+
+      // Update data labels (for "data" label mode)
+      if (this.countryLabels) {
+        const valuesObj =
+          customStat.values instanceof Map
+            ? Object.fromEntries(customStat.values)
+            : customStat.values;
+        this.countryLabels.setDataIds(Object.keys(valuesObj));
       }
     }
   }
