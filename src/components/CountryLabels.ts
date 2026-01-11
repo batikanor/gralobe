@@ -348,19 +348,19 @@ export class CountryLabels {
         font-size: 8px;
       }
 
-      /* All style - slightly more subtle but still readable */
+      /* All style - harmonized visibility */
       .label-style-all .country-label {
         color: rgba(255, 255, 255, 0.85);
       }
 
       .label-style-all .country-label.size-large {
         font-size: 9px;
-        color: rgba(255, 255, 255, 0.9);
+        color: rgba(255, 255, 255, 0.95);
       }
 
       .label-style-all .country-label.size-tiny {
         font-size: 5px;
-        color: rgba(255, 255, 255, 0.6);
+        color: rgba(255, 255, 255, 0.8);
       }
     `;
     document.head.appendChild(style);
