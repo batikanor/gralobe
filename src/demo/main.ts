@@ -77,6 +77,7 @@ async function createGlobe(containerId: string) {
         objectName: "counties",
         disableNormalization: true,
         // Removed idProperty: "NAME_3". Using default root "id" (Integers) for stability.
+        labelProperty: "NAME_3",
       };
       fullConfig.autoRotate = false;
       fullConfig.statistic = customStats.germany_population;

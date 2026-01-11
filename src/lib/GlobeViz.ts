@@ -245,7 +245,7 @@ export class GlobeViz implements GlobeVizAPI {
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(0x000812);
 
-    this.camera = new THREE.PerspectiveCamera(50, width / height, 1, 1000);
+    this.camera = new THREE.PerspectiveCamera(50, width / height, 0.1, 1000);
     this.camera.position.set(
       0,
       0,
@@ -259,7 +259,7 @@ export class GlobeViz implements GlobeVizAPI {
 
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
     this.controls.enableDamping = true;
-    this.controls.minDistance = 10;
+    this.controls.minDistance = 2.0;
     this.controls.maxDistance = 400;
 
     // Initialize components

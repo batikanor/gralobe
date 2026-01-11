@@ -199,6 +199,8 @@ export interface TopologyConfig {
   idProperty?: string;
   /** Disable value normalization (for pre-calculated stats) */
   disableNormalization?: boolean;
+  /** Property to use for labeling (default: "name") */
+  labelProperty?: string;
 }
 
 /**

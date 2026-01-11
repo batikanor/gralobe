@@ -105,6 +105,7 @@ export class ChoroplethRenderer {
     objectName: string;
     disableNormalization: boolean;
     idProperty?: string;
+    labelProperty?: string;
   };
 
   // State for progressive rendering
@@ -124,6 +125,7 @@ export class ChoroplethRenderer {
       objectName?: string;
       disableNormalization?: boolean;
       idProperty?: string;
+      labelProperty?: string;
     },
     onProgress?: (progress: number) => void,
     onTextureUpdate?: () => void
@@ -143,6 +145,7 @@ export class ChoroplethRenderer {
       objectName: topologyConfig?.objectName || "countries",
       disableNormalization: topologyConfig?.disableNormalization || false,
       idProperty: topologyConfig?.idProperty,
+      labelProperty: topologyConfig?.labelProperty,
     };
 
     // Create lookup map for statistics by country ID
@@ -305,14 +308,22 @@ export class ChoroplethRenderer {
         const centroid = this.computeCentroid(f);
         if (!centroid) return null;
 
-        // Smart name extraction: check standard keys first, then search for likely candidates
-        let name =
-          f.properties?.name ||
-          f.properties?.NAME ||
-          f.properties?.Name ||
-          f.properties?.label ||
-          f.properties?.LABEL ||
-          "";
+        // Smart name extraction: check configured label property first, then standard keys
+        let name = "";
+
+        if (this.topologyConfig?.labelProperty) {
+          name = f.properties?.[this.topologyConfig.labelProperty] || "";
+        }
+
+        if (!name) {
+          name =
+            f.properties?.name ||
+            f.properties?.NAME ||
+            f.properties?.Name ||
+            f.properties?.label ||
+            f.properties?.LABEL ||
+            "";
+        }
 
         // If no standard name found, look for likely keys in properties
         if (!name && f.properties) {
