@@ -11,7 +11,7 @@ const TEXTURE_HEIGHT = 2048;
 interface CountryFeature {
   type: "Feature";
   id: string;
-  properties: { name: string };
+  properties: { name: string; [key: string]: any };
   geometry: {
     type: "Polygon" | "MultiPolygon" | "Point";
     coordinates: number[][][] | number[][][][] | number[];
@@ -23,12 +23,15 @@ interface CountryFeature {
  * We use a Blob URL to avoid needing a separate worker file build step.
  */
 const WORKER_CODE = `
-  importScripts('https://unpkg.com/topojson-client@3.1.0/dist/topojson-client.min.js');
-
   self.onmessage = async (e) => {
-    const { url, objectName, idProperty } = e.data;
+    const { url, objectName, idProperty, topojsonUrl } = e.data;
     
     try {
+      if (!self.topojson) {
+        self.postMessage({ status: "Loading dependencies..." });
+        importScripts(topojsonUrl);
+      }
+      self.postMessage({ status: "Fetching data...", progress: 0.1 });
       const response = await fetch(url);
       if (!response.ok) throw new Error('Fetch failed: ' + response.statusText);
       
@@ -39,8 +42,9 @@ const WORKER_CODE = `
       if (data.type === 'FeatureCollection') {
         features = data.features;
       } else {
-        // Assume TopoJSON
-        const topology = data;
+      // Assume TopoJSON
+      self.postMessage({ status: "Processing TopoJSON...", progress: 0.4 });
+      const topology = data;
         let objects = topology.objects[objectName];
         
         if (!objects) {
@@ -69,6 +73,7 @@ const WORKER_CODE = `
         });
       }
       
+      self.postMessage({ status: "Complete", progress: 1.0 });
       self.postMessage({ 
         success: true, 
         features: features 
@@ -112,7 +117,7 @@ export class ChoroplethRenderer {
   private currentRenderId: number = 0;
 
   // Callback for loading progress (0-1)
-  private onProgress?: (progress: number) => void;
+  private onProgress?: (progress: number, status?: string) => void;
   // Callback when texture has been updated (for progressive rendering)
   private onTextureUpdate?: () => void;
 
@@ -127,8 +132,8 @@ export class ChoroplethRenderer {
       idProperty?: string;
       labelProperty?: string;
     },
-    onProgress?: (progress: number) => void,
-    onTextureUpdate?: () => void
+    onProgress?: (progress: number, status?: string) => void,
+    onTextureUpdate?: () => void,
   ) {
     this.canvas = document.createElement("canvas");
     this.canvas.width = TEXTURE_WIDTH;
@@ -140,7 +145,7 @@ export class ChoroplethRenderer {
     // Set topology config with defaults
     this.topologyConfig = {
       url:
-        topologyConfig?.url ||
+        topologyConfig?.url ??
         "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json",
       objectName: topologyConfig?.objectName || "countries",
       disableNormalization: topologyConfig?.disableNormalization || false,
@@ -162,6 +167,13 @@ export class ChoroplethRenderer {
       this.topologyConfig!.objectName
     }|${this.topologyConfig!.idProperty || ""}`;
 
+    // If URL is empty, we skip loading (manual feature injection mode)
+    if (!this.topologyConfig!.url) {
+      this.loaded = true;
+      this.onProgress?.(1.0);
+      return;
+    }
+
     // Report initial progress
     this.onProgress?.(0.1);
 
@@ -174,7 +186,7 @@ export class ChoroplethRenderer {
           features = await this.loadInWorker(
             this.topologyConfig!.url,
             this.topologyConfig!.objectName,
-            this.topologyConfig!.idProperty
+            this.topologyConfig!.idProperty,
           );
 
           // Report parsing done
@@ -204,7 +216,7 @@ export class ChoroplethRenderer {
           console.log(
             `Loaded and processed ${features.length} boundaries from ${
               this.topologyConfig!.objectName
-            }`
+            }`,
           );
           return features;
         } catch (error) {
@@ -238,14 +250,28 @@ export class ChoroplethRenderer {
   private loadInWorker(
     url: string,
     objectName: string,
-    idProperty?: string
+    idProperty?: string,
   ): Promise<CountryFeature[]> {
     return new Promise((resolve, reject) => {
       const blob = new Blob([WORKER_CODE], { type: "application/javascript" });
       const workerUrl = URL.createObjectURL(blob);
       const worker = new Worker(workerUrl);
 
+      // Timeout to prevent infinite hanging
+      const timeoutId = setTimeout(() => {
+        worker.terminate();
+        URL.revokeObjectURL(workerUrl);
+        reject(new Error(`Worker timed out after 15s loading ${objectName}`));
+      }, 15000);
+
       worker.onmessage = (e) => {
+        // Handle status updates from worker
+        if (e.data.status) {
+          this.onProgress?.(e.data.progress || 0, e.data.status);
+          return;
+        }
+
+        clearTimeout(timeoutId);
         URL.revokeObjectURL(workerUrl);
         worker.terminate();
 
@@ -257,12 +283,26 @@ export class ChoroplethRenderer {
       };
 
       worker.onerror = (e) => {
+        clearTimeout(timeoutId);
         URL.revokeObjectURL(workerUrl);
         worker.terminate();
         reject(new Error("Worker error: " + e.message));
       };
 
-      worker.postMessage({ url, objectName });
+      // Resolve URL to absolute to ensure worker can fetch it (needed for relative public/ paths)
+      const absoluteUrl = new URL(url, window.location.href).href;
+      // Also resolve the topojson client library relative to the window
+      const topojsonLibUrl = new URL(
+        "/lib/topojson-client.min.js",
+        window.location.href,
+      ).href;
+
+      worker.postMessage({
+        url: absoluteUrl,
+        objectName,
+        idProperty,
+        topojsonUrl: topojsonLibUrl,
+      });
     });
   }
 
@@ -270,7 +310,16 @@ export class ChoroplethRenderer {
    * Wait for country data to load
    */
   async waitForLoad(): Promise<void> {
+    const startTime = Date.now();
     while (!this.loaded) {
+      // Failsafe: if loading takes > 20s, bust the lock to prevent infinite hanging
+      if (Date.now() - startTime > 20000) {
+        console.error(
+          "ChoroplethRenderer.waitForLoad timed out after 20s. Forcing continuation.",
+        );
+        this.loaded = true;
+        break;
+      }
       await new Promise((resolve) => setTimeout(resolve, 100));
     }
   }
@@ -296,6 +345,29 @@ export class ChoroplethRenderer {
 
     // Extract feature labels with computed centroids
     // Extract feature labels with computed centroids
+    this.updateFeatureLabels();
+  }
+
+  /**
+   * Add features to the existing set (e.g. overlay cities on top of countries)
+   */
+  addFeatures(features: any[]): void {
+    // Process new features
+    features.forEach((feature) => {
+      if (!(feature as any).path) {
+        (feature as any).path = this.createPath(feature as CountryFeature);
+      }
+    });
+
+    // Append to existing countries
+    this.countries = [...this.countries, ...(features as CountryFeature[])];
+
+    // Disable normalization if we are mixing custom with standard
+    if (this.topologyConfig) {
+      this.topologyConfig.disableNormalization = true;
+    }
+
+    // Re-compute labels
     this.updateFeatureLabels();
   }
 
@@ -358,7 +430,7 @@ export class ChoroplethRenderer {
         };
       })
       .filter(
-        (l): l is FeatureLabel => l !== null && l.id !== "" && l.name !== ""
+        (l): l is FeatureLabel => l !== null && l.id !== "" && l.name !== "",
       );
   }
 
@@ -476,7 +548,7 @@ export class ChoroplethRenderer {
   private drawFeature(
     country: CountryFeature,
     color: string,
-    stroke: boolean
+    stroke: boolean,
   ): void {
     const path = (country as any).path as Path2D;
     if (path) {
@@ -572,7 +644,7 @@ export class ChoroplethRenderer {
   renderCustomTexture(
     values: Record<string, number> | Map<string, number>,
     colorScale: [string, string, string],
-    domain: [number, number]
+    domain: [number, number],
   ): HTMLCanvasElement {
     // Cancel any previous render job
     this.currentRenderId++;
@@ -617,7 +689,7 @@ export class ChoroplethRenderer {
         if (value !== undefined) {
           const normalized = Math.max(
             0,
-            Math.min(1, (value - domain[0]) / (domain[1] - domain[0]))
+            Math.min(1, (value - domain[0]) / (domain[1] - domain[0])),
           );
           color = this.interpolateColor(colorScale, normalized);
         }
@@ -651,6 +723,37 @@ export class ChoroplethRenderer {
    */
   getStatsMap(): Map<string, any> {
     return this.statsMap;
+  }
+
+  /**
+   * Get the name of a feature by its ID (using pre-computed feature labels)
+   */
+  getFeatureName(id: string): string | undefined {
+    // Normalize string comparison if needed?
+    let label = this.featureLabels.find((l) => l.id === id);
+
+    // Smart Lookup: If direct match fails, try stripping zero padding (e.g. "01001" -> "1001")
+    if (!label && id.startsWith("0")) {
+      const numericId = String(parseInt(id, 10));
+      label = this.featureLabels.find((l) => l.id === numericId);
+    }
+
+    if (label) return label.name;
+
+    // Fallback: look in countries directly
+    const feature = this.countries.find(
+      (c) => c.id === id || c.properties?.id === id,
+    );
+    if (feature) {
+      return (
+        feature.properties.name ||
+        feature.properties.NAME ||
+        feature.properties.Name ||
+        feature.id
+      );
+    }
+
+    return undefined;
   }
 
   getBounds(): [number, number, number, number] | null {

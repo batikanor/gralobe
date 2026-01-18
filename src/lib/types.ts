@@ -228,8 +228,40 @@ export interface GlobeVizConfig {
   /**
    * Custom map topology configuration
    * Allows loading custom borders (cities, states) instead of countries
+   *
+   * Supported Data Modes:
+   * 1. **Country Mode** (Default):
+   *    - Loads 110m resolution country borders.
+   *    - Data mapped by ISO-A3/A2 codes or Name.
+   *    - `topology` should be undefined or `{ url: '', ... }` to suppress.
+   *
+   * 2. **State/Province Mode**:
+   *    - Provide a URL to state-level GeoJSON/TopoJSON.
+   *    - Use `objectName` if TopoJSON.
+   *    - Data mapped by state name or ID property.
+   *
+   * 3. **City/Urban Mode**:
+   *    - Provide a URL to urban area polygons (e.g., Natural Earth Urban Areas).
+   *    - Displays actual city boundaries.
+   *
+   * 4. **Point Mode** (Synthetic):
+   *    - Map points (lat/lon) directly without existing polygons.
+   *    - Uses `pointRadius` to generate synthetic circular boundaries.
+   *    - Perfect for "World Cities" style visualization where only lat/lon is known.
    */
   topology?: TopologyConfig;
+
+  /**
+   * Radius for synthetic point markers (in km)
+   * Used when mapping point data to topology (e.g. World Cities or Point Mode)
+   *
+   * This value controls the size of the synthetic circles generated for data points
+   * that do not have associated polygon geometry.
+   *
+   * - Range: 10km - 500km
+   * - Default: 140km
+   */
+  pointRadius?: number;
 
   /**
    * Country label display style
@@ -301,7 +333,7 @@ export interface GlobeVizConfig {
   onCountryClick?: (
     countryId: string,
     countryName: string,
-    value?: number
+    value?: number,
   ) => void;
 
   /**
@@ -312,5 +344,5 @@ export interface GlobeVizConfig {
   /**
    * Callback for loading progress (0-1)
    */
-  onLoadProgress?: (progress: number) => void;
+  onLoadProgress?: (progress: number, status?: string) => void;
 }

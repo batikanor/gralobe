@@ -142,3 +142,25 @@ export const customStats: Record<string, StatisticData> = {
     },
   },
 };
+
+// Coordinates for World Cities
+export const worldCitiesCoordinates: Record<
+  string,
+  { lat: number; lon: number }
+> = {
+  "New York": { lat: 40.7128, lon: -74.006 },
+  Tokyo: { lat: 35.6762, lon: 139.6503 },
+  London: { lat: 51.5074, lon: -0.1278 },
+  Paris: { lat: 48.8566, lon: 2.3522 },
+  "Los Angeles": { lat: 34.0522, lon: -118.2437 },
+  Chicago: { lat: 41.8781, lon: -87.6298 },
+  Moscow: { lat: 55.7558, lon: 37.6173 },
+  Istanbul: { lat: 41.0082, lon: 28.9784 },
+  Shanghai: { lat: 31.2304, lon: 121.4737 },
+  Beijing: { lat: 39.9042, lon: 116.4074 },
+  Mumbai: { lat: 19.076, lon: 72.8777 },
+  "Sao Paulo": { lat: -23.5505, lon: -46.6333 },
+  "Mexico City": { lat: 19.4326, lon: -99.1332 },
+  Cairo: { lat: 30.0444, lon: 31.2357 },
+  Lagos: { lat: 6.5244, lon: 3.3792 },
+};

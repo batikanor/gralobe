@@ -1,9 +1,75 @@
 import { GlobeViz } from "../lib/GlobeViz";
-import type { GlobeVizConfig } from "../lib/types";
-import { customStats } from "./data";
+import type { DemoConfig, DemoSection } from "./demo-config";
+import { sections } from "./demo-config";
 
+// Registry of active globes
 const globes = new Map<string, GlobeViz>();
 const MAX_ACTIVE_GLOBES = 6;
+
+// --- DOM Generation Helpers ---
+
+function createSectionHTML(section: DemoSection, index: number): string {
+  const infoBox = section.infoBox
+    ? `<div class="info-box">${section.infoBox}</div>`
+    : "";
+
+  // Collapse all except the first one by default
+  const isCollapsed = index !== 0; // First one open, rest closed
+  const collapsedClass = isCollapsed ? "collapsed" : "";
+  const iconClass = isCollapsed
+    ? "section-toggle-icon collapsed"
+    : "section-toggle-icon";
+
+  return `
+    <section id="${section.id}">
+      <div class="section-header" onclick="toggleSection('${section.id}')">
+        <div class="section-header-content">
+          <h2 class="section-title">${section.title}</h2>
+          <p class="section-desc">${section.description}</p>
+        </div>
+        <svg class="${iconClass}" id="icon-${section.id}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="6 9 12 15 18 9"></polyline>
+        </svg>
+      </div>
+      <div class="section-content ${collapsedClass}" id="content-${section.id}">
+        ${infoBox}
+        <div class="grid ${section.gridClass || "grid-2"}" id="grid-${section.id}">
+          <!-- Demos injected here -->
+        </div>
+      </div>
+    </section>
+  `;
+}
+
+function createDemoHTML(demo: DemoConfig): string {
+  // Use config.showControls to determine if we show the gear icon logic or similar,
+  // but for now we just render the container.
+
+  return `
+    <div class="variant">
+      <div class="variant-header">
+        <span class="variant-title">${demo.title}</span>
+        <span class="variant-meta">${demo.subtitle || ""}</span>
+      </div>
+      <div class="variant-container ${demo.heightClass || "height-400"} globe-container" id="${demo.id}">
+        <div class="globe-loader">
+          <div class="globe-spinner"></div>
+          <div class="globe-progress-track"><div class="globe-progress-bar"></div></div>
+          <div class="globe-progress-text">0%</div>
+          <div class="globe-debug-text" style="font-size: 10px; color: #666; margin-top: 4px;">Initializing...</div>
+        </div>
+        <div class="globe-error">Failed to load</div>
+        <div class="globe-toolbar">
+           <button class="toolbar-btn data-trigger" onclick="showDataGrid('${demo.id}')" title="View Data">▤</button>
+           <button class="toolbar-btn" onclick="toggleFullscreen('${demo.id}')" title="Fullscreen">⛶</button>
+        </div>
+      </div>
+      ${demo.description ? `<div style="padding: 8px 12px; font-size: 11px; color: #666; border-top: 1px solid #1a1a25; background: #0a0a0f;">${demo.description}</div>` : ""}
+    </div>
+  `;
+}
+
+// --- Lifecycle Management ---
 
 function updateCounter() {
   const el = document.getElementById("webgl-count");
@@ -20,7 +86,7 @@ function enforceLimit() {
       if (!el) continue;
       const rect = el.getBoundingClientRect();
       const dist = Math.abs(
-        rect.top + rect.height / 2 - window.innerHeight / 2
+        rect.top + rect.height / 2 - window.innerHeight / 2,
       );
       if (dist > furthestDistance) {
         furthestDistance = dist;
@@ -28,136 +94,6 @@ function enforceLimit() {
       }
     }
     if (furthestId) destroyGlobe(furthestId);
-  }
-}
-
-async function createGlobe(containerId: string) {
-  const container = document.getElementById(containerId);
-  if (!container || globes.has(containerId)) return;
-
-  const loader = container.querySelector(".globe-loader") as HTMLElement;
-  const error = container.querySelector(".globe-error");
-  const progressBar = container.querySelector(
-    ".globe-progress-bar"
-  ) as HTMLElement;
-  const progressText = container.querySelector(".globe-progress-text");
-
-  try {
-    enforceLimit();
-
-    const config = JSON.parse(container.dataset.config || "{}");
-    const fullConfig: GlobeVizConfig = {
-      autoRotate: true,
-      showControls: false,
-      showLegend: true,
-      labels: "data",
-      effects: { atmosphere: false, clouds: false },
-      ...config,
-      onLoadProgress: (progress: number) => {
-        if (progressBar)
-          progressBar.style.width = `${Math.round(progress * 100)}%`;
-        if (progressText)
-          progressText.textContent = `${Math.round(progress * 100)}%`;
-      },
-    };
-
-    // Handle Custom Topology
-    if (container.dataset.customTopology === "us_counties") {
-      fullConfig.topology = {
-        url: "https://cdn.jsdelivr.net/npm/us-atlas@3/counties-10m.json",
-        objectName: "counties",
-        disableNormalization: true,
-      };
-      fullConfig.autoRotate = false;
-      fullConfig.statistic = customStats.us_unemployment;
-    } else if (container.dataset.customTopology === "germany_districts") {
-      fullConfig.topology = {
-        // Now using GeoJSON directly (supported by updated ChoroplethRenderer)
-        url: "https://raw.githubusercontent.com/isellsoap/deutschlandGeoJSON/main/4_kreise/2_hoch.geo.json",
-        objectName: "counties",
-        disableNormalization: true,
-        // Removed idProperty: "NAME_3". Using default root "id" (Integers) for stability.
-        labelProperty: "NAME_3",
-      };
-      fullConfig.autoRotate = false;
-      fullConfig.statistic = customStats.germany_population;
-    } else if (container.dataset.customTopology === "world_cities") {
-      // City-Based Demo (Urban Areas Polygons)
-      fullConfig.texture = "dark";
-      fullConfig.topology = {
-        url: "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_50m_urban_areas.geojson",
-        objectName: "urban_areas",
-        disableNormalization: true,
-        idProperty: "name_conve", // Property in NE Urban Areas containing the city name
-      };
-
-      fullConfig.effects = {
-        atmosphere: true,
-        glowPulse: false,
-        cityLights: true,
-      };
-      fullConfig.statistic = customStats.world_cities_pop;
-    } else if (container.dataset.customTopology === "us_election_2020") {
-      fullConfig.topology = {
-        url: "https://cdn.jsdelivr.net/npm/us-atlas@3/counties-10m.json",
-        objectName: "counties",
-        disableNormalization: true,
-      };
-      fullConfig.autoRotate = false;
-
-      if (!customStats.us_2020_election) {
-        // Generate massive dataset
-        const values: Record<string, number> = {};
-        // Approx FIPS range
-        for (let fips = 1000; fips < 56046; fips++) {
-          // Bias towards red/blue based on arbitrary math to create clusters
-          const val =
-            (Math.sin(fips * 0.1) + Math.cos(fips * 0.05)) * 0.5 + 0.5;
-          // Pad FIPS to 5 digits
-          const sFips = fips.toString().padStart(5, "0");
-          if (fips % 7 !== 0) {
-            // Skip some to simulate real world sparsity/boundaries
-            values[sFips] = val; // 0-1 (Dem % or similar)
-          }
-        }
-
-        customStats.us_2020_election = {
-          definition: {
-            id: "us_election",
-            name: "Vote Share (Sim)",
-            unit: "share",
-            description: "Simulated 2020 Election Data",
-            colorScale: ["#ff0000", "#ffffff", "#0000ff"], // Red -> White -> Blue
-            domain: [0, 1],
-          },
-          values: values,
-        };
-      }
-      fullConfig.statistic = customStats.us_2020_election;
-    }
-
-    const globe = new GlobeViz(container, fullConfig);
-    globes.set(containerId, globe);
-    updateCounter();
-
-    await globe.ready;
-
-    // If we just loaded the US topology, rotate to it
-    if (container.dataset.customTopology === "us_counties") {
-      // Rough approximation for US view
-      // globe.controls.autoRotate = false;
-    }
-
-    const customStatKey = container.dataset.customStat;
-    if (customStatKey && customStats[customStatKey]) {
-      globe.setStatistic(customStats[customStatKey]);
-    }
-
-    loader?.classList.add("hidden");
-  } catch (err) {
-    console.error(`Failed: ${containerId}`, err);
-    loader?.classList.add("hidden");
-    error?.classList.add("visible");
   }
 }
 
@@ -176,65 +112,197 @@ function destroyGlobe(containerId: string) {
   }
 }
 
-// Make globally accessible for inline onclick handlers
-(window as any).toggleFullscreen = async (containerId: string) => {
-  if (!globes.has(containerId)) await createGlobe(containerId);
-  globes.get(containerId)?.toggleFullscreen();
-};
+// --- Initialization ---
+
+async function initGlobe(demo: DemoConfig) {
+  const containerId = demo.id;
+  const container = document.getElementById(containerId);
+  if (!container || globes.has(containerId)) return;
+
+  const loader = container.querySelector(".globe-loader") as HTMLElement;
+  const error = container.querySelector(".globe-error") as HTMLElement;
+  const progressBar = container.querySelector(
+    ".globe-progress-bar",
+  ) as HTMLElement;
+  const progressText = container.querySelector(".globe-progress-text");
+  const debugText = container.querySelector(".globe-debug-text");
+
+  try {
+    enforceLimit();
+
+    const config = {
+      ...demo.config,
+      onLoadProgress: (progress: number, status?: string) => {
+        if (progressBar)
+          progressBar.style.width = `${Math.round(progress * 100)}%`;
+        if (progressText)
+          progressText.textContent = `${Math.round(progress * 100)}%`;
+        if (debugText && status) debugText.textContent = status;
+        // console.log(`[${containerId}] Progress: ${progress}, Status: ${status}`);
+      },
+    };
+
+    const globe = new GlobeViz(container, config);
+    globes.set(containerId, globe);
+    updateCounter();
+
+    // Run custom setup if defined (e.g. data injection)
+    if (demo.setup) {
+      await demo.setup(globe);
+    }
+
+    await globe.ready;
+
+    loader?.classList.add("hidden");
+  } catch (err) {
+    console.error(`Failed to init ${containerId}:`, err);
+    loader?.classList.add("hidden");
+    error?.classList.add("visible");
+  }
+}
+
+// --- Intersection Observer for Lazy Loading ---
 
 const observer = new IntersectionObserver(
   (entries) => {
     entries.forEach((entry) => {
-      if (entry.isIntersecting && !globes.has(entry.target.id)) {
-        createGlobe(entry.target.id);
+      if (entry.isIntersecting) {
+        const id = entry.target.id;
+        // Find the demo config that matches this ID
+        for (const section of sections) {
+          const demo = section.demos.find((d) => d.id === id);
+          if (demo) {
+            initGlobe(demo);
+            break;
+          }
+        }
       }
     });
   },
-  { rootMargin: "100px", threshold: 0.1 }
+  { rootMargin: "200px", threshold: 0.1 },
 );
 
-// Generate stats gallery
-const stats = [
-  "lifeExpectancy",
-  "humanDevIndex",
-  "gdpPerCapita",
-  "co2Emissions",
-  "renewableEnergy",
-  "internetUsers",
-  "urbanPopulation",
-  "healthExpenditure",
-  "forestArea",
-  "population",
-  "accessElectricity",
-  "educationExpenditure",
-];
+// --- Data Grid Logic ---
 
-const gallery = document.getElementById("stats-gallery");
-if (gallery) {
-  stats.forEach((id, i) => {
-    const showControls = i % 3 === 0; // Every 3rd one has controls
-    gallery.insertAdjacentHTML(
-      "beforeend",
-      `
-    <div class="variant">
-      <div class="variant-header">
-        <span class="variant-title">${id}</span>
-        <span class="variant-meta">${showControls ? "⚙" : ""}</span>
-      </div>
-      <div class="variant-container height-250 globe-container" id="globe-stat-${id}" 
-           data-config='{"statistic":"${id}","labels":"none","effects":{"atmosphere":false,"clouds":false},"showControls":${showControls}}'>
-        <div class="globe-loader"></div>
-        <div class="globe-toolbar">
-          ${showControls ? `` : ""}
-          <button class="toolbar-btn" onclick="toggleFullscreen('globe-stat-${id}')" title="Fullscreen">⛶</button>
-        </div>
-      </div>
-    </div>
-  `
-    );
-  });
+function showDataGrid(containerId: string) {
+  const globe = globes.get(containerId);
+  if (!globe) return;
+
+  const data = globe.getCurrentData();
+  const entries = Object.entries(data).sort((a, b) => a[0].localeCompare(b[0]));
+
+  const modal = document.getElementById("data-grid-modal");
+  const title = document.getElementById("grid-title");
+  const tbody = document.querySelector("#data-grid-table tbody");
+
+  if (modal && title && tbody) {
+    const config = (globe as any).config;
+    // Helper within helper?? No, just inline logic or reuse helper
+    const statName = getStatisticName(config.statistic);
+    title.textContent = `Data: ${statName}`;
+    tbody.innerHTML = entries
+      .map(
+        ([name, val]) => `
+      <tr>
+        <td class="font-medium">${name}</td>
+        <td class="text-right text-mono">${val.toLocaleString()}</td>
+      </tr>
+    `,
+      )
+      .join("");
+    modal.classList.remove("hidden");
+  }
 }
 
-document
-  .querySelectorAll(".globe-container")
-  .forEach((c) => observer.observe(c));
+function getStatisticName(stat: any): string {
+  if (typeof stat === "string") return stat;
+  if (stat && stat.definition && stat.definition.name)
+    return stat.definition.name;
+  return "Unknown Statistic";
+}
+
+// --- Toggle Logic ---
+
+function toggleSection(sectionId: string) {
+  const content = document.getElementById(`content-${sectionId}`);
+  const icon = document.getElementById(`icon-${sectionId}`);
+
+  if (content && icon) {
+    const isCollapsed = content.classList.contains("collapsed");
+
+    if (isCollapsed) {
+      // Opening
+      content.classList.remove("collapsed");
+      icon.classList.remove("collapsed");
+
+      // Trigger observers immediately just in case
+      // The IntersectionObserver loop will pick this up automatically as they become visible
+    } else {
+      // Closing
+      content.classList.add("collapsed");
+      icon.classList.add("collapsed");
+    }
+  }
+}
+
+// --- Main Entry ---
+
+function renderApp() {
+  const root = document.getElementById("demo-container");
+  if (!root) return;
+
+  // 1. Render Sections
+  let html = "";
+  sections.forEach((section, index) => {
+    html += createSectionHTML(section, index);
+  });
+  root.innerHTML = html;
+
+  // 2. Render Demos into Grids
+  sections.forEach((section) => {
+    const grid = document.getElementById(`grid-${section.id}`);
+    if (grid) {
+      section.demos.forEach((demo) => {
+        grid.insertAdjacentHTML("beforeend", createDemoHTML(demo));
+      });
+    }
+  });
+
+  // 3. Attach Observer
+  document
+    .querySelectorAll(".globe-container")
+    .forEach((el) => observer.observe(el));
+}
+
+// --- Global Exports (for inline onclicks) ---
+(window as any).toggleFullscreen = async (containerId: string) => {
+  // Check if globe exists, if not try to init it (should be handled by observer but for safety)
+  if (!globes.has(containerId)) {
+    // Find config
+    for (const section of sections) {
+      const demo = section.demos.find((d) => d.id === containerId);
+      if (demo) {
+        await initGlobe(demo);
+        break;
+      }
+    }
+  }
+  globes.get(containerId)?.toggleFullscreen();
+};
+(window as any).showDataGrid = showDataGrid;
+(window as any).toggleSection = toggleSection;
+
+// --- Event Listeners ---
+document.addEventListener("DOMContentLoaded", () => {
+  renderApp();
+
+  // Modal close handlers
+  const close = document.getElementById("grid-close");
+  const modal = document.getElementById("data-grid-modal");
+  if (close && modal) {
+    close.addEventListener("click", () => modal.classList.add("hidden"));
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) modal.classList.add("hidden");
+    });
+  }
+});

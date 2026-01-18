@@ -8,7 +8,10 @@ html {
 }
 body {
   background: #0a0a0f;
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
   color: #fff;
 }
 
@@ -163,8 +166,9 @@ section {
 /* Globe toolbar - top right corner */
 .globe-toolbar {
   position: absolute;
-  top: 8px;
-  right: 8px;
+  /* Moved to bottom to avoid conflict with GUI controls */
+  bottom: 12px;
+  right: 12px;
   display: flex;
   gap: 4px;
   z-index: 100;
@@ -304,4 +308,218 @@ footer {
 footer a {
   color: #4af;
   text-decoration: none;
+}
+
+/* Data Grid Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  z-index: 2000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 1;
+  visibility: visible;
+  transition:
+    opacity 0.2s,
+    visibility 0.2s;
+}
+
+.modal-overlay.hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.modal-content {
+  background: #0f0f15;
+  border: 1px solid #2a2a35;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 600px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+
+.modal-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid #2a2a35;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  color: #666;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 4px;
+}
+.modal-close:hover {
+  color: #fff;
+}
+
+.modal-body {
+  flex: 1;
+  overflow: hidden;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.table-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px;
+}
+
+#data-grid-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+#data-grid-table th {
+  text-align: left;
+  padding: 12px 10px;
+  color: #888;
+  font-weight: 500;
+  position: sticky;
+  top: 0;
+  background: #0f0f15;
+  border-bottom: 1px solid #2a2a35;
+}
+
+#data-grid-table td {
+  padding: 10px;
+  border-bottom: 1px solid #1a1a25;
+  color: #ccc;
+}
+
+#data-grid-table tr:hover td {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.text-right {
+  text-align: right !important;
+}
+
+/* Add scrolling bar style if needed */
+.table-container::-webkit-scrollbar {
+  width: 8px;
+}
+.table-container::-webkit-scrollbar-track {
+  background: #0a0a0f;
+}
+.table-container::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 4px;
+}
+
+/* GUI Tooltips */
+.lil-gui-help-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  font-size: 10px;
+  font-weight: bold;
+  cursor: help;
+  margin-left: 8px;
+  position: relative;
+  pointer-events: auto;
+}
+.lil-gui-help-icon:hover {
+  background: #4af;
+}
+
+.lil-gui-tooltip {
+  position: absolute;
+  right: 24px;
+  top: 0;
+  width: 220px;
+  background: rgba(15, 15, 20, 0.95);
+  border: 1px solid #333;
+  border-radius: 4px;
+  padding: 10px;
+  font-size: 11px;
+  line-height: 1.4;
+  color: #ccc;
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 0.2s;
+  z-index: 1001;
+  pointer-events: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  white-space: normal;
+  text-align: left;
+}
+.lil-gui-tooltip b {
+  color: #4af;
+  display: block;
+  margin-bottom: 4px;
+}
+.lil-gui-tooltip.visible {
+  visibility: visible;
+  opacity: 1;
+}
+
+/* Accordion Styles */
+.section-header {
+  max-width: 1400px;
+  margin: 0 auto 20px;
+  /* Make it clickable */
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start; /* Align with title group */
+  user-select: none;
+}
+.section-header:hover .section-title {
+  color: #6bf; /* Lighter blue on hover */
+}
+
+/* Container for title/desc to keep them together */
+.section-header-content {
+  flex: 1;
+}
+
+.section-toggle-icon {
+  width: 24px;
+  height: 24px;
+  color: #4af;
+  margin-left: 16px;
+  margin-top: 4px; /* Align with title */
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  /* Default: pointing down (open) */
+  transform: rotate(0deg);
+}
+
+/* Collapsed state */
+.section-content.collapsed {
+  display: none;
+}
+
+.section-toggle-icon.collapsed {
+  transform: rotate(-90deg); /* Pointing left/closed */
 }

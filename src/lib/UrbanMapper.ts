@@ -54,8 +54,9 @@ export class UrbanMapper {
   static generateSyntheticBoundary(
     lat: number,
     lon: number,
-    radiusKm: number = 20
+    radiusKm: number = 85,
   ): any {
+    // console.log("Generating synthetic boundary with radius:", radiusKm);
     const steps = 16; // Low polygon count for performance
     const coordinates: number[][] = [];
 
@@ -73,7 +74,7 @@ export class UrbanMapper {
 
     return {
       type: "Feature",
-      id: `synthetic_${lat.toFixed(4)}_${lon.toFixed(4)}`,
+      id: `synthetic_${lat.toFixed(4)}_${lon.toFixed(4)}_${radiusKm}`,
       properties: {
         name: "Unknown City",
         featurecla: "Synthetic Urban Area",
@@ -89,44 +90,36 @@ export class UrbanMapper {
    * Map points to urban areas or generate synthetic ones
    */
   static async mapPointsToTopology(
-    points: GeoPoint[]
+    points: GeoPoint[],
+    radiusKm: number = 85,
+    forceSynthetic: boolean = false,
   ): Promise<UrbanTopologyResult> {
-    const urbanFeatures = await this.loadBaseTopology();
+    console.log(
+      "UrbanMapper.mapPointsToTopology called with radius:",
+      radiusKm,
+      "forceSynthetic:",
+      forceSynthetic,
+    );
+
+    // Only load base topology if we are NOT forcing synthetic
+    const urbanFeatures = !forceSynthetic ? await this.loadBaseTopology() : [];
     const resultFeatures: any[] = [];
     const statistics: Record<string, number> = {};
     const usedFeatureIds = new Set<string>();
 
-    // Simple bounding box check for point-in-polygon could be expensive for many points * many polygons.
-    // For MVP/Performance, we'll try a hybrid approach:
-    // 1. Iterate points
-    // 2. Find containing polygon (if any)
-    // 3. If found, add to result specific feature.
-    // 4. If not found, generate synthetic.
-
-    // Optimization: We only verify against urbanFeatures if we have them.
-    // Note: Doing full point-in-polygon in JS for 4000+ complex polygons is slow.
-    // We will rely on a simple center-point proximity or skipping broad phase for now
-    // OR just use synthetic for everything if performance is key?
-    // "Professional Principle Engineer" approach:
-    // Real PiP is heavy. We'll use a simplified check:
-    // If we can't efficiently check PiP on client without standard libraries like turf.js (which might be heavy),
-    // we might need a simpler heuristic or just include the dependency.
-    // Given the constraints, let's include a minimal Point-in-Polygon implementation or bounding box check.
-
-    // Let's implement a basic BBox check first, then ray casting for candidates.
-
     for (const point of points) {
       let match = null;
 
-      // Try to match with existing urban areas
-      // Heuristic: Check against features named in the point if available?
-      // Or strictly spatial? Spatial is better but slower.
-      // Let's do a quick BBox search.
-
-      for (const feature of urbanFeatures) {
-        if (this.isPointInFeature(point, feature)) {
-          match = feature;
-          break;
+      if (!forceSynthetic) {
+        // Try to match with existing urban areas
+        // Heuristic: Check against features named in the point if available?
+        // Or strictly spatial? Spatial is better but slower.
+        // Let's do a quick BBox search.
+        for (const feature of urbanFeatures) {
+          if (this.isPointInFeature(point, feature)) {
+            match = feature;
+            break;
+          }
         }
       }
 
@@ -149,6 +142,12 @@ export class UrbanMapper {
 
         if (clone) {
           clone.id = featureId;
+          // Ensure name is consistent, prioritizing point name if provided
+          if (point.name) {
+            clone.properties.name = point.name;
+          } else if (!clone.properties.name) {
+            clone.properties.name = featureId;
+          }
           resultFeatures.push(clone);
           usedFeatureIds.add(featureId);
         }
@@ -157,13 +156,18 @@ export class UrbanMapper {
         statistics[featureId] = (statistics[featureId] || 0) + point.value;
       } else {
         // Synthetic
-        const synthetic = this.generateSyntheticBoundary(point.lat, point.lon);
+        const synthetic = this.generateSyntheticBoundary(
+          point.lat,
+          point.lon,
+          radiusKm,
+        );
         // Check if we already have a synthetic nearby? (Cluster logic)
         // For now, simple 1-to-1 or simple overlap.
         // Let's just push it.
 
         // Use the point's ID/name if available for the feature ID to allow specific targeting
         if (point.id) synthetic.id = point.id;
+        if (point.name) synthetic.properties.name = point.name;
 
         resultFeatures.push(synthetic);
         statistics[synthetic.id] = point.value;

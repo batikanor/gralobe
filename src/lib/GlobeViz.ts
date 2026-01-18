@@ -89,7 +89,7 @@ export interface GlobeVizAPI {
   setMarkers(data: MarkerData[], config?: MarkerConfig): void;
   /** Set urban city data for visualization */
   setUrbanData(
-    points: { lat: number; lon: number; value: number; id?: string }[]
+    points: { lat: number; lon: number; value: number; id?: string }[],
   ): Promise<void>;
   /** Resize the visualization */
   resize(width: number, height: number): void;
@@ -97,6 +97,8 @@ export interface GlobeVizAPI {
   toggleFullscreen(): Promise<void>;
   /** Check if currently fullscreen */
   isFullscreen(): boolean;
+  /** Get current statistical data for grid */
+  getCurrentData(): Record<string, number>;
   /** Destroy the instance and clean up */
   destroy(): void;
 }
@@ -128,6 +130,7 @@ const DEFAULT_CONFIG: Required<
     starTwinkle: true,
   },
   extrudeHeight: false,
+  pointRadius: 140,
 };
 
 /**
@@ -199,12 +202,17 @@ export class GlobeViz implements GlobeVizAPI {
   // State
   private morph = 0;
   private currentStatistic: string | null = null;
+  private currentValues: Record<string, number> | null = null;
   private animationId: number | null = null;
   private isDestroyed = false;
+  private urbanPoints:
+    | { lat: number; lon: number; value: number; id?: string }[]
+    | null = null;
 
   /** Promise that resolves when fully initialized */
   public ready: Promise<void>;
   private resolveReady!: () => void;
+  private rejectReady!: (reason?: any) => void;
 
   /**
    * Create a new GlobeViz instance
@@ -229,8 +237,9 @@ export class GlobeViz implements GlobeVizAPI {
     };
 
     // Create ready promise
-    this.ready = new Promise((resolve) => {
+    this.ready = new Promise((resolve, reject) => {
       this.resolveReady = resolve;
+      this.rejectReady = reject;
     });
 
     // Initialize
@@ -238,35 +247,37 @@ export class GlobeViz implements GlobeVizAPI {
   }
 
   private async init(): Promise<void> {
-    const width = this.config.width || this.container.clientWidth || 800;
-    const height = this.config.height || this.container.clientHeight || 600;
-
-    // Setup Three.js
-    this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0x000812);
-
-    this.camera = new THREE.PerspectiveCamera(50, width / height, 0.1, 1000);
-    this.camera.position.set(
-      0,
-      0,
-      this.config.initialView === "flat" ? 350 : 150
-    );
-
-    this.renderer = new THREE.WebGLRenderer({ antialias: true });
-    this.renderer.setSize(width, height);
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    this.container.appendChild(this.renderer.domElement);
-
-    this.controls = new OrbitControls(this.camera, this.renderer.domElement);
-    this.controls.enableDamping = true;
-    this.controls.minDistance = 2.0;
-    this.controls.maxDistance = 400;
-
-    // Initialize components
     try {
+      const width = this.config.width || this.container.clientWidth || 800;
+      const height = this.config.height || this.container.clientHeight || 600;
+
+      // Setup Three.js
+      this.scene = new THREE.Scene();
+      this.scene.background = new THREE.Color(0x000812);
+
+      this.camera = new THREE.PerspectiveCamera(50, width / height, 0.1, 1000);
+      this.camera.position.set(
+        0,
+        0,
+        this.config.initialView === "flat" ? 350 : 150,
+      );
+
+      this.renderer = new THREE.WebGLRenderer({ antialias: true });
+      this.renderer.setSize(width, height);
+      this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      this.container.appendChild(this.renderer.domElement);
+
+      this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+      this.controls.enableDamping = true;
+      this.controls.minDistance = 2.0;
+      this.controls.maxDistance = 400;
+
+      // Initialize components
       this.choropleth = new ChoroplethRenderer(
         this.config.topology,
-        this.config.onLoadProgress,
+        (progress, status) => {
+          this.config.onLoadProgress?.(progress, status);
+        },
         () => {
           // Texture updated
           if (this.material && this.material.uniforms.uDataTexture.value) {
@@ -281,7 +292,7 @@ export class GlobeViz implements GlobeVizAPI {
               });
             }
           }
-        }
+        },
       );
 
       if (this.config.showLegend) {
@@ -332,42 +343,45 @@ export class GlobeViz implements GlobeVizAPI {
 
       // Set initial statistic
       this.setStatistic(this.config.statistic);
+
+      // Set initial view
+      this.morph = this.config.initialView === "globe" ? 1 : 0;
+      if (this.material) {
+        this.material.uniforms.uMorph.value = this.morph;
+      }
+      this.countryLabels?.setMorph(this.morph);
+
+      // Handle resize
+      window.addEventListener("resize", this.handleResize);
+
+      // Handle fullscreen changes
+      document.addEventListener(
+        "fullscreenchange",
+        this.handleFullscreenChange,
+      );
+
+      // Make canvas focusable for keyboard events
+      this.renderer.domElement.tabIndex = 0;
+      this.renderer.domElement.style.outline = "none"; // Remove default focus outline
+
+      // Focus on click
+      this.renderer.domElement.addEventListener("mousedown", () => {
+        this.renderer.domElement.focus();
+      });
+
+      // Handle keyboard shortcuts
+      this.renderer.domElement.addEventListener("keydown", this.handleKeydown);
+
+      // Start animation loop
+      this.animate();
+
+      // Signal that initialization is complete
+      this.resolveReady();
     } catch (err) {
       console.error("GlobeViz init failed:", err);
-      // Ensure specific error UI handling if needed, but always resolve ready
-      // so the loader can be hidden (or error displayed by consumer)
+      // Explicitly reject the ready promise so listeners know it died
+      this.rejectReady(err);
     }
-
-    // Set initial view
-    this.morph = this.config.initialView === "globe" ? 1 : 0;
-    if (this.material) {
-      this.material.uniforms.uMorph.value = this.morph;
-    }
-    this.countryLabels?.setMorph(this.morph);
-
-    // Handle resize
-    window.addEventListener("resize", this.handleResize);
-
-    // Handle fullscreen changes
-    document.addEventListener("fullscreenchange", this.handleFullscreenChange);
-
-    // Make canvas focusable for keyboard events
-    this.renderer.domElement.tabIndex = 0;
-    this.renderer.domElement.style.outline = "none"; // Remove default focus outline
-
-    // Focus on click
-    this.renderer.domElement.addEventListener("mousedown", () => {
-      this.renderer.domElement.focus();
-    });
-
-    // Handle keyboard shortcuts
-    this.renderer.domElement.addEventListener("keydown", this.handleKeydown);
-
-    // Start animation loop
-    this.animate();
-
-    // Signal that initialization is complete
-    this.resolveReady();
   }
 
   // ... (existing code)
@@ -393,9 +407,19 @@ export class GlobeViz implements GlobeVizAPI {
 
   private async createGlobe(): Promise<void> {
     // Load base earth texture
-    const baseTex = await this.textureLoader.loadAsync(
-      EARTH_TEXTURES[this.config.texture]
+    // Load base earth texture with timeout
+    const loadTexture = this.textureLoader.loadAsync(
+      EARTH_TEXTURES[this.config.texture],
     );
+
+    const timeout = new Promise<never>((_, reject) =>
+      setTimeout(
+        () => reject(new Error("Texture load timed out after 10s")),
+        10000,
+      ),
+    );
+
+    const baseTex = await Promise.race([loadTexture, timeout]);
 
     baseTex.anisotropy = this.renderer.capabilities.getMaxAnisotropy();
     baseTex.minFilter = THREE.LinearMipmapLinearFilter;
@@ -412,7 +436,7 @@ export class GlobeViz implements GlobeVizAPI {
       Math.PI * 2 * SPHERE_RADIUS,
       Math.PI * SPHERE_RADIUS,
       256,
-      128
+      128,
     );
 
     // Shader material
@@ -473,7 +497,7 @@ export class GlobeViz implements GlobeVizAPI {
       Math.PI * 2 * SPHERE_RADIUS * 1.15,
       Math.PI * SPHERE_RADIUS * 1.15,
       128,
-      64
+      64,
     );
 
     const atmosMaterial = new THREE.ShaderMaterial({
@@ -601,7 +625,7 @@ export class GlobeViz implements GlobeVizAPI {
     exportFolder
       .add(
         { screenshot: () => this.screenshot({ width: 1920, height: 1080 }) },
-        "screenshot"
+        "screenshot",
       )
       .name("📷 Screenshot");
   }
@@ -750,7 +774,7 @@ export class GlobeViz implements GlobeVizAPI {
         {
           value: 1,
           duration: 1.0,
-        }
+        },
       );
     }
   }
@@ -910,7 +934,7 @@ export class GlobeViz implements GlobeVizAPI {
         {
           value: 0,
           duration: 1.0,
-        }
+        },
       );
     }
   }
@@ -1021,7 +1045,12 @@ export class GlobeViz implements GlobeVizAPI {
         console.warn(`Unknown statistic: ${id}`);
         return;
       }
+      if (!stat) {
+        console.warn(`Unknown statistic: ${id}`);
+        return;
+      }
       this.currentStatistic = id;
+      this.currentValues = null; // Clear custom values to force lookup from internal stats
 
       // Find matching internal statistic and update choropleth
       const internalStat = INTERNAL_STATISTICS.find((s) => s.id === id);
@@ -1053,14 +1082,20 @@ export class GlobeViz implements GlobeVizAPI {
       }
     } else {
       // Custom StatisticData object
-      const customStat = id;
+      const customStat = id as StatisticData;
       this.currentStatistic = customStat.definition.id;
+
+      // Store values for Data Viewer
+      this.currentValues =
+        customStat.values instanceof Map
+          ? Object.fromEntries(customStat.values)
+          : customStat.values;
 
       if (this.choropleth) {
         const canvas = this.choropleth.renderCustomTexture(
           customStat.values,
           customStat.definition.colorScale,
-          customStat.definition.domain
+          customStat.definition.domain,
         );
         if (this.material && canvas) {
           const texture = new THREE.CanvasTexture(canvas);
@@ -1101,7 +1136,7 @@ export class GlobeViz implements GlobeVizAPI {
       lat: number;
       lon: number;
       size?: "large" | "medium" | "small" | "tiny";
-    }>
+    }>,
   ): void {
     this.countryLabels?.addCustomLabels(labels);
   }
@@ -1223,14 +1258,27 @@ export class GlobeViz implements GlobeVizAPI {
   }
 
   async setUrbanData(
-    points: { lat: number; lon: number; value: number; id?: string }[]
+    points: { lat: number; lon: number; value: number; id?: string }[],
   ): Promise<void> {
     if (!this.choropleth) return;
 
+    // Save points for regeneration (e.g. radius change)
+    this.urbanPoints = points;
+
     // 1. Map points to urban topology
-    const urbanData = await UrbanMapper.mapPointsToTopology(points);
+    const radius = this.config.pointRadius || 140;
+
+    // We force synthetic boundaries to allow user control over radius/visibility
+    const urbanData = await UrbanMapper.mapPointsToTopology(
+      points,
+      radius,
+      true,
+    );
 
     // 2. Inject features into ChoroplethRenderer
+    // 2. Inject features into ChoroplethRenderer
+    // User requested "City Based Gralobe", NOT with all countries.
+    // So we REPLACE the existing features with just the cities.
     this.choropleth.setFeatures(urbanData.features);
 
     // Auto-label the new urban features
@@ -1259,6 +1307,15 @@ export class GlobeViz implements GlobeVizAPI {
       max,
     ]);
 
+    // FORCE Update: changing the texture requires notifying the shader
+    if (this.material && this.material.uniforms.uDataTexture.value) {
+      this.material.uniforms.uDataTexture.value.needsUpdate = true;
+      this.material.uniforms.uDataOverlay.value = 1;
+    }
+
+    // Update current values for Data Grid
+    this.currentValues = urbanData.statistics;
+
     // 4. Set effects
     if (this.material) {
       this.material.uniforms.uCityLights.value = 1;
@@ -1266,8 +1323,55 @@ export class GlobeViz implements GlobeVizAPI {
     }
 
     // Hide country labels as they are confusing for city-level data
+    // We don't hide the group entirely anymore, relying on style="data" or "none" set by user/config
+    // But we might want to default to "data" if not set?
+    // For now, let's just ensure custom labels are added to dataIds (happens in addCustomLabels)
+    // Ensure labels group is visible
     if (this.countryLabels) {
-      this.countryLabels.getGroup().visible = false;
+      this.countryLabels.getGroup().visible = true;
+    }
+
+    // Lazy Add GUI Control for Radius if not exists
+    if (this.gui) {
+      // Check if control already exists by traversing Display folder
+      let displayFolder = this.gui.folders.find(
+        (f: any) => f._title === "Display",
+      );
+
+      if (!displayFolder) {
+        displayFolder = this.gui.addFolder("Display");
+      }
+
+      // Check if radius control exists
+      const controllers = displayFolder.controllers;
+      const hasRadius = controllers.some(
+        (c: any) => c.property === "pointRadius",
+      ); // Check property name bound
+
+      if (!hasRadius) {
+        // Create a proxy object for the control since we need to bind to a simple object
+        const radiusConfig = { pointRadius: this.config.pointRadius || 140 };
+
+        const radiusCtrl = displayFolder
+          .add(radiusConfig, "pointRadius", 10, 500, 5)
+          .name("Point Marker Radius")
+          .onChange(async (v: number) => {
+            this.config.pointRadius = v;
+            if (this.urbanPoints) {
+              // Re-run the generation
+              await this.setUrbanData(this.urbanPoints);
+            }
+          });
+
+        this.addTooltip(
+          radiusCtrl,
+          "<b>Synthetic Geometry Radius</b><br><br>" +
+            "If our data consists of point locations (like cities) without defined 2D borders, " +
+            "we generate synthetic circular boundaries for them.<br><br>" +
+            "This control scales the size (in km) of these generated circles. " +
+            "Larger values make small cities more visible on the global map.",
+        );
+      }
     }
   }
 
@@ -1292,6 +1396,55 @@ export class GlobeViz implements GlobeVizAPI {
     return document.fullscreenElement === this.container;
   }
 
+  getCurrentData(): Record<string, number> {
+    // 1. If we are displaying a custom statistic (e.g. from main.ts), use that source of truth
+    if (this.currentStatistic) {
+      // Check if it's a custom stat object passed directly to setStatistic logic
+      if (this.currentValues) {
+        if (this.choropleth) {
+          // Enhanced lookup: Try to find names for IDs
+          const result: Record<string, number> = {};
+          const entries = Array.isArray(this.currentValues)
+            ? this.currentValues // Should not happen with current types but safety
+            : Object.entries(this.currentValues);
+
+          for (const [id, value] of entries) {
+            // Try to resolve name from topology
+            const name = this.choropleth.getFeatureName(id) || id;
+            // Handle duplicates if needed? For now simple overwrite
+            result[name] = value;
+          }
+          return result;
+        }
+        return this.currentValues;
+      }
+
+      // Check built-ins
+      const internalStat = INTERNAL_STATISTICS.find(
+        (s) => s.id === this.currentStatistic,
+      );
+      if (internalStat) {
+        // Built-in stat. Extract using accessor from Choropleth's statsMap.
+        if (this.choropleth) {
+          const statsMap = this.choropleth.getStatsMap();
+          const result: Record<string, number> = {};
+          statsMap.forEach((countryStats, key) => {
+            const val = internalStat.accessor(countryStats);
+            const name = countryStats.name || key;
+            if (val !== undefined && val !== null) {
+              result[name] = val;
+            }
+          });
+          return result;
+        }
+      }
+    }
+
+    // Fallback: Try to guess from Choropleth if it has any data texture at all
+    // But usually currentStatistic should be set if data is visible.
+    return {};
+  }
+
   destroy(): void {
     this.isDestroyed = true;
 
@@ -1303,13 +1456,16 @@ export class GlobeViz implements GlobeVizAPI {
     window.removeEventListener("keydown", this.handleKeydown);
     document.removeEventListener(
       "fullscreenchange",
-      this.handleFullscreenChange
+      this.handleFullscreenChange,
     );
 
     this.gui?.destroy();
     this.legend?.dispose();
     this.countryLabels?.dispose();
     this.markerLayer?.dispose();
+
+    // Remove tooltips
+    document.querySelectorAll(".lil-gui-tooltip").forEach((el) => el.remove());
 
     // Dispose Three.js objects
     this.globe?.geometry.dispose();
@@ -1321,5 +1477,51 @@ export class GlobeViz implements GlobeVizAPI {
 
     this.renderer.dispose();
     this.container.removeChild(this.renderer.domElement);
+  }
+
+  private addTooltip(controller: any, text: string) {
+    const domElement = controller.domElement;
+    if (!domElement) return;
+
+    // Simple title attribute for basic tooltip
+    domElement.title = text.replace(/<br>/g, "\n").replace(/<b>|<\/b>/g, "");
+
+    // Enhanced custom tooltip if possible
+    // (This requires more CSS/DOM manipulation, but title is a good fallback)
+    domElement.parentElement.addEventListener("mouseenter", (e: MouseEvent) => {
+      const tooltip = document.createElement("div");
+      tooltip.className = "lil-gui-tooltip";
+      tooltip.innerHTML = text;
+      tooltip.style.position = "fixed";
+      tooltip.style.background = "rgba(0, 0, 0, 0.9)";
+      tooltip.style.color = "#fff";
+      tooltip.style.padding = "8px 12px";
+      tooltip.style.borderRadius = "4px";
+      tooltip.style.fontSize = "12px";
+      tooltip.style.maxWidth = "200px";
+      tooltip.style.pointerEvents = "none";
+      tooltip.style.zIndex = "10000";
+      tooltip.style.border = "1px solid #333";
+      tooltip.style.boxShadow = "0 4px 12px rgba(0,0,0,0.5)";
+
+      document.body.appendChild(tooltip);
+
+      const moveHandler = (moveEvent: MouseEvent) => {
+        tooltip.style.left = moveEvent.clientX + 10 + "px";
+        tooltip.style.top = moveEvent.clientY + 10 + "px";
+      };
+
+      window.addEventListener("mousemove", moveHandler);
+
+      const leaveHandler = () => {
+        tooltip.remove();
+        window.removeEventListener("mousemove", moveHandler);
+        domElement.parentElement.removeEventListener(
+          "mouseleave",
+          leaveHandler,
+        );
+      };
+      domElement.parentElement.addEventListener("mouseleave", leaveHandler);
+    });
   }
 }

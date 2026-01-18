@@ -415,7 +415,7 @@ export class CountryLabels {
       lat: number;
       lon: number;
       size?: "large" | "medium" | "small" | "tiny";
-    }>
+    }>,
   ): void {
     labels.forEach((customLabel) => {
       // Duplication check: skip if label with same ID or Name already exists
@@ -485,7 +485,7 @@ export class CountryLabels {
    */
   clearCustomLabels(): void {
     const toRemove = this.labels.filter((l) =>
-      l.element.classList.contains("custom-label")
+      l.element.classList.contains("custom-label"),
     );
     toRemove.forEach((label) => {
       this.labelGroup.remove(label.object);
@@ -493,7 +493,7 @@ export class CountryLabels {
       this.dataIds.delete(label.country.code);
     });
     this.labels = this.labels.filter(
-      (l) => !l.element.classList.contains("custom-label")
+      (l) => !l.element.classList.contains("custom-label"),
     );
   }
 
@@ -505,7 +505,7 @@ export class CountryLabels {
   private updateLabelPosition(
     object: CSS2DObject,
     label: CountryLabel,
-    morph: number
+    morph: number,
   ): void {
     const { lat, lon, element } = label;
 
@@ -537,7 +537,7 @@ export class CountryLabels {
     this.localPos.set(
       flatX + t * (sphereX - flatX),
       flatY + t * (sphereY - flatY),
-      flatZ + t * (sphereZ - flatZ)
+      flatZ + t * (sphereZ - flatZ),
     );
 
     // Transform local position to world position using globe's matrix
@@ -762,7 +762,7 @@ export class CountryLabels {
   getVisibleLabelsForCanvas(
     camera: THREE.Camera,
     canvasWidth: number,
-    canvasHeight: number
+    canvasHeight: number,
   ): Array<{
     text: string;
     x: number;
