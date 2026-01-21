@@ -52,6 +52,7 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.57.0",
+    "@types/node": "^25.0.9",
     "@types/topojson-client": "^3.1.5",
     "@types/topojson-specification": "^1.0.5",
     "typescript": "~5.9.3",

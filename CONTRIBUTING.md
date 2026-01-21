@@ -1,49 +1,87 @@
 # Contributing to Gralobe
 
-Thank you for your interest in contributing to Gralobe! This document provides guidelines for contributing.
+Thank you for your interest in contributing to Gralobe! This document provides guidelines for maintaining a high-quality, sustainable codebase.
 
-## Getting Started
+## 🌟 Core Philosophy
 
-1. Fork the repository
-2. Clone your fork: `git clone https://github.com/YOUR_USERNAME/gralobe.git`
-3. Install dependencies: `npm install`
-4. Create a branch: `git checkout -b feature/your-feature-name`
+As an AI agent or human contributor, your goal is not just to "make it work", but to **leave the codebase cleaner than you found it**.
 
-## Development
+- **Quality over Quantity**: Do not add features if they degrade architecture.
+- **Sustainability**: Write code that is easy to read, test, and maintain.
+- **Proactive Refactoring**: If you see messy code, fix it (safely).
+
+## 🧪 Testing Strategy
+
+We use **Playwright** for both Unit and End-to-End (E2E) testing.
+
+### 1. Unit Tests (Colocated)
+
+- **Location**: Next to the source file (e.g., `src/lib/formatters.ts` -> `src/lib/formatters.spec.ts`).
+- **Purpose**: Test individual functions, classes, and logic in isolation.
+- **Naming**: `*.spec.ts`
+- **Goal**: High coverage of business logic and edge cases.
+
+### 2. E2E / Integration Tests
+
+- **Location**: `tests/` directory.
+- **Purpose**: Test the application as a whole (browser interaction, rendering, data flow).
+- **Naming**: `*.test.ts`
+- **Goal**: Ensure the user experience remains broken-free.
+
+## 🚀 Development Workflow
+
+### Setup
 
 ```bash
-# Start dev server
-npm run dev
+git clone https://github.com/YOUR_USERNAME/gralobe.git
+npm install
+```
 
-# Run tests
+### Running Tests
+
+```bash
+# Run all tests
 npm test
 
-# Build
-npm run build
+# Run only unit tests (fast)
+npx playwright test --grep "Unit"
+
+# Run with UI (good for debugging E2E)
+npm run test:ui
 ```
+
+## 📝 Code Style & Quality
+
+- **TypeScript**: Strict typing is required. Avoid `any`.
+- **Formatting**: Code should be formatted consistently (Prettier/ESLint).
+- **Comments**: Explain _why_, not _what_. Add JSDoc to all public interfaces.
+- **Components**: Keep components small and focused. Refactor large files (like `GlobeViz.ts`) into smaller sub-modules when possible.
+
+## 🐛 Bug Fixing
+
+When fixing a bug:
+
+1. **Reproduce** it with a failing test case (Unit or E2E).
+2. **Fix** the code.
+3. **Verify** the test passes.
+4. **Refactor** adjacent code if it contributed to the bug.
 
 ## Pull Request Process
 
-1. Ensure tests pass: `npm test`
-2. Update documentation if needed
-3. Follow existing code style
-4. Write clear commit messages
-5. Reference any related issues
+1. Ensure all tests pass.
+2. Update documentation if behavior changes.
 
-## Code Style
+## ❓ Common Issues & Troubleshooting
 
-- Use TypeScript
-- Follow existing patterns in the codebase
-- Add JSDoc comments for public APIs
-- Keep functions focused and small
+### "Cannot find name 'process'"
 
-## Reporting Issues
+If you encounter this error (e.g., in `playwright.config.ts`), it means TypeScript cannot see Node.js global types.
 
-- Use GitHub Issues
-- Include browser/environment info
-- Provide minimal reproduction steps
-- Include error messages if applicable
+1. Ensure `@types/node` is installed: `npm i --save-dev @types/node`
+2. Ensure `tsconfig.json` includes `"types": ["node"]`.
 
-## Questions?
+### "Strict Mode Violation" in Tests
 
-Open a discussion or issue on GitHub.
+Playwright strict mode fails if a selector matches multiple elements.
+
+- **Fix**: Use more specific selectors (e.g., `#globe-container-id .target-class`) instead of generic ones.

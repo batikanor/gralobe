@@ -1,87 +1,92 @@
-import { test, expect } from '@playwright/test';
+import { expect, test } from "@playwright/test";
 
-test.describe('Legend Component', () => {
+test.describe("Legend Component", () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/');
+    await page.goto("/");
     // Wait for globe to initialize (canvas appears)
-    await page.waitForSelector('canvas', { timeout: 15000 });
+    await page.waitForSelector("canvas", { timeout: 15000 });
   });
 
-  test('legend element exists in DOM', async ({ page }) => {
+  test("legend element exists in DOM", async ({ page }) => {
     // Wait a bit for initialization
     await page.waitForTimeout(2000);
-    const legends = page.locator('.gralobe-legend');
+    const legends = page.locator(".gralobe-legend");
     const count = await legends.count();
     expect(count).toBeGreaterThan(0);
   });
 
-  test('legend has proper structure', async ({ page }) => {
+  test("legend has proper structure", async ({ page }) => {
     // Wait a bit for initialization
     await page.waitForTimeout(2000);
-    
+
     // Check that the first legend has proper structure
-    const legend = page.locator('.gralobe-legend').first();
+    const legend = page.locator(".gralobe-legend").first();
     await expect(legend).toBeAttached();
 
     // Check structure elements exist
-    const legendTitle = legend.locator('.gralobe-legend-title');
-    const legendGradient = legend.locator('.gralobe-legend-gradient');
-    const legendLabels = legend.locator('.gralobe-legend-labels');
+    const legendTitle = legend.locator(".gralobe-legend-title");
+    const legendGradient = legend.locator(".gralobe-legend-gradient");
+    const legendLabels = legend.locator(".gralobe-legend-labels");
 
     await expect(legendTitle).toBeAttached();
     await expect(legendGradient).toBeAttached();
     await expect(legendLabels).toBeAttached();
   });
 
-  test('legend becomes visible with statistic data', async ({ page }) => {
+  test("legend becomes visible with statistic data", async ({ page }) => {
     // Wait for the hero globe to initialize
-    await page.waitForSelector('#hero-globe canvas', { timeout: 15000 });
-    
+    await page.waitForSelector("#globe-stat-life canvas", { timeout: 15000 });
+
     // Wait for legend to become visible in hero section
-    const heroSection = page.locator('#hero-globe');
-    const heroLegend = heroSection.locator('.gralobe-legend');
-    
+    const heroSection = page.locator("#globe-stat-life");
+    const heroLegend = heroSection.locator(".gralobe-legend");
+
     // Wait for visible class
     await page.waitForTimeout(3000);
-    
-    const hasVisibleClass = await heroLegend.evaluate((el) => el.classList.contains('visible'));
+
+    const hasVisibleClass = await heroLegend.evaluate((el) =>
+      el.classList.contains("visible"),
+    );
     expect(hasVisibleClass).toBe(true);
-    
+
     // Check title has content
-    const legendTitle = heroLegend.locator('.gralobe-legend-title');
+    const legendTitle = heroLegend.locator(".gralobe-legend-title");
     const titleText = await legendTitle.textContent();
     expect(titleText?.length).toBeGreaterThan(0);
   });
 });
 
-test.describe('Legend Scoped to Container', () => {
-  test('legend is inside its globe container', async ({ page }) => {
-    await page.goto('/');
-    
+test.describe("Legend Scoped to Container", () => {
+  test("legend is inside its globe container", async ({ page }) => {
+    await page.goto("/");
+
     // Wait for hero globe
-    await page.waitForSelector('#hero-globe canvas', { timeout: 15000 });
+    await page.waitForSelector("#globe-stat-life canvas", { timeout: 15000 });
     await page.waitForTimeout(2000);
-    
+
     // Check that legend is inside its respective container (not in body)
-    const heroLegend = page.locator('#hero-globe .gralobe-legend');
+    const heroLegend = page.locator("#globe-stat-life .gralobe-legend");
     await expect(heroLegend).toBeAttached();
-    
+
     // Legend should be a child of the container, not body
-    const legendParent = await heroLegend.evaluate((el) => el.parentElement?.id);
-    expect(legendParent).toBe('hero-globe');
+    const legendParent = await heroLegend.evaluate(
+      (el) => el.parentElement?.id,
+    );
+    expect(legendParent).toBe("globe-stat-life");
   });
 
-  test('legend scales based on container size', async ({ page }) => {
-    await page.goto('/');
-    
+  test("legend scales based on container size", async ({ page }) => {
+    await page.goto("/");
+
     // Wait for hero globe
-    await page.waitForSelector('#hero-globe canvas', { timeout: 15000 });
+    await page.waitForSelector("#globe-stat-life canvas", { timeout: 15000 });
     await page.waitForTimeout(2000);
-    
+
     // Hero is large, should have size-lg class
-    const heroLegend = page.locator('#hero-globe .gralobe-legend');
-    const hasLgClass = await heroLegend.evaluate((el) => 
-      el.classList.contains('size-lg') || el.classList.contains('size-md')
+    const heroLegend = page.locator("#globe-stat-life .gralobe-legend");
+    const hasLgClass = await heroLegend.evaluate(
+      (el) =>
+        el.classList.contains("size-lg") || el.classList.contains("size-md"),
     );
     expect(hasLgClass).toBe(true);
   });

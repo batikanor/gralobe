@@ -1,10 +1,10 @@
 import { expect, test } from "@playwright/test";
-import { ChoroplethRenderer } from "../src/components/ChoroplethRenderer";
+import { ChoroplethRenderer } from "./ChoroplethRenderer";
 
 // Mock DOM for Node environment
 if (typeof document === "undefined") {
-  global.document = {
-    createElement: (tag) => {
+  (globalThis as any).document = {
+    createElement: (tag: string) => {
       if (tag === "canvas") {
         return {
           width: 0,
@@ -28,7 +28,7 @@ if (typeof document === "undefined") {
     },
   } as any;
 
-  global.Path2D = class {
+  (globalThis as any).Path2D = class {
     arc() {}
     moveTo() {}
     lineTo() {}
@@ -45,7 +45,7 @@ test.describe("ChoroplethRenderer Smart Lookup", () => {
     // But getFeatureName relies on this.featureLabels OR this.countries.
 
     // We can use "setFeatures" to populate it easily.
-    const renderer = new ChoroplethRenderer();
+    const renderer = new ChoroplethRenderer({ url: "" });
 
     const mockFeatures: any[] = [
       {
@@ -62,7 +62,7 @@ test.describe("ChoroplethRenderer Smart Lookup", () => {
   });
 
   test("getFeatureName performs smart lookup for padded zeros", async () => {
-    const renderer = new ChoroplethRenderer();
+    const renderer = new ChoroplethRenderer({ url: "" });
 
     const mockFeatures: any[] = [
       {
@@ -81,7 +81,7 @@ test.describe("ChoroplethRenderer Smart Lookup", () => {
   });
 
   test("getFeatureName returns undefined for no match", async () => {
-    const renderer = new ChoroplethRenderer();
+    const renderer = new ChoroplethRenderer({ url: "" });
     renderer.setFeatures([]);
     expect(renderer.getFeatureName("99999")).toBeUndefined();
   });

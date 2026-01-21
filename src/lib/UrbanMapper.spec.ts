@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { UrbanMapper } from "../src/lib/UrbanMapper";
+import { UrbanMapper } from "./UrbanMapper";
 
 test.describe("UrbanMapper Unit Tests", () => {
   test("generateSyntheticBoundary creates a Polygon with correct properties", () => {
@@ -42,6 +42,9 @@ test.describe("UrbanMapper Unit Tests", () => {
         name: "Tokyo City",
       },
     ];
+
+    // Mock loadBaseTopology to ensure synthetic path
+    (UrbanMapper as any).loadBaseTopology = async () => [];
 
     const result = await UrbanMapper.mapPointsToTopology(points);
 

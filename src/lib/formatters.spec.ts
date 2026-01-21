@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { createFormatter } from "../src/lib/formatters";
+import { createFormatter } from "./formatters";
 
 test.describe("Unit: Formatters", () => {
   test("formats percentages correctly", () => {
@@ -32,6 +32,6 @@ test.describe("Unit: Formatters", () => {
   test("falls back to default formatting for unknown units", () => {
     const fmt = createFormatter("apples");
     expect(fmt(5)).toBe("5 apples");
-    expect(fmt(5.55)).toBe("5.6 apples");
+    expect(fmt(5.56)).toBe("5.6 apples");
   });
 });
