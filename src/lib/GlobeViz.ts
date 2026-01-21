@@ -1399,6 +1399,22 @@ export class GlobeViz implements GlobeVizAPI {
           ? Object.fromEntries(customStat.values)
           : customStat.values;
 
+      // Update labels with new data IDs
+      if (this.countryLabels && this.currentValues) {
+        // Translate numeric IDs (156) to Alpha-2 codes (CN)
+        const activeIds = new Set(Object.keys(this.currentValues));
+        const activeCodes: string[] = [];
+
+        // Map numeric IDs from data to Alpha-2 codes for labels
+        WORLD_STATISTICS.forEach((c) => {
+          if (activeIds.has(c.id)) {
+            activeCodes.push(c.code);
+          }
+        });
+
+        this.countryLabels.setDataIds(activeCodes);
+      }
+
       if (this.choropleth) {
         const canvas = this.choropleth.renderCustomTexture(
           customStat.values,
