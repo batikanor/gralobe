@@ -59,10 +59,6 @@ function createDemoHTML(demo: DemoConfig): string {
           <div class="globe-debug-text" style="font-size: 10px; color: #666; margin-top: 4px;">Initializing...</div>
         </div>
         <div class="globe-error">Failed to load</div>
-        <div class="globe-toolbar">
-           <button class="toolbar-btn data-trigger" onclick="showDataGrid('${demo.id}')" title="View Data">▤</button>
-           <button class="toolbar-btn" onclick="toggleFullscreen('${demo.id}')" title="Fullscreen">⛶</button>
-        </div>
       </div>
       ${demo.description ? `<div style="padding: 8px 12px; font-size: 11px; color: #666; border-top: 1px solid #1a1a25; background: #0a0a0f;">${demo.description}</div>` : ""}
     </div>
@@ -182,45 +178,6 @@ const observer = new IntersectionObserver(
   { rootMargin: "200px", threshold: 0.1 },
 );
 
-// --- Data Grid Logic ---
-
-function showDataGrid(containerId: string) {
-  const globe = globes.get(containerId);
-  if (!globe) return;
-
-  const data = globe.getCurrentData();
-  const entries = Object.entries(data).sort((a, b) => a[0].localeCompare(b[0]));
-
-  const modal = document.getElementById("data-grid-modal");
-  const title = document.getElementById("grid-title");
-  const tbody = document.querySelector("#data-grid-table tbody");
-
-  if (modal && title && tbody) {
-    const config = (globe as any).config;
-    // Helper within helper?? No, just inline logic or reuse helper
-    const statName = getStatisticName(config.statistic);
-    title.textContent = `Data: ${statName}`;
-    tbody.innerHTML = entries
-      .map(
-        ([name, val]) => `
-      <tr>
-        <td class="font-medium">${name}</td>
-        <td class="text-right text-mono">${val.toLocaleString()}</td>
-      </tr>
-    `,
-      )
-      .join("");
-    modal.classList.remove("hidden");
-  }
-}
-
-function getStatisticName(stat: any): string {
-  if (typeof stat === "string") return stat;
-  if (stat && stat.definition && stat.definition.name)
-    return stat.definition.name;
-  return "Unknown Statistic";
-}
-
 // --- Toggle Logic ---
 
 function toggleSection(sectionId: string) {
@@ -289,20 +246,9 @@ function renderApp() {
   }
   globes.get(containerId)?.toggleFullscreen();
 };
-(window as any).showDataGrid = showDataGrid;
 (window as any).toggleSection = toggleSection;
 
 // --- Event Listeners ---
 document.addEventListener("DOMContentLoaded", () => {
   renderApp();
-
-  // Modal close handlers
-  const close = document.getElementById("grid-close");
-  const modal = document.getElementById("data-grid-modal");
-  if (close && modal) {
-    close.addEventListener("click", () => modal.classList.add("hidden"));
-    modal.addEventListener("click", (e) => {
-      if (e.target === modal) modal.classList.add("hidden");
-    });
-  }
 });

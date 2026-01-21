@@ -164,6 +164,8 @@ export declare class GlobeViz implements GlobeVizAPI {
     private exporter;
     private countryLabels;
     private markerLayer;
+    private toolbar;
+    private dataGrid;
     private textureLoader;
     private dataTexture;
     private morph;
@@ -199,7 +201,7 @@ export declare class GlobeViz implements GlobeVizAPI {
     private setupInteraction;
     setMorph(value: number): void;
     getMorph(): number;
-    setStatistic(id: string | StatisticData): void;
+    setStatistic(idOrData: string | StatisticData): void;
     setLabels(style: LabelStyle): void;
     /**
      * Add custom labels for cities, states, or any geographic points
@@ -227,13 +229,17 @@ export declare class GlobeViz implements GlobeVizAPI {
         lon: number;
         value: number;
         id?: string;
+        name?: string;
+        label?: string;
     }[]): Promise<void>;
     resize(width: number, height: number): void;
+    toggleProjection(): void;
     toggleFullscreen(): Promise<void>;
     isFullscreen(): boolean;
     getCurrentData(): Record<string, number>;
     destroy(): void;
     private addTooltip;
+    private getStatisticMetadata;
 }
 
 /**
@@ -274,6 +280,8 @@ export declare interface GlobeVizAPI {
         lon: number;
         value: number;
         id?: string;
+        name?: string;
+        label?: string;
     }[]): Promise<void>;
     /** Resize the visualization */
     resize(width: number, height: number): void;
@@ -281,6 +289,8 @@ export declare interface GlobeVizAPI {
     toggleFullscreen(): Promise<void>;
     /** Check if currently fullscreen */
     isFullscreen(): boolean;
+    /** Toggle between globe and flat projection */
+    toggleProjection(): void;
     /** Get current statistical data for grid */
     getCurrentData(): Record<string, number>;
     /** Destroy the instance and clean up */
@@ -359,8 +369,17 @@ export declare interface GlobeVizConfig {
      */
     initialView?: "globe" | "flat";
     /**
-     * Show control panel (lil-gui)
-     * @default true
+     * Show debug control panel (lil-gui)
+     * @default false
+     */
+    showDebug?: boolean;
+    /**
+     * Show library toolbar (Fullscreen, Data Grid)
+     * @default false
+     */
+    showToolbar?: boolean;
+    /**
+     * @deprecated Use showDebug or showToolbar instead
      */
     showControls?: boolean;
     /**

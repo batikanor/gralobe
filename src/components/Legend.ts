@@ -5,8 +5,8 @@
  * Each instance is scoped to its parent container and scales proportionally.
  */
 
-import type { StatisticDefinition } from '../lib/types';
-import { createFormatter } from '../lib/formatters';
+import { createFormatter } from "../lib/formatters";
+import type { StatisticDefinition } from "../lib/types";
 
 // Inject global styles once
 let stylesInjected = false;
@@ -15,8 +15,8 @@ function injectGlobalStyles(): void {
   if (stylesInjected) return;
   stylesInjected = true;
 
-  const style = document.createElement('style');
-  style.setAttribute('data-gralobe-legend', 'true');
+  const style = document.createElement("style");
+  style.setAttribute("data-gralobe-legend", "true");
   style.textContent = `
     .gralobe-legend {
       position: absolute;
@@ -153,7 +153,7 @@ function injectGlobalStyles(): void {
   document.head.appendChild(style);
 }
 
-type LegendSize = 'xs' | 'sm' | 'md' | 'lg';
+type LegendSize = "xs" | "sm" | "md" | "lg";
 
 export class Legend {
   private element: HTMLElement;
@@ -168,15 +168,14 @@ export class Legend {
 
     // Ensure parent has relative/absolute positioning
     const parentPosition = getComputedStyle(parentContainer).position;
-    if (parentPosition === 'static') {
-      parentContainer.style.position = 'relative';
+    if (parentPosition === "static") {
+      parentContainer.style.position = "relative";
     }
 
-    this.element = document.createElement('div');
-    this.element.className = 'gralobe-legend';
-    this.element.setAttribute('data-testid', 'globe-legend');
+    this.element = document.createElement("div");
+    this.element.className = "gralobe-legend";
+    this.element.setAttribute("data-testid", "globe-legend");
     this.element.innerHTML = `
-      <div class="gralobe-legend-hint">G: view · F: fullscreen</div>
       <div class="gralobe-legend-title" data-testid="legend-title"></div>
       <div class="gralobe-legend-gradient"></div>
       <div class="gralobe-legend-labels">
@@ -196,10 +195,10 @@ export class Legend {
 
   private getSizeClass(width: number, height: number): LegendSize {
     const minDim = Math.min(width, height);
-    if (minDim < 200) return 'xs';
-    if (minDim < 300) return 'sm';
-    if (minDim < 450) return 'md';
-    return 'lg';
+    if (minDim < 200) return "xs";
+    if (minDim < 300) return "sm";
+    if (minDim < 450) return "md";
+    return "lg";
   }
 
   private updateSize(): void {
@@ -208,16 +207,26 @@ export class Legend {
     const sizeClass = this.getSizeClass(width, height);
 
     // Remove old size classes and add new one
-    this.element.classList.remove('size-xs', 'size-sm', 'size-md', 'size-lg');
+    this.element.classList.remove("size-xs", "size-sm", "size-md", "size-lg");
     this.element.classList.add(`size-${sizeClass}`);
   }
 
   show(stat: StatisticDefinition): void {
-    const titleEl = this.element.querySelector('.gralobe-legend-title') as HTMLElement;
-    const gradientEl = this.element.querySelector('.gralobe-legend-gradient') as HTMLElement;
-    const minEl = this.element.querySelector('.gralobe-legend-min') as HTMLElement;
-    const maxEl = this.element.querySelector('.gralobe-legend-max') as HTMLElement;
-    const descEl = this.element.querySelector('.gralobe-legend-description') as HTMLElement;
+    const titleEl = this.element.querySelector(
+      ".gralobe-legend-title",
+    ) as HTMLElement;
+    const gradientEl = this.element.querySelector(
+      ".gralobe-legend-gradient",
+    ) as HTMLElement;
+    const minEl = this.element.querySelector(
+      ".gralobe-legend-min",
+    ) as HTMLElement;
+    const maxEl = this.element.querySelector(
+      ".gralobe-legend-max",
+    ) as HTMLElement;
+    const descEl = this.element.querySelector(
+      ".gralobe-legend-description",
+    ) as HTMLElement;
 
     titleEl.textContent = stat.name;
     descEl.textContent = stat.description;
@@ -229,12 +238,12 @@ export class Legend {
     minEl.textContent = formatValue(stat.domain[0]);
     maxEl.textContent = formatValue(stat.domain[1]);
 
-    this.element.classList.add('visible');
+    this.element.classList.add("visible");
     this.visible = true;
   }
 
   hide(): void {
-    this.element.classList.remove('visible');
+    this.element.classList.remove("visible");
     this.visible = false;
   }
 

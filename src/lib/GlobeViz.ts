@@ -9,10 +9,15 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 
 import { ChoroplethRenderer } from "../components/ChoroplethRenderer";
 import { CountryLabels } from "../components/CountryLabels";
+import { DataGrid } from "../components/DataGrid";
 import { Exporter } from "../components/Exporter";
 import { Legend } from "../components/Legend";
 import { MarkerLayer } from "../components/MarkerLayer";
-import { STATISTICS as INTERNAL_STATISTICS } from "../data/worldStatistics";
+import { Toolbar } from "../components/Toolbar";
+import {
+  STATISTICS as INTERNAL_STATISTICS,
+  WORLD_STATISTICS,
+} from "../data/worldStatistics";
 import {
   atmosphereFragmentShader,
   atmosphereVertexShader,
@@ -89,7 +94,14 @@ export interface GlobeVizAPI {
   setMarkers(data: MarkerData[], config?: MarkerConfig): void;
   /** Set urban city data for visualization */
   setUrbanData(
-    points: { lat: number; lon: number; value: number; id?: string }[],
+    points: {
+      lat: number;
+      lon: number;
+      value: number;
+      id?: string;
+      name?: string;
+      label?: string;
+    }[],
   ): Promise<void>;
   /** Resize the visualization */
   resize(width: number, height: number): void;
@@ -97,6 +109,8 @@ export interface GlobeVizAPI {
   toggleFullscreen(): Promise<void>;
   /** Check if currently fullscreen */
   isFullscreen(): boolean;
+  /** Toggle between globe and flat projection */
+  toggleProjection(): void;
   /** Get current statistical data for grid */
   getCurrentData(): Record<string, number>;
   /** Destroy the instance and clean up */
@@ -122,12 +136,26 @@ const DEFAULT_CONFIG: Required<
   autoRotate: false,
   initialView: "globe",
   showControls: false,
+  showDebug: false,
+  showToolbar: false,
   showLegend: true,
   effects: {
     atmosphereIntensity: 0,
     atmosphere: false,
     clouds: false,
+    cloudSpeed: 1.0,
+    cloudOpacity: 0.6,
     starTwinkle: true,
+    aurora: false,
+    cityLights: false,
+    oceanSpecular: false,
+    gridLines: false,
+    gridOpacity: 0.5,
+    hologramMode: false,
+    vintageMode: false,
+    thermalMode: false,
+    blueprintMode: false,
+    glowPulse: false,
   },
   extrudeHeight: false,
   pointRadius: 140,
@@ -196,6 +224,8 @@ export class GlobeViz implements GlobeVizAPI {
   private exporter: Exporter | null = null;
   private countryLabels: CountryLabels | null = null;
   private markerLayer: MarkerLayer | null = null;
+  private toolbar: Toolbar | null = null;
+  private dataGrid: DataGrid | null = null;
   private textureLoader: THREE.TextureLoader = new THREE.TextureLoader();
   private dataTexture: THREE.CanvasTexture | null = null;
 
@@ -229,12 +259,16 @@ export class GlobeViz implements GlobeVizAPI {
       this.container = container;
     }
 
+    this.container.classList.add("gralobe-viz-container");
+
     // Merge config with defaults
     this.config = {
       ...DEFAULT_CONFIG,
       ...config,
-      effects: { ...DEFAULT_CONFIG.effects, ...config.effects },
+      effects: { ...DEFAULT_CONFIG.effects, ...(config.effects || {}) },
     };
+
+    console.log("GlobeViz v5 initialized", this.config.effects);
 
     // Create ready promise
     this.ready = new Promise((resolve, reject) => {
@@ -245,7 +279,6 @@ export class GlobeViz implements GlobeVizAPI {
     // Initialize
     this.init();
   }
-
   private async init(): Promise<void> {
     try {
       const width = this.config.width || this.container.clientWidth || 800;
@@ -325,7 +358,7 @@ export class GlobeViz implements GlobeVizAPI {
       }
 
       // Setup controls GUI if enabled
-      if (this.config.showControls) {
+      if (this.config.showControls || this.config.showDebug) {
         this.createGUI();
       }
 
@@ -375,6 +408,28 @@ export class GlobeViz implements GlobeVizAPI {
       // Start animation loop
       this.animate();
 
+      // Initialize keys for fullscreen/flat
+
+      // Initialize UI components if showToolbar is true (or legacy showControls)
+      // We explicitly check both, prioritizing showToolbar
+      if (this.config.showToolbar || this.config.showControls) {
+        this.toolbar = new Toolbar(this.container, {
+          onShowData: () => {
+            const stats = this.currentStatistic
+              ? this.getStatisticMetadata(this.currentStatistic)
+              : null;
+            const title = stats?.definition.name || "Current Data";
+            this.dataGrid?.show(title, this.getCurrentData());
+          },
+          onToggleFullscreen: () => this.toggleFullscreen(),
+          onToggleProjection: () => this.toggleProjection(),
+        });
+        this.dataGrid = new DataGrid(this.container);
+
+        // Set initial icon state based on initialView
+        this.toolbar.updateProjectionIcon(this.config.initialView === "globe");
+      }
+
       // Signal that initialization is complete
       this.resolveReady();
     } catch (err) {
@@ -393,11 +448,7 @@ export class GlobeViz implements GlobeVizAPI {
     if (document.activeElement !== this.renderer.domElement) return;
 
     if (e.key === "g" || e.key === "G") {
-      if (this.morph > 0.5) {
-        this.toFlat();
-      } else {
-        this.toGlobe();
-      }
+      this.toggleProjection();
     }
 
     if (e.key === "f" || e.key === "F") {
@@ -420,6 +471,9 @@ export class GlobeViz implements GlobeVizAPI {
     );
 
     const baseTex = await Promise.race([loadTexture, timeout]);
+
+    // Safety check: if destroyed before load finished
+    if (this.isDestroyed || !this.renderer) return;
 
     baseTex.anisotropy = this.renderer.capabilities.getMaxAnisotropy();
     baseTex.minFilter = THREE.LinearMipmapLinearFilter;
@@ -565,69 +619,362 @@ export class GlobeViz implements GlobeVizAPI {
       this.container.style.position = "relative";
     }
 
-    // Create GUI attached to container, compact and closed by default
+    console.warn("Creating GUI v6 (Two-Stage Navigation)");
+
+    // Force-inject or Update custom styles
+    let style = document.querySelector(
+      "style#gralobe-gui-style",
+    ) as HTMLStyleElement;
+    if (!style) {
+      style = document.createElement("style");
+      style.id = "gralobe-gui-style";
+      document.head.appendChild(style);
+    }
+
+    style.textContent = `
+        /* Root container helper */
+        .gralobe-viz-container {
+            position: relative;
+        }
+
+        /* 1. Main Toggle Button (Top Right) */
+        .gralobe-gui-toggle {
+          position: absolute !important;
+          top: 12px !important;
+          right: 12px !important;
+          width: 32px !important;
+          height: 32px !important;
+          background: rgba(0, 5, 15, 0.9) !important;
+          border: 1px solid rgba(100, 150, 200, 0.3) !important;
+          border-radius: 6px !important;
+          color: #ddd !important;
+          display: flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          cursor: pointer !important;
+          z-index: 1002 !important;
+          backdrop-filter: blur(4px) !important;
+          -webkit-backdrop-filter: blur(4px) !important;
+          transition: all 0.2s ease !important;
+          padding: 0 !important;
+        }
+
+        .gralobe-gui-toggle:hover {
+          background: rgba(20, 40, 60, 0.95) !important;
+          border-color: rgba(100, 180, 255, 0.6) !important;
+          color: #fff !important;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+        }
+
+        .gralobe-gui-toggle.expanded svg {
+          transform: rotate(180deg) !important;
+          color: #4af !important;
+        }
+        
+        .gralobe-gui-toggle svg {
+           width: 18px !important;
+           height: 18px !important;
+           stroke: currentColor !important;
+           transition: transform 0.3s ease !important;
+        }
+
+        /* 2. Category Toolbar (Vertical Stack beneath Toggle) */
+        .gralobe-category-bar {
+          position: absolute !important;
+          top: 50px !important;
+          right: 12px !important;
+          display: flex !important;
+          flex-direction: column !important;
+          gap: 6px !important;
+          z-index: 1001 !important;
+          transition: opacity 0.2s ease, transform 0.2s ease !important;
+          pointer-events: none !important;
+          opacity: 0 !important;
+          transform: translateX(20px) !important;
+        }
+
+        .gralobe-category-bar.visible {
+          pointer-events: auto !important;
+          opacity: 1 !important;
+          transform: translateX(0) !important;
+        }
+
+        .gralobe-category-btn {
+          background: rgba(0, 10, 20, 0.85) !important;
+          border: 1px solid rgba(100, 150, 200, 0.3) !important;
+          color: #ddd !important;
+          padding: 6px 12px !important;
+          border-radius: 4px !important;
+          font-family: 'Inter', sans-serif !important;
+          font-size: 8px !important;
+          text-align: right !important;
+          cursor: pointer !important;
+          backdrop-filter: blur(8px) !important;
+          transition: all 0.2s ease !important;
+          min-width: 80px !important;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.3) !important;
+        }
+
+        .gralobe-category-btn:hover {
+          background: rgba(20, 40, 70, 0.9) !important;
+          border-color: #4af !important;
+          color: #fff !important;
+          transform: translateX(-2px) !important;
+        }
+
+        .gralobe-category-btn.active {
+          background: rgba(0, 60, 120, 0.9) !important;
+          border-color: #4af !important;
+          color: #4af !important;
+          font-weight: 600 !important;
+        }
+
+        /* 3. Transient Panels (lil-gui instances) */
+        .gralobe-viz-container .lil-gui.root {
+          position: absolute !important;
+          top: 50px !important; /* Align with top of toolbar */
+          right: 100px !important; /* To the left of the toolbar */
+          width: 160px !important;
+          z-index: 1000 !important;
+          
+          --background-color: rgba(0, 10, 20, 0.9) !important;
+          --text-color: #ddd !important;
+          --widget-color: rgba(60, 110, 170, 0.3) !important;
+          --hover-color: rgba(70, 160, 255, 0.4) !important;
+          --focus-color: #4af !important;
+          --number-color: #4af !important;
+          
+          border-radius: 6px !important;
+          border: 1px solid rgba(100, 150, 200, 0.3) !important;
+          backdrop-filter: blur(12px) !important;
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6) !important;
+          
+          transition: opacity 0.2s ease, transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
+          opacity: 0 !important;
+          pointer-events: none !important;
+          transform: translateX(10px) !important;
+          display: none !important; /* Hide by default */
+        }
+
+        .gralobe-viz-container .lil-gui.root.active-panel {
+          opacity: 1 !important;
+          pointer-events: auto !important;
+          transform: translateX(0) !important;
+          display: flex !important;
+        }
+
+        /* 4. Global Font Overrides */
+        .gralobe-viz-container .lil-gui,
+        .gralobe-viz-container .lil-gui * {
+          font-size: 7px !important;
+          font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
+          line-height: 1.2 !important;
+        }
+        
+        /* Hide internal titles */
+        .gralobe-viz-container .lil-gui.root > .title {
+            display: none !important;
+        }
+
+        /* Compact inputs */
+        .gralobe-viz-container .lil-gui input[type="checkbox"] {
+          width: 8px !important; height: 8px !important; margin-top: 1px !important;
+        }
+        .gralobe-viz-container .lil-gui input[type="text"],
+        .gralobe-viz-container .lil-gui input[type="number"],
+        .gralobe-viz-container .lil-gui select {
+            height: 12px !important;
+            font-size: 7px !important;
+        }
+        .gralobe-viz-container .lil-gui .controller {
+            margin: 2px 0 !important;
+        }
+    `;
+
+    // 1. Cleanup existing GUI/Button/Toolbar
+    if (this.gui) {
+      try {
+        this.gui.destroy();
+      } catch (e) {}
+      this.gui = null;
+    }
+    const oldBtn = this.container.querySelector(".gralobe-gui-toggle");
+    if (oldBtn) oldBtn.remove();
+    const oldToolbar = this.container.querySelector(".gralobe-category-bar");
+    if (oldToolbar) oldToolbar.remove();
+
+    // Create GUI attached to container - This acts as a factory/manager now
     this.gui = new GUI({
       container: this.container,
-      title: "⚙ Controls",
-      width: 220,
-      closeFolders: true,
+      title: "Controls",
     });
 
-    // Style the GUI to be positioned within container
-    const guiDom = this.gui.domElement;
-    guiDom.style.position = "absolute";
-    guiDom.style.top = "8px";
-    guiDom.style.right = "8px";
-    guiDom.style.zIndex = "100";
+    // --- A. Main Toggle Button ---
+    const toggleBtn = document.createElement("button");
+    toggleBtn.className = "gralobe-gui-toggle";
+    toggleBtn.innerHTML = `
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="15 18 9 12 15 6"></polyline>
+      </svg>
+    `;
+    toggleBtn.title = "Toggle Toolbar";
+    this.container.appendChild(toggleBtn);
 
-    // Start closed
-    this.gui.close();
+    // --- B. Category Toolbar Container ---
+    const toolbar = document.createElement("div");
+    toolbar.className = "gralobe-category-bar";
+    this.container.appendChild(toolbar);
 
-    // View controls
-    const viewFolder = this.gui.addFolder("View");
-    viewFolder
-      .add({ toGlobe: () => this.toGlobe() }, "toGlobe")
-      .name("→ Globe");
-    viewFolder.add({ toFlat: () => this.toFlat() }, "toFlat").name("→ Flat");
-    viewFolder
+    // State
+    let isToolbarOpen = false;
+    let activeCategory: string | null = null;
+    const categoryGUIs: { [key: string]: GUI } = {};
+    const categoryBtns: { [key: string]: HTMLButtonElement } = {};
+
+    // Helper: Close all panels
+    const closeAllPanels = () => {
+      Object.keys(categoryGUIs).forEach((key) => {
+        categoryGUIs[key].domElement.classList.remove("active-panel");
+        categoryBtns[key].classList.remove("active");
+      });
+      activeCategory = null;
+    };
+
+    // Helper: Toggle a specific category
+    const toggleCategory = (key: string) => {
+      if (activeCategory === key) {
+        closeAllPanels();
+      } else {
+        closeAllPanels();
+        activeCategory = key;
+        categoryGUIs[key].domElement.classList.add("active-panel");
+        categoryBtns[key].classList.add("active");
+      }
+    };
+
+    // --- C. Logic: Toggle Main Toolbar ---
+    const updateToolbarState = (open: boolean) => {
+      isToolbarOpen = open;
+      if (isToolbarOpen) {
+        toolbar.classList.add("visible");
+        toggleBtn.classList.add("expanded");
+      } else {
+        toolbar.classList.remove("visible");
+        toggleBtn.classList.remove("expanded");
+        closeAllPanels();
+      }
+    };
+
+    toggleBtn.onclick = (e) => {
+      e.stopPropagation();
+      updateToolbarState(!isToolbarOpen);
+    };
+
+    // Initialize (Closed)
+    updateToolbarState(false);
+
+    // Helper: Build a Category
+    const createCategory = (name: string, label: string) => {
+      // 1. Button
+      const btn = document.createElement("button");
+      btn.className = "gralobe-category-btn";
+
+      btn.innerText = label;
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        toggleCategory(name);
+      };
+      toolbar.appendChild(btn);
+      categoryBtns[name] = btn;
+
+      // 2. GUI Panel
+      const gui = new GUI({ container: this.container, title: name });
+      gui.domElement.classList.add("root"); // apply styles
+      categoryGUIs[name] = gui;
+
+      return gui;
+    };
+
+    // 1. Theme
+    const textureFolder = createCategory("texture", "Texture");
+    textureFolder
+      .add(this.config, "texture", Object.keys(EARTH_TEXTURES))
+      .name("Theme")
+      .onChange((v: any) => this.setTexture(v));
+
+    // 2. Navigation
+    const navGUI = createCategory("nav", "Navigation");
+    navGUI.add({ toGlobe: () => this.toGlobe() }, "toGlobe").name("→ Globe");
+    navGUI.add({ toFlat: () => this.toFlat() }, "toFlat").name("→ Flat");
+    navGUI
       .add({ morph: this.morph }, "morph", 0, 1)
       .name("Morph")
+      .listen()
       .onChange((v: number) => this.setMorph(v));
 
-    // Statistics
-    const statsFolder = this.gui.addFolder("Statistics");
-    const statOptions = Object.keys(BUILT_IN_STATISTICS);
-    statsFolder
-      .add({ stat: this.config.statistic as string }, "stat", statOptions)
-      .name("Statistic")
+    // 3. Stats
+    const statsGUI = createCategory("stats", "Data");
+
+    // Determine initial ID (handle custom object vs string)
+    const initialStatId =
+      typeof this.config.statistic === "string"
+        ? this.config.statistic
+        : this.config.statistic.definition.id;
+
+    statsGUI
+      .add({ stat: initialStatId }, "stat", Object.keys(BUILT_IN_STATISTICS))
+      .name("Metric")
       .onChange((id: string) => this.setStatistic(id));
 
-    // Labels
-    const labelOptions: LabelStyle[] = [
-      "none",
-      "minimal",
-      "major",
-      "all",
-      "all-countries",
-      "data",
-    ];
-    this.gui
-      .addFolder("Display")
-      .add({ labels: this.config.labels }, "labels", labelOptions)
-      .name("Labels")
-      .onChange((style: LabelStyle) => this.setLabels(style));
+    // 4. Effects
+    const fxGUI = createCategory("fx", "Effects");
+    const fx = this.config.effects!;
+    fxGUI.add(fx, "clouds").onChange((v: boolean) => {
+      if (this.material) this.material.uniforms.uClouds.value = v ? 1 : 0;
+    });
+    fxGUI.add(fx, "atmosphere").onChange((v: boolean) => {
+      if (this.material)
+        this.material.uniforms.uAtmosphereIntensity.value = v ? 1 : 0;
+    });
+    fxGUI
+      .add(fx, "cityLights")
+      .name("City Lights")
+      .onChange((v: boolean) => {
+        if (this.material) this.material.uniforms.uCityLights.value = v ? 1 : 0;
+      });
 
-    // Auto rotate
-    this.gui.add(this.config, "autoRotate").name("Auto Rotate");
+    // Sub-folder for special modes in the same panel
+    const specialFolder = fxGUI.addFolder("Special Modes");
+    specialFolder
+      .add(fx, "hologramMode")
+      .name("Hologram")
+      .onChange((v: boolean) => {
+        if (this.material) this.material.uniforms.uHologram.value = v ? 1 : 0;
+      });
+    specialFolder
+      .add(fx, "vintageMode")
+      .name("Vintage")
+      .onChange((v: boolean) => {
+        if (this.material) this.material.uniforms.uVintage.value = v ? 1 : 0;
+      });
 
-    // Export controls
-    const exportFolder = this.gui.addFolder("Export");
-    exportFolder
+    // 5. Settings
+    const settingsGUI = createCategory("settings", "Settings");
+    settingsGUI
+      .add({ labels: this.config.labels }, "labels", [
+        "none",
+        "minimal",
+        "all",
+        "data",
+      ])
+      .onChange((v: any) => this.setLabels(v));
+    settingsGUI.add(this.config, "autoRotate").name("Auto Rotate");
+    settingsGUI
       .add(
         { screenshot: () => this.screenshot({ width: 1920, height: 1080 }) },
         "screenshot",
       )
-      .name("📷 Screenshot");
+      .name("Screenshot");
   }
 
   private handleResize = (): void => {
@@ -777,6 +1124,9 @@ export class GlobeViz implements GlobeVizAPI {
         },
       );
     }
+
+    // Update toolbar icon
+    this.toolbar?.updateProjectionIcon(true);
   }
 
   toFlat(): void {
@@ -937,6 +1287,9 @@ export class GlobeViz implements GlobeVizAPI {
         },
       );
     }
+
+    // Update toolbar icon
+    this.toolbar?.updateProjectionIcon(false);
   }
 
   /**
@@ -1011,81 +1364,36 @@ export class GlobeViz implements GlobeVizAPI {
         }
       }
     });
-
-    // Handle Double Click (Reset View)
-    this.renderer.domElement.addEventListener("dblclick", () => {
-      if (this.morph < 0.1) {
-        // Reset to full view by calling toFlat again
-        this.toFlat();
-      }
-    });
   }
 
   setMorph(value: number): void {
-    this.morph = Math.max(0, Math.min(1, value));
-    if (this.material) {
-      this.material.uniforms.uMorph.value = this.morph;
-    }
+    this.morph = value;
+    if (this.material) this.material.uniforms.uMorph.value = value;
     if (this.atmosphere) {
       (this.atmosphere.material as THREE.ShaderMaterial).uniforms.uMorph.value =
-        this.morph;
+        value;
     }
-    this.countryLabels?.setMorph(this.morph);
-    this.markerLayer?.setMorph(this.morph);
+    this.countryLabels?.setMorph(value);
+    this.markerLayer?.setMorph(value);
   }
 
   getMorph(): number {
     return this.morph;
   }
 
-  setStatistic(id: string | StatisticData): void {
-    if (typeof id === "string") {
-      const stat = BUILT_IN_STATISTICS[id];
-      if (!stat) {
-        console.warn(`Unknown statistic: ${id}`);
-        return;
-      }
-      if (!stat) {
-        console.warn(`Unknown statistic: ${id}`);
-        return;
-      }
-      this.currentStatistic = id;
-      this.currentValues = null; // Clear custom values to force lookup from internal stats
+  setStatistic(idOrData: string | StatisticData): void {
+    if (this.isDestroyed) return;
 
-      // Find matching internal statistic and update choropleth
-      const internalStat = INTERNAL_STATISTICS.find((s) => s.id === id);
-      if (internalStat && this.choropleth) {
-        const canvas = this.choropleth.renderTexture(internalStat);
-        if (this.material && canvas) {
-          const texture = new THREE.CanvasTexture(canvas);
-          texture.needsUpdate = true;
-          this.material.uniforms.uDataTexture.value = texture;
-          this.material.uniforms.uDataOverlay.value = 1;
-          this.material.uniforms.uDataOpacity.value = 0.7;
-        }
-      }
-
-      // Update legend
-      if (this.legend && internalStat) {
-        this.legend.show(internalStat);
-      }
-
-      // Update data labels (for "data" label mode)
-      // Built-in stats use statsMap from choropleth - extract country codes (not numeric IDs)
-      if (this.countryLabels && this.choropleth) {
-        const statsMap = this.choropleth.getStatsMap();
-        // statsMap values have .code property (2-letter country code like "US")
-        const dataIds: string[] = statsMap
-          ? Array.from(statsMap.values()).map((c: any) => c.code)
-          : [];
-        this.countryLabels.setDataIds(dataIds);
-      }
+    let customStat: StatisticData | null = null;
+    if (typeof idOrData === "string") {
+      customStat = this.getStatisticMetadata(idOrData);
+      this.currentStatistic = idOrData;
     } else {
-      // Custom StatisticData object
-      const customStat = id as StatisticData;
+      customStat = idOrData;
       this.currentStatistic = customStat.definition.id;
+    }
 
-      // Store values for Data Viewer
+    if (customStat) {
       this.currentValues =
         customStat.values instanceof Map
           ? Object.fromEntries(customStat.values)
@@ -1099,25 +1407,24 @@ export class GlobeViz implements GlobeVizAPI {
         );
         if (this.material && canvas) {
           const texture = new THREE.CanvasTexture(canvas);
+          texture.anisotropy = this.renderer.capabilities.getMaxAnisotropy();
           texture.needsUpdate = true;
           this.material.uniforms.uDataTexture.value = texture;
           this.material.uniforms.uDataOverlay.value = 1;
-          this.material.uniforms.uDataOpacity.value = 0.7;
+
+          // If we receive an update and data opacity is 0, fade it in
+          if (this.material.uniforms.uDataOpacity.value === 0) {
+            gsap.to(this.material.uniforms.uDataOpacity, {
+              value: 0.7,
+              duration: 1.0,
+            });
+          }
         }
-      }
 
-      // Update legend with custom stat definition
-      if (this.legend) {
-        this.legend.show(customStat.definition as any);
-      }
-
-      // Update data labels (for "data" label mode)
-      if (this.countryLabels) {
-        const valuesObj =
-          customStat.values instanceof Map
-            ? Object.fromEntries(customStat.values)
-            : customStat.values;
-        this.countryLabels.setDataIds(Object.keys(valuesObj));
+        // Update legend with custom stat definition
+        if (this.legend) {
+          this.legend.show(customStat.definition as any);
+        }
       }
     }
   }
@@ -1258,7 +1565,14 @@ export class GlobeViz implements GlobeVizAPI {
   }
 
   async setUrbanData(
-    points: { lat: number; lon: number; value: number; id?: string }[],
+    points: {
+      lat: number;
+      lon: number;
+      value: number;
+      id?: string;
+      name?: string;
+      label?: string;
+    }[],
   ): Promise<void> {
     if (!this.choropleth) return;
 
@@ -1288,15 +1602,19 @@ export class GlobeViz implements GlobeVizAPI {
     }
 
     // 3. Render the texture with the new data
-    // Use a default heatmap color scale if none provided?
-    // Logic: Hackathons are often one active per city, or count.
-    // Let's use a nice "Active" color scale.
-    // Red/Orange/Yellow heatmap style.
-    const colorScale: [string, string, string] = [
+    // Use the color scale from the current statistic if available, otherwise default heatmap
+    let colorScale: [string, string, string] = [
       "#ffffb2",
       "#fd8d3c",
       "#bd0026",
     ];
+
+    if (this.currentStatistic) {
+      const stats = this.getStatisticMetadata(this.currentStatistic);
+      if (stats && stats.definition.colorScale) {
+        colorScale = stats.definition.colorScale as [string, string, string];
+      }
+    }
 
     // Calculate max for domain
     const values = Object.values(urbanData.statistics) as number[];
@@ -1314,7 +1632,20 @@ export class GlobeViz implements GlobeVizAPI {
     }
 
     // Update current values for Data Grid
-    this.currentValues = urbanData.statistics;
+    // Use names/labels if available for better readability in the grid
+    const displayValues: Record<string, number> = {};
+    let hasNames = false;
+
+    points.forEach((p) => {
+      if (p.name || p.label) {
+        hasNames = true;
+        const key = p.name || p.label || p.id || "Unknown";
+        displayValues[key] = p.value;
+      }
+    });
+
+    // Fallback to statistics IDs if no names provided
+    this.currentValues = hasNames ? displayValues : urbanData.statistics;
 
     // 4. Set effects
     if (this.material) {
@@ -1381,6 +1712,14 @@ export class GlobeViz implements GlobeVizAPI {
     this.handleResize();
   }
 
+  toggleProjection(): void {
+    if (this.morph > 0.5) {
+      this.toFlat();
+    } else {
+      this.toGlobe();
+    }
+  }
+
   async toggleFullscreen(): Promise<void> {
     if (!document.fullscreenElement) {
       await this.container.requestFullscreen();
@@ -1420,14 +1759,19 @@ export class GlobeViz implements GlobeVizAPI {
       }
 
       // Check built-ins
+      // Check built-ins
       const internalStat = INTERNAL_STATISTICS.find(
         (s) => s.id === this.currentStatistic,
       );
+
       if (internalStat) {
-        // Built-in stat. Extract using accessor from Choropleth's statsMap.
-        if (this.choropleth) {
-          const statsMap = this.choropleth.getStatsMap();
-          const result: Record<string, number> = {};
+        const result: Record<string, number> = {};
+
+        // Use choropleth stats if available, fall back to global data for built-ins
+        const statsMap = this.choropleth?.getStatsMap();
+        const hasMapData = statsMap && statsMap.size > 0;
+
+        if (hasMapData) {
           statsMap.forEach((countryStats, key) => {
             const val = internalStat.accessor(countryStats);
             const name = countryStats.name || key;
@@ -1435,13 +1779,21 @@ export class GlobeViz implements GlobeVizAPI {
               result[name] = val;
             }
           });
-          return result;
+        } else {
+          // Robust fallback for built-in stats directly from data array
+          WORLD_STATISTICS.forEach((country) => {
+            const val = internalStat.accessor(country);
+            if (val !== undefined && val !== null) {
+              result[country.name || country.code] = val;
+            }
+          });
         }
+
+        return result;
       }
     }
 
-    // Fallback: Try to guess from Choropleth if it has any data texture at all
-    // But usually currentStatistic should be set if data is visible.
+    // Fallback: Empty data
     return {};
   }
 
@@ -1459,10 +1811,14 @@ export class GlobeViz implements GlobeVizAPI {
       this.handleFullscreenChange,
     );
 
+    // Dispose helper components
     this.gui?.destroy();
     this.legend?.dispose();
     this.countryLabels?.dispose();
     this.markerLayer?.dispose();
+    this.controls?.dispose();
+    this.toolbar?.dispose();
+    this.dataGrid?.dispose();
 
     // Remove tooltips
     document.querySelectorAll(".lil-gui-tooltip").forEach((el) => el.remove());
@@ -1474,9 +1830,37 @@ export class GlobeViz implements GlobeVizAPI {
     (this.atmosphere?.material as THREE.Material)?.dispose();
     this.stars?.geometry.dispose();
     (this.stars?.material as THREE.Material)?.dispose();
+    this.dataTexture?.dispose();
 
-    this.renderer.dispose();
-    this.container.removeChild(this.renderer.domElement);
+    // Clear scene to ensure all meshes are detached
+    this.scene?.clear();
+
+    // Force WebGL Context Loss to prevent leaks (limit ~16 contexts)
+    // This is critical for dashboards with multiple globes
+    try {
+      this.renderer?.dispose();
+      this.renderer?.forceContextLoss();
+      // Also try extension approach for older three.js/browsers if forceContextLoss not exposed directly
+      const context = this.renderer?.getContext();
+      context?.getExtension("WEBGL_lose_context")?.loseContext();
+    } catch (e) {
+      console.warn("Error forcing context loss:", e);
+    }
+
+    if (
+      this.renderer?.domElement &&
+      this.container?.contains(this.renderer.domElement)
+    ) {
+      this.container.removeChild(this.renderer.domElement);
+    }
+
+    // Break references
+    // @ts-ignore
+    this.renderer = null;
+    // @ts-ignore
+    this.scene = null;
+    // @ts-ignore
+    this.camera = null;
   }
 
   private addTooltip(controller: any, text: string) {
@@ -1523,5 +1907,58 @@ export class GlobeViz implements GlobeVizAPI {
       };
       domElement.parentElement.addEventListener("mouseleave", leaveHandler);
     });
+  }
+
+  private getStatisticMetadata(id: string): StatisticData | null {
+    // Check built-in statistics
+    if (BUILT_IN_STATISTICS[id as keyof typeof BUILT_IN_STATISTICS]) {
+      const def = BUILT_IN_STATISTICS[id as keyof typeof BUILT_IN_STATISTICS];
+
+      // For built-in stats, we map from WORLD_STATISTICS data
+      const internalStat = INTERNAL_STATISTICS.find((s) => s.id === id);
+      const values: Record<string, number> = {};
+
+      if (internalStat) {
+        WORLD_STATISTICS.forEach((country) => {
+          const val = internalStat.accessor(country);
+          if (val !== undefined && val !== null) {
+            values[country.id] = val;
+          }
+        });
+      }
+
+      return {
+        definition: def,
+        values,
+      };
+    }
+
+    // Check world statistics
+    const worldStat = INTERNAL_STATISTICS.find((s) => s.id === id);
+    if (worldStat) {
+      // For these internal stats, we also map from WORLD_STATISTICS
+      const values: Record<string, number> = {};
+      WORLD_STATISTICS.forEach((country) => {
+        const val = worldStat.accessor(country);
+        if (val !== undefined && val !== null) {
+          values[country.id] = val;
+        }
+      });
+
+      return {
+        definition: {
+          id: worldStat.id,
+          name: worldStat.name,
+          unit: worldStat.unit,
+          description: worldStat.description,
+          colorScale: worldStat.colorScale as [string, string, string],
+          domain: worldStat.domain as [number, number],
+          format: worldStat.format,
+        },
+        values,
+      };
+    }
+
+    return null;
   }
 }

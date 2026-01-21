@@ -295,8 +295,19 @@ export interface GlobeVizConfig {
   initialView?: "globe" | "flat";
 
   /**
-   * Show control panel (lil-gui)
-   * @default true
+   * Show debug control panel (lil-gui)
+   * @default false
+   */
+  showDebug?: boolean;
+
+  /**
+   * Show library toolbar (Fullscreen, Data Grid)
+   * @default false
+   */
+  showToolbar?: boolean;
+
+  /**
+   * @deprecated Use showDebug or showToolbar instead
    */
   showControls?: boolean;
 
