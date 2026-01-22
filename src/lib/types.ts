@@ -347,11 +347,7 @@ export interface GlobeVizConfig {
   /**
    * Callback when a country is clicked
    */
-  onCountryClick?: (
-    countryId: string,
-    countryName: string,
-    value?: number,
-  ) => void;
+  onCountryClick?: (countryId: string, countryName: string, value?: number) => void;
 
   /**
    * Callback when view changes between flat and globe

@@ -14,9 +14,7 @@ test.describe("Keyboard Shortcuts", () => {
     await page.keyboard.press("g");
 
     // Wait for projection change (icon update is a good proxy)
-    const projectionBtn = page.locator(
-      '.gralobe-toolbar-btn[title*="Toggle Projection"]',
-    );
+    const projectionBtn = page.locator('.gralobe-toolbar-btn[title*="Toggle Projection"]');
     await expect(projectionBtn).toHaveAttribute("title", /Toggle Projection/);
 
     // Since we don't have easy access to internal state, we can check the button icon or title
@@ -36,9 +34,7 @@ test.describe("Keyboard Shortcuts", () => {
     await expect(fsBtn).toHaveClass(/show-shortcut/);
   });
 
-  test("Disabling shortcuts via GUI removes indicators and disables keys", async ({
-    page,
-  }) => {
+  test("Disabling shortcuts via GUI removes indicators and disables keys", async ({ page }) => {
     // Focus canvas
     await page.click("canvas");
 

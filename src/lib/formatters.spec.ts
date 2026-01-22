@@ -1,7 +1,7 @@
-import { expect, test } from "@playwright/test";
+import { describe, expect, test } from "vitest";
 import { createFormatter } from "./formatters";
 
-test.describe("Unit: Formatters", () => {
+describe("Unit: Formatters", () => {
   test("formats percentages correctly", () => {
     const fmt = createFormatter("%");
     expect(fmt(42.567)).toBe("42.6%");

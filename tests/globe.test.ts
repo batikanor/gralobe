@@ -16,10 +16,7 @@ test.describe("GlobeViz Basic Functionality", () => {
 
     // Filter out non-critical errors (network failures, etc.)
     const criticalErrors = errors.filter(
-      (e) =>
-        !e.includes("Failed to fetch") &&
-        !e.includes("404") &&
-        !e.includes("NetworkError")
+      (e) => !e.includes("Failed to fetch") && !e.includes("404") && !e.includes("NetworkError"),
     );
     expect(criticalErrors).toHaveLength(0);
   });
@@ -61,7 +58,7 @@ test.describe("GlobeViz Basic Functionality", () => {
     await page.waitForTimeout(1000);
 
     const criticalErrors = errors.filter(
-      (e) => !e.includes("Failed to fetch") && !e.includes("404")
+      (e) => !e.includes("Failed to fetch") && !e.includes("404"),
     );
     expect(criticalErrors).toHaveLength(0);
   });
@@ -95,10 +92,7 @@ test.describe("GlobeViz Basic Functionality", () => {
     await page.waitForTimeout(3000);
 
     const criticalErrors = errors.filter(
-      (e) =>
-        !e.includes("Failed to fetch") &&
-        !e.includes("404") &&
-        !e.includes("NetworkError")
+      (e) => !e.includes("Failed to fetch") && !e.includes("404") && !e.includes("NetworkError"),
     );
     expect(criticalErrors).toHaveLength(0);
   });

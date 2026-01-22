@@ -1,8 +1,8 @@
-import { expect, test } from "@playwright/test";
+import { describe, expect, test } from "vitest";
 import { normalizeCountryValues, toNumericCode } from "./countryCodes";
 
-test.describe("Unit: Country Codes", () => {
-  test.describe("toNumericCode", () => {
+describe("Unit: Country Codes", () => {
+  describe("toNumericCode", () => {
     test("returns numeric codes as-is", () => {
       expect(toNumericCode("840")).toBe("840");
       expect(toNumericCode("156")).toBe("156");
@@ -43,7 +43,7 @@ test.describe("Unit: Country Codes", () => {
     });
   });
 
-  test.describe("normalizeCountryValues", () => {
+  describe("normalizeCountryValues", () => {
     test("converts keys in record object", () => {
       const input = {
         US: 100,

@@ -20,12 +20,8 @@ test.describe("PNG Export with Legend and Labels", () => {
     await expect(title).not.toBeEmpty();
 
     // Min/max labels should exist
-    await expect(
-      page.locator('#globe-stat-life [data-testid="legend-min"]'),
-    ).toBeVisible();
-    await expect(
-      page.locator('#globe-stat-life [data-testid="legend-max"]'),
-    ).toBeVisible();
+    await expect(page.locator('#globe-stat-life [data-testid="legend-min"]')).toBeVisible();
+    await expect(page.locator('#globe-stat-life [data-testid="legend-max"]')).toBeVisible();
   });
 
   test("legend gradient has colors", async ({ page }) => {
@@ -56,21 +52,13 @@ test.describe("PNG Export with Legend and Labels", () => {
     await page.waitForTimeout(2000);
 
     // Verify legend element has data-testid for exporter to find
-    const legend = page.locator(
-      '#globe-stat-life [data-testid="globe-legend"]',
-    );
+    const legend = page.locator('#globe-stat-life [data-testid="globe-legend"]');
     await expect(legend).toBeVisible({ timeout: 10000 });
 
     // Verify legend has all required child elements for export
-    await expect(
-      page.locator('#globe-stat-life [data-testid="legend-title"]'),
-    ).toBeVisible();
-    await expect(
-      page.locator('#globe-stat-life [data-testid="legend-min"]'),
-    ).toBeVisible();
-    await expect(
-      page.locator('#globe-stat-life [data-testid="legend-max"]'),
-    ).toBeVisible();
+    await expect(page.locator('#globe-stat-life [data-testid="legend-title"]')).toBeVisible();
+    await expect(page.locator('#globe-stat-life [data-testid="legend-min"]')).toBeVisible();
+    await expect(page.locator('#globe-stat-life [data-testid="legend-max"]')).toBeVisible();
 
     // Verify gradient element exists with style
     const gradient = page.locator("#globe-stat-life .gralobe-legend-gradient");
@@ -95,8 +83,7 @@ test.describe("PNG Export with Legend and Labels", () => {
 
     // No critical errors
     const criticalErrors = errors.filter(
-      (e) =>
-        !e.includes("fetch") && !e.includes("404") && !e.includes("Network"),
+      (e) => !e.includes("fetch") && !e.includes("404") && !e.includes("Network"),
     );
     expect(criticalErrors).toHaveLength(0);
   });

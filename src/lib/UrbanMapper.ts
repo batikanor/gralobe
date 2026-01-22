@@ -23,26 +23,26 @@ export class UrbanMapper {
    * Load the base urban areas topology
    */
   static async loadBaseTopology(): Promise<any[]> {
-    if (this.urbanFeatures) return this.urbanFeatures;
-    if (this.loadPromise) return this.loadPromise;
+    if (UrbanMapper.urbanFeatures) return UrbanMapper.urbanFeatures;
+    if (UrbanMapper.loadPromise) return UrbanMapper.loadPromise;
 
-    this.isLoading = true;
-    this.loadPromise = (async () => {
+    UrbanMapper.isLoading = true;
+    UrbanMapper.loadPromise = (async () => {
       try {
         const response = await fetch(URBAN_AREAS_URL);
         if (!response.ok) throw new Error("Failed to load urban areas");
         const data = await response.json();
-        this.urbanFeatures = data.features;
-        return this.urbanFeatures || [];
+        UrbanMapper.urbanFeatures = data.features;
+        return UrbanMapper.urbanFeatures || [];
       } catch (e) {
         console.error("UrbanMapper load error:", e);
         return [];
       } finally {
-        this.isLoading = false;
+        UrbanMapper.isLoading = false;
       }
     })();
 
-    return this.loadPromise;
+    return UrbanMapper.loadPromise;
   }
 
   /**
@@ -51,11 +51,7 @@ export class UrbanMapper {
    * @param lon Longitude
    * @param radiusKm Radius in km (default 5km)
    */
-  static generateSyntheticBoundary(
-    lat: number,
-    lon: number,
-    radiusKm: number = 85,
-  ): any {
+  static generateSyntheticBoundary(lat: number, lon: number, radiusKm: number = 85): any {
     // console.log("Generating synthetic boundary with radius:", radiusKm);
     const steps = 16; // Low polygon count for performance
     const coordinates: number[][] = [];
@@ -102,7 +98,7 @@ export class UrbanMapper {
     );
 
     // Only load base topology if we are NOT forcing synthetic
-    const urbanFeatures = !forceSynthetic ? await this.loadBaseTopology() : [];
+    const urbanFeatures = !forceSynthetic ? await UrbanMapper.loadBaseTopology() : [];
     const resultFeatures: any[] = [];
     const statistics: Record<string, number> = {};
     const usedFeatureIds = new Set<string>();
@@ -116,7 +112,7 @@ export class UrbanMapper {
         // Or strictly spatial? Spatial is better but slower.
         // Let's do a quick BBox search.
         for (const feature of urbanFeatures) {
-          if (this.isPointInFeature(point, feature)) {
+          if (UrbanMapper.isPointInFeature(point, feature)) {
             match = feature;
             break;
           }
@@ -130,15 +126,11 @@ export class UrbanMapper {
         // We'll construct an ID based on index or properties.
         // Actually NE GeoJSON usually has indices. Let's assume we can assign a temp ID.
         const featureId =
-          match.properties.name_conve ||
-          match.properties.name ||
-          `ua_${Math.random()}`; // Fallback
+          match.properties.name_conve || match.properties.name || `ua_${Math.random()}`; // Fallback
 
         // Avoid mutating the cached original feature heavily, or clone it?
         // Cloning is safer.
-        const clone = usedFeatureIds.has(featureId)
-          ? null
-          : JSON.parse(JSON.stringify(match));
+        const clone = usedFeatureIds.has(featureId) ? null : JSON.parse(JSON.stringify(match));
 
         if (clone) {
           clone.id = featureId;
@@ -156,11 +148,7 @@ export class UrbanMapper {
         statistics[featureId] = (statistics[featureId] || 0) + point.value;
       } else {
         // Synthetic
-        const synthetic = this.generateSyntheticBoundary(
-          point.lat,
-          point.lon,
-          radiusKm,
-        );
+        const synthetic = UrbanMapper.generateSyntheticBoundary(point.lat, point.lon, radiusKm);
         // Check if we already have a synthetic nearby? (Cluster logic)
         // For now, simple 1-to-1 or simple overlap.
         // Let's just push it.
@@ -190,10 +178,10 @@ export class UrbanMapper {
 
     const coords = geom.coordinates;
     if (geom.type === "Polygon") {
-      return this.pointInPolygon([lon, lat], coords);
+      return UrbanMapper.pointInPolygon([lon, lat], coords);
     } else if (geom.type === "MultiPolygon") {
       for (const poly of coords) {
-        if (this.pointInPolygon([lon, lat], poly)) return true;
+        if (UrbanMapper.pointInPolygon([lon, lat], poly)) return true;
       }
     }
     return false;
@@ -216,8 +204,7 @@ export class UrbanMapper {
       const xj = ring[j][0],
         yj = ring[j][1];
 
-      const intersect =
-        yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi;
+      const intersect = yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi;
       if (intersect) inside = !inside;
     }
 

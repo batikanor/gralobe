@@ -1,5 +1,5 @@
-import * as THREE from 'three';
-import { gsap } from 'gsap';
+import { gsap } from "gsap";
+import * as THREE from "three";
 
 interface City {
   name: string;
@@ -9,41 +9,41 @@ interface City {
 }
 
 const MAJOR_CITIES: City[] = [
-  { name: 'New York', lat: 40.7128, lon: -74.0060, importance: 1.0 },
-  { name: 'London', lat: 51.5074, lon: -0.1278, importance: 1.0 },
-  { name: 'Tokyo', lat: 35.6762, lon: 139.6503, importance: 1.0 },
-  { name: 'Shanghai', lat: 31.2304, lon: 121.4737, importance: 0.9 },
-  { name: 'Dubai', lat: 25.2048, lon: 55.2708, importance: 0.85 },
-  { name: 'Singapore', lat: 1.3521, lon: 103.8198, importance: 0.85 },
-  { name: 'Hong Kong', lat: 22.3193, lon: 114.1694, importance: 0.85 },
-  { name: 'Sydney', lat: -33.8688, lon: 151.2093, importance: 0.8 },
-  { name: 'São Paulo', lat: -23.5505, lon: -46.6333, importance: 0.8 },
-  { name: 'Mumbai', lat: 19.0760, lon: 72.8777, importance: 0.8 },
-  { name: 'Paris', lat: 48.8566, lon: 2.3522, importance: 0.9 },
-  { name: 'Los Angeles', lat: 34.0522, lon: -118.2437, importance: 0.85 },
-  { name: 'Berlin', lat: 52.5200, lon: 13.4050, importance: 0.75 },
-  { name: 'Moscow', lat: 55.7558, lon: 37.6173, importance: 0.8 },
-  { name: 'Seoul', lat: 37.5665, lon: 126.9780, importance: 0.85 },
-  { name: 'Shenzhen', lat: 22.5431, lon: 114.0579, importance: 0.9 },
+  { name: "New York", lat: 40.7128, lon: -74.006, importance: 1.0 },
+  { name: "London", lat: 51.5074, lon: -0.1278, importance: 1.0 },
+  { name: "Tokyo", lat: 35.6762, lon: 139.6503, importance: 1.0 },
+  { name: "Shanghai", lat: 31.2304, lon: 121.4737, importance: 0.9 },
+  { name: "Dubai", lat: 25.2048, lon: 55.2708, importance: 0.85 },
+  { name: "Singapore", lat: 1.3521, lon: 103.8198, importance: 0.85 },
+  { name: "Hong Kong", lat: 22.3193, lon: 114.1694, importance: 0.85 },
+  { name: "Sydney", lat: -33.8688, lon: 151.2093, importance: 0.8 },
+  { name: "São Paulo", lat: -23.5505, lon: -46.6333, importance: 0.8 },
+  { name: "Mumbai", lat: 19.076, lon: 72.8777, importance: 0.8 },
+  { name: "Paris", lat: 48.8566, lon: 2.3522, importance: 0.9 },
+  { name: "Los Angeles", lat: 34.0522, lon: -118.2437, importance: 0.85 },
+  { name: "Berlin", lat: 52.52, lon: 13.405, importance: 0.75 },
+  { name: "Moscow", lat: 55.7558, lon: 37.6173, importance: 0.8 },
+  { name: "Seoul", lat: 37.5665, lon: 126.978, importance: 0.85 },
+  { name: "Shenzhen", lat: 22.5431, lon: 114.0579, importance: 0.9 },
 ];
 
 const CONNECTIONS: [number, number][] = [
-  [0, 1],  // NY - London
-  [1, 4],  // London - Dubai
-  [4, 9],  // Dubai - Mumbai
-  [9, 5],  // Mumbai - Singapore
-  [5, 6],  // Singapore - HK
-  [6, 3],  // HK - Shanghai
-  [3, 2],  // Shanghai - Tokyo
+  [0, 1], // NY - London
+  [1, 4], // London - Dubai
+  [4, 9], // Dubai - Mumbai
+  [9, 5], // Mumbai - Singapore
+  [5, 6], // Singapore - HK
+  [6, 3], // HK - Shanghai
+  [3, 2], // Shanghai - Tokyo
   [2, 11], // Tokyo - LA
   [11, 0], // LA - NY
-  [0, 8],  // NY - São Paulo
+  [0, 8], // NY - São Paulo
   [1, 12], // London - Berlin
   [12, 13], // Berlin - Moscow
   [2, 14], // Tokyo - Seoul
   [14, 15], // Seoul - Shenzhen
   [15, 6], // Shenzhen - HK
-  [5, 7],  // Singapore - Sydney
+  [5, 7], // Singapore - Sydney
   [10, 1], // Paris - London
 ];
 
@@ -65,7 +65,12 @@ export class ConnectionLines {
     this.createPulseParticles();
   }
 
-  private latLonToPosition(lat: number, lon: number, radius: number, morphProgress: number): THREE.Vector3 {
+  private latLonToPosition(
+    lat: number,
+    lon: number,
+    radius: number,
+    morphProgress: number,
+  ): THREE.Vector3 {
     const phi = (90 - lat) * (Math.PI / 180);
     const theta = (lon + 180) * (Math.PI / 180);
 
@@ -73,13 +78,13 @@ export class ConnectionLines {
     const spherePos = new THREE.Vector3(
       -radius * Math.sin(phi) * Math.cos(theta),
       radius * Math.cos(phi),
-      radius * Math.sin(phi) * Math.sin(theta)
+      radius * Math.sin(phi) * Math.sin(theta),
     );
 
     // Flat Mercator position
     const x = (lon / 180) * (Math.PI * radius);
-    const mercatorY = Math.log(Math.tan(Math.PI / 4 + (lat * Math.PI / 180) / 2));
-    const y = (mercatorY / Math.PI) * (Math.PI * radius / 2);
+    const mercatorY = Math.log(Math.tan(Math.PI / 4 + (lat * Math.PI) / 180 / 2));
+    const y = (mercatorY / Math.PI) * ((Math.PI * radius) / 2);
     const flatPos = new THREE.Vector3(x, y, radius * 0.02); // Slight Z offset
 
     // Interpolate based on morph progress
@@ -91,7 +96,7 @@ export class ConnectionLines {
     const colors: number[] = [];
     const sizes: number[] = [];
 
-    MAJOR_CITIES.forEach(city => {
+    MAJOR_CITIES.forEach((city) => {
       const pos = this.latLonToPosition(city.lat, city.lon, this.sphereRadius * 1.01, 1);
       positions.push(pos.x, pos.y, pos.z);
 
@@ -103,9 +108,9 @@ export class ConnectionLines {
     });
 
     const geometry = new THREE.BufferGeometry();
-    geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-    geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
-    geometry.setAttribute('size', new THREE.Float32BufferAttribute(sizes, 1));
+    geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+    geometry.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
+    geometry.setAttribute("size", new THREE.Float32BufferAttribute(sizes, 1));
 
     const material = new THREE.PointsMaterial({
       size: 5,
@@ -181,8 +186,8 @@ export class ConnectionLines {
     }
 
     const geometry = new THREE.BufferGeometry();
-    geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-    geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+    geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+    geometry.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
 
     const material = new THREE.PointsMaterial({
       size: 3,
@@ -216,7 +221,12 @@ export class ConnectionLines {
     if (this.points) {
       const positions = this.points.geometry.attributes.position.array as Float32Array;
       MAJOR_CITIES.forEach((city, i) => {
-        const pos = this.latLonToPosition(city.lat, city.lon, this.sphereRadius * 1.01, this.morphProgress);
+        const pos = this.latLonToPosition(
+          city.lat,
+          city.lon,
+          this.sphereRadius * 1.01,
+          this.morphProgress,
+        );
         positions[i * 3] = pos.x;
         positions[i * 3 + 1] = pos.y;
         positions[i * 3 + 2] = pos.z;
@@ -241,7 +251,12 @@ export class ConnectionLines {
     });
   }
 
-  private createArcPointsWithMorph(from: City, to: City, segments: number, morphProgress: number): THREE.Vector3[] {
+  private createArcPointsWithMorph(
+    from: City,
+    to: City,
+    segments: number,
+    morphProgress: number,
+  ): THREE.Vector3[] {
     const points: THREE.Vector3[] = [];
 
     for (let i = 0; i <= segments; i++) {
@@ -318,16 +333,16 @@ export class ConnectionLines {
     this.setVisible(true);
     const target = { opacity: 0 };
 
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
       gsap.to(target, {
         opacity: 1,
         duration,
-        ease: 'power2.inOut',
+        ease: "power2.inOut",
         onUpdate: () => {
           if (this.points) {
             (this.points.material as THREE.PointsMaterial).opacity = target.opacity * 0.9;
           }
-          this.lines.forEach(line => {
+          this.lines.forEach((line) => {
             (line.material as THREE.LineBasicMaterial).opacity = target.opacity * 0.4;
           });
         },
@@ -337,7 +352,7 @@ export class ConnectionLines {
   }
 
   dispose(): void {
-    this.lines.forEach(line => {
+    this.lines.forEach((line) => {
       line.geometry.dispose();
       (line.material as THREE.Material).dispose();
     });

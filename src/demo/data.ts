@@ -144,10 +144,7 @@ export const customStats: Record<string, StatisticData> = {
 };
 
 // Coordinates for World Cities
-export const worldCitiesCoordinates: Record<
-  string,
-  { lat: number; lon: number }
-> = {
+export const worldCitiesCoordinates: Record<string, { lat: number; lon: number }> = {
   "New York": { lat: 40.7128, lon: -74.006 },
   Tokyo: { lat: 35.6762, lon: 139.6503 },
   London: { lat: 51.5074, lon: -0.1278 },

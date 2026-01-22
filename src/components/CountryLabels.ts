@@ -1,12 +1,6 @@
 import * as THREE from "three";
-import {
-  CSS2DObject,
-  CSS2DRenderer,
-} from "three/examples/jsm/renderers/CSS2DRenderer.js";
-import {
-  WORLD_STATISTICS,
-  type CountryStatistics,
-} from "../data/worldStatistics";
+import { CSS2DObject, CSS2DRenderer } from "three/examples/jsm/renderers/CSS2DRenderer.js";
+import { type CountryStatistics, WORLD_STATISTICS } from "../data/worldStatistics";
 import type { LabelStyle } from "../lib/types";
 
 interface CountryLabel {
@@ -420,8 +414,7 @@ export class CountryLabels {
     labels.forEach((customLabel) => {
       // Duplication check: skip if label with same ID or Name already exists
       // Normalize IDs (remove leading zeros from "036") and Names (remove "The " prefix)
-      const normalizeId = (id: string) =>
-        String(parseInt(id) || id).toLowerCase();
+      const normalizeId = (id: string) => String(parseInt(id) || id).toLowerCase();
       const normalizeName = (name: string) =>
         name
           .toLowerCase()
@@ -484,17 +477,13 @@ export class CountryLabels {
    * Clear all custom labels (keeps country labels)
    */
   clearCustomLabels(): void {
-    const toRemove = this.labels.filter((l) =>
-      l.element.classList.contains("custom-label"),
-    );
+    const toRemove = this.labels.filter((l) => l.element.classList.contains("custom-label"));
     toRemove.forEach((label) => {
       this.labelGroup.remove(label.object);
       label.element.remove();
       this.dataIds.delete(label.country.code);
     });
-    this.labels = this.labels.filter(
-      (l) => !l.element.classList.contains("custom-label"),
-    );
+    this.labels = this.labels.filter((l) => !l.element.classList.contains("custom-label"));
   }
 
   private localPos = new THREE.Vector3();
@@ -502,11 +491,7 @@ export class CountryLabels {
   private cameraDirection = new THREE.Vector3();
   private labelNormal = new THREE.Vector3();
 
-  private updateLabelPosition(
-    object: CSS2DObject,
-    label: CountryLabel,
-    morph: number,
-  ): void {
+  private updateLabelPosition(object: CSS2DObject, label: CountryLabel, morph: number): void {
     const { lat, lon, element } = label;
 
     // Convert lat/lon to UV (same as shader)
@@ -627,8 +612,7 @@ export class CountryLabels {
             break;
         }
       }
-      element.style.opacity =
-        distanceOpacity < 0.05 ? "0" : String(distanceOpacity);
+      element.style.opacity = distanceOpacity < 0.05 ? "0" : String(distanceOpacity);
     }
   }
 
@@ -676,10 +660,7 @@ export class CountryLabels {
       }
 
       // Special handling for "all-countries": hide custom labels
-      if (
-        style === "all-countries" &&
-        label.element.classList.contains("custom-label")
-      ) {
+      if (style === "all-countries" && label.element.classList.contains("custom-label")) {
         visible = false;
       }
 
@@ -799,13 +780,7 @@ export class CountryLabels {
       const y = (-vector.y * 0.5 + 0.5) * canvasHeight;
 
       // Only include if on screen
-      if (
-        x >= 0 &&
-        x <= canvasWidth &&
-        y >= 0 &&
-        y <= canvasHeight &&
-        vector.z < 1
-      ) {
+      if (x >= 0 && x <= canvasWidth && y >= 0 && y <= canvasHeight && vector.z < 1) {
         result.push({
           text: label.country.name,
           x,

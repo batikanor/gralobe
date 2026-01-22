@@ -14,10 +14,7 @@ import { Exporter } from "../components/Exporter";
 import { Legend } from "../components/Legend";
 import { MarkerLayer } from "../components/MarkerLayer";
 import { Toolbar } from "../components/Toolbar";
-import {
-  STATISTICS as INTERNAL_STATISTICS,
-  WORLD_STATISTICS,
-} from "../data/worldStatistics";
+import { STATISTICS as INTERNAL_STATISTICS, WORLD_STATISTICS } from "../data/worldStatistics";
 import {
   atmosphereFragmentShader,
   atmosphereVertexShader,
@@ -28,8 +25,6 @@ import {
   vertexShader,
 } from "./shaders";
 import { BUILT_IN_STATISTICS } from "./statistics";
-import { UrbanMapper } from "./UrbanMapper";
-
 import type {
   CountryData,
   EffectsConfig,
@@ -42,6 +37,7 @@ import type {
   TexturePreset,
   TopologyConfig,
 } from "./types";
+import { UrbanMapper } from "./UrbanMapper";
 
 /**
  * Earth texture URLs
@@ -52,8 +48,7 @@ const EARTH_TEXTURES: Record<TexturePreset, string> = {
   natural:
     "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_day_4096.jpg",
   dark: "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_lights_2048.png",
-  light:
-    "https://raw.githubusercontent.com/turban/webgl-earth/master/images/2_no_clouds_4k.jpg",
+  light: "https://raw.githubusercontent.com/turban/webgl-earth/master/images/2_no_clouds_4k.jpg",
   night:
     "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_lights_2048.png",
   topographic:
@@ -121,13 +116,7 @@ export interface GlobeVizAPI {
 const DEFAULT_CONFIG: Required<
   Omit<
     GlobeVizConfig,
-    | "data"
-    | "onCountryClick"
-    | "onViewChange"
-    | "onLoadProgress"
-    | "width"
-    | "height"
-    | "topology"
+    "data" | "onCountryClick" | "onViewChange" | "onLoadProgress" | "width" | "height" | "topology"
   >
 > = {
   texture: "satellite",
@@ -236,9 +225,7 @@ export class GlobeViz implements GlobeVizAPI {
   private currentValues: Record<string, number> | null = null;
   private animationId: number | null = null;
   private isDestroyed = false;
-  private urbanPoints:
-    | { lat: number; lon: number; value: number; id?: string }[]
-    | null = null;
+  private urbanPoints: { lat: number; lon: number; value: number; id?: string }[] | null = null;
 
   /** Promise that resolves when fully initialized */
   public ready: Promise<void>;
@@ -290,11 +277,7 @@ export class GlobeViz implements GlobeVizAPI {
       this.scene.background = new THREE.Color(0x000812);
 
       this.camera = new THREE.PerspectiveCamera(50, width / height, 0.1, 1000);
-      this.camera.position.set(
-        0,
-        0,
-        this.config.initialView === "flat" ? 350 : 150,
-      );
+      this.camera.position.set(0, 0, this.config.initialView === "flat" ? 350 : 150);
 
       this.renderer = new THREE.WebGLRenderer({ antialias: true });
       this.renderer.setSize(width, height);
@@ -389,10 +372,7 @@ export class GlobeViz implements GlobeVizAPI {
       window.addEventListener("resize", this.handleResize);
 
       // Handle fullscreen changes
-      document.addEventListener(
-        "fullscreenchange",
-        this.handleFullscreenChange,
-      );
+      document.addEventListener("fullscreenchange", this.handleFullscreenChange);
 
       // Make canvas focusable for keyboard events
       this.renderer.domElement.tabIndex = 0;
@@ -465,15 +445,10 @@ export class GlobeViz implements GlobeVizAPI {
   private async createGlobe(): Promise<void> {
     // Load base earth texture
     // Load base earth texture with timeout
-    const loadTexture = this.textureLoader.loadAsync(
-      EARTH_TEXTURES[this.config.texture],
-    );
+    const loadTexture = this.textureLoader.loadAsync(EARTH_TEXTURES[this.config.texture]);
 
     const timeout = new Promise<never>((_, reject) =>
-      setTimeout(
-        () => reject(new Error("Texture load timed out after 10s")),
-        10000,
-      ),
+      setTimeout(() => reject(new Error("Texture load timed out after 10s")), 10000),
     );
 
     const baseTex = await Promise.race([loadTexture, timeout]);
@@ -628,9 +603,7 @@ export class GlobeViz implements GlobeVizAPI {
     console.warn("Creating GUI v6 (Two-Stage Navigation)");
 
     // Force-inject or Update custom styles
-    let style = document.querySelector(
-      "style#gralobe-gui-style",
-    ) as HTMLStyleElement;
+    let style = document.querySelector("style#gralobe-gui-style") as HTMLStyleElement;
     if (!style) {
       style = document.createElement("style");
       style.id = "gralobe-gui-style";
@@ -1009,12 +982,8 @@ export class GlobeViz implements GlobeVizAPI {
 
     // 2. Navigation
     const navGUI = createCategory("nav", "Navigation");
-    const toGlobeCtrl = navGUI
-      .add({ toGlobe: () => this.toGlobe() }, "toGlobe")
-      .name("→ Globe");
-    const toFlatCtrl = navGUI
-      .add({ toFlat: () => this.toFlat() }, "toFlat")
-      .name("→ Flat");
+    const toGlobeCtrl = navGUI.add({ toGlobe: () => this.toGlobe() }, "toGlobe").name("→ Globe");
+    const toFlatCtrl = navGUI.add({ toFlat: () => this.toFlat() }, "toFlat").name("→ Flat");
     const morphCtrl = navGUI
       .add({ morph: this.morph }, "morph", 0, 1)
       .name("Morph")
@@ -1058,12 +1027,9 @@ export class GlobeViz implements GlobeVizAPI {
 
     // A. Atmosphere
     const atmosFolder = fxGUI.addFolder("Atmosphere");
-    const atmosCtrl = atmosFolder
-      .add(fx, "atmosphere")
-      .onChange((v: boolean) => {
-        if (this.material)
-          this.material.uniforms.uAtmosphereIntensity.value = v ? 1 : 0;
-      });
+    const atmosCtrl = atmosFolder.add(fx, "atmosphere").onChange((v: boolean) => {
+      if (this.material) this.material.uniforms.uAtmosphereIntensity.value = v ? 1 : 0;
+    });
     const cloudsCtrl = atmosFolder.add(fx, "clouds").onChange((v: boolean) => {
       if (this.material) this.material.uniforms.uClouds.value = v ? 1 : 0;
     });
@@ -1072,10 +1038,7 @@ export class GlobeViz implements GlobeVizAPI {
       atmosCtrl,
       "<b>Atmosphere Glow</b><br><br>Toggle the outer atmospheric glow effect.",
     );
-    this.addTooltip(
-      cloudsCtrl,
-      "<b>Cloud Layer</b><br><br>Toggle the moving cloud layer.",
-    );
+    this.addTooltip(cloudsCtrl, "<b>Cloud Layer</b><br><br>Toggle the moving cloud layer.");
     // ... add tooltips for other atmos controls if needed ...
 
     atmosFolder
@@ -1111,8 +1074,7 @@ export class GlobeViz implements GlobeVizAPI {
       .add(fx, "oceanSpecular")
       .name("Ocean Specular")
       .onChange((v: boolean) => {
-        if (this.material)
-          this.material.uniforms.uOceanSpecular.value = v ? 1 : 0;
+        if (this.material) this.material.uniforms.uOceanSpecular.value = v ? 1 : 0;
       });
     lightFolder.close();
 
@@ -1225,10 +1187,7 @@ export class GlobeViz implements GlobeVizAPI {
 
     settingsGUI.add(this.config, "autoRotate").name("Auto Rotate");
     settingsGUI
-      .add(
-        { screenshot: () => this.screenshot({ width: 1920, height: 1080 }) },
-        "screenshot",
-      )
+      .add({ screenshot: () => this.screenshot({ width: 1920, height: 1080 }) }, "screenshot")
       .name("Screenshot");
 
     settingsGUI
@@ -1328,9 +1287,7 @@ export class GlobeViz implements GlobeVizAPI {
           this.material.uniforms.uMorph.value = this.morph;
         }
         if (this.atmosphere) {
-          (
-            this.atmosphere.material as THREE.ShaderMaterial
-          ).uniforms.uMorph.value = this.morph;
+          (this.atmosphere.material as THREE.ShaderMaterial).uniforms.uMorph.value = this.morph;
         }
         this.countryLabels?.setMorph(this.morph);
         this.markerLayer?.setMorph(this.morph);
@@ -1378,13 +1335,10 @@ export class GlobeViz implements GlobeVizAPI {
       });
     }
     if (this.atmosphere) {
-      gsap.to(
-        (this.atmosphere.material as THREE.ShaderMaterial).uniforms.uOpacity,
-        {
-          value: 1,
-          duration: 1.0,
-        },
-      );
+      gsap.to((this.atmosphere.material as THREE.ShaderMaterial).uniforms.uOpacity, {
+        value: 1,
+        duration: 1.0,
+      });
     }
 
     // Update toolbar icon
@@ -1454,9 +1408,7 @@ export class GlobeViz implements GlobeVizAPI {
           this.material.uniforms.uMorph.value = this.morph;
         }
         if (this.atmosphere) {
-          (
-            this.atmosphere.material as THREE.ShaderMaterial
-          ).uniforms.uMorph.value = this.morph;
+          (this.atmosphere.material as THREE.ShaderMaterial).uniforms.uMorph.value = this.morph;
         }
         this.countryLabels?.setMorph(this.morph);
         this.markerLayer?.setMorph(this.morph);
@@ -1541,13 +1493,10 @@ export class GlobeViz implements GlobeVizAPI {
       });
     }
     if (this.atmosphere) {
-      gsap.to(
-        (this.atmosphere.material as THREE.ShaderMaterial).uniforms.uOpacity,
-        {
-          value: 0,
-          duration: 1.0,
-        },
-      );
+      gsap.to((this.atmosphere.material as THREE.ShaderMaterial).uniforms.uOpacity, {
+        value: 0,
+        duration: 1.0,
+      });
     }
 
     // Update toolbar icon
@@ -1598,10 +1547,7 @@ export class GlobeViz implements GlobeVizAPI {
           const mapLimitX = Math.PI * SPHERE_RADIUS;
           const mapLimitY = (Math.PI * SPHERE_RADIUS) / 2;
 
-          if (
-            Math.abs(planeIntersect.x) <= mapLimitX &&
-            Math.abs(planeIntersect.y) <= mapLimitY
-          ) {
+          if (Math.abs(planeIntersect.x) <= mapLimitX && Math.abs(planeIntersect.y) <= mapLimitY) {
             // Valid Map Click: Zoom to Point
             const targetZ = 50; // Close zoom level
 
@@ -1632,8 +1578,7 @@ export class GlobeViz implements GlobeVizAPI {
     this.morph = value;
     if (this.material) this.material.uniforms.uMorph.value = value;
     if (this.atmosphere) {
-      (this.atmosphere.material as THREE.ShaderMaterial).uniforms.uMorph.value =
-        value;
+      (this.atmosphere.material as THREE.ShaderMaterial).uniforms.uMorph.value = value;
     }
     this.countryLabels?.setMorph(value);
     this.markerLayer?.setMorph(value);
@@ -1820,8 +1765,7 @@ export class GlobeViz implements GlobeVizAPI {
       this.material.uniforms.uCloudOpacity.value = effects.cloudOpacity;
     }
     if (effects.atmosphereIntensity !== undefined) {
-      this.material.uniforms.uAtmosphereIntensity.value =
-        effects.atmosphereIntensity;
+      this.material.uniforms.uAtmosphereIntensity.value = effects.atmosphereIntensity;
     }
     if (effects.gridLines !== undefined) {
       this.material.uniforms.uGridLines.value = effects.gridLines ? 1 : 0;
@@ -1833,8 +1777,9 @@ export class GlobeViz implements GlobeVizAPI {
       this.material.uniforms.uGlowPulse.value = effects.glowPulse ? 1 : 0;
     }
     if (effects.starTwinkle !== undefined && this.stars) {
-      (this.stars.material as THREE.ShaderMaterial).uniforms.uTwinkle.value =
-        effects.starTwinkle ? 1 : 0;
+      (this.stars.material as THREE.ShaderMaterial).uniforms.uTwinkle.value = effects.starTwinkle
+        ? 1
+        : 0;
     }
   }
 
@@ -1870,11 +1815,7 @@ export class GlobeViz implements GlobeVizAPI {
     const radius = this.config.pointRadius || 140;
 
     // We force synthetic boundaries to allow user control over radius/visibility
-    const urbanData = await UrbanMapper.mapPointsToTopology(
-      points,
-      radius,
-      true,
-    );
+    const urbanData = await UrbanMapper.mapPointsToTopology(points, radius, true);
 
     // 2. Inject features into ChoroplethRenderer
     // 2. Inject features into ChoroplethRenderer
@@ -1898,11 +1839,7 @@ export class GlobeViz implements GlobeVizAPI {
 
     // 3. Render the texture with the new data
     // Use the color scale from the current statistic if available, otherwise default heatmap
-    let colorScale: [string, string, string] = [
-      "#ffffb2",
-      "#fd8d3c",
-      "#bd0026",
-    ];
+    let colorScale: [string, string, string] = ["#ffffb2", "#fd8d3c", "#bd0026"];
 
     if (this.currentStatistic) {
       const stats = this.getStatisticMetadata(this.currentStatistic);
@@ -1915,10 +1852,7 @@ export class GlobeViz implements GlobeVizAPI {
     const values = Object.values(urbanData.statistics) as number[];
     const max = Math.max(...values, 1); // Avoid 0/0
 
-    this.choropleth.renderCustomTexture(urbanData.statistics, colorScale, [
-      0,
-      max,
-    ]);
+    this.choropleth.renderCustomTexture(urbanData.statistics, colorScale, [0, max]);
 
     // FORCE Update: changing the texture requires notifying the shader
     if (this.material && this.material.uniforms.uDataTexture.value) {
@@ -1956,8 +1890,6 @@ export class GlobeViz implements GlobeVizAPI {
     if (this.countryLabels) {
       this.countryLabels.getGroup().visible = true;
     }
-
-
   }
 
   resize(width: number, height: number): void {
@@ -2014,9 +1946,7 @@ export class GlobeViz implements GlobeVizAPI {
 
       // Check built-ins
       // Check built-ins
-      const internalStat = INTERNAL_STATISTICS.find(
-        (s) => s.id === this.currentStatistic,
-      );
+      const internalStat = INTERNAL_STATISTICS.find((s) => s.id === this.currentStatistic);
 
       if (internalStat) {
         const result: Record<string, number> = {};
@@ -2060,10 +1990,7 @@ export class GlobeViz implements GlobeVizAPI {
 
     window.removeEventListener("resize", this.handleResize);
     window.removeEventListener("keydown", this.handleKeydown);
-    document.removeEventListener(
-      "fullscreenchange",
-      this.handleFullscreenChange,
-    );
+    document.removeEventListener("fullscreenchange", this.handleFullscreenChange);
 
     // Dispose helper components
     this.categoryGUIs.forEach((g) => g.destroy());
@@ -2102,19 +2029,16 @@ export class GlobeViz implements GlobeVizAPI {
       console.warn("Error forcing context loss:", e);
     }
 
-    if (
-      this.renderer?.domElement &&
-      this.container?.contains(this.renderer.domElement)
-    ) {
+    if (this.renderer?.domElement && this.container?.contains(this.renderer.domElement)) {
       this.container.removeChild(this.renderer.domElement);
     }
 
     // Break references
-    // @ts-ignore
+    // @ts-expect-error
     this.renderer = null;
-    // @ts-ignore
+    // @ts-expect-error
     this.scene = null;
-    // @ts-ignore
+    // @ts-expect-error
     this.camera = null;
   }
 

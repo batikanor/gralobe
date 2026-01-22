@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { describe, expect, test } from "vitest";
 import { ChoroplethRenderer } from "./ChoroplethRenderer";
 
 // Mock DOM for Node environment
@@ -36,7 +36,7 @@ if (typeof document === "undefined") {
   } as any;
 }
 
-test.describe("ChoroplethRenderer Smart Lookup", () => {
+describe("ChoroplethRenderer Smart Lookup", () => {
   test("getFeatureName finds exact match", async () => {
     // We can't easily instantiate ChoroplethRenderer without canvas context issues potentially
     // unless the test env provides full DOM. Playwright does.

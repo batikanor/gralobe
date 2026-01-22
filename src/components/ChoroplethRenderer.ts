@@ -1,8 +1,5 @@
-import type {
-  CountryStatistics,
-  InternalStatisticDef,
-} from "../data/worldStatistics";
-import { WORLD_STATISTICS, getNormalizedValue } from "../data/worldStatistics";
+import type { CountryStatistics, InternalStatisticDef } from "../data/worldStatistics";
+import { getNormalizedValue, WORLD_STATISTICS } from "../data/worldStatistics";
 import { normalizeCountryValues } from "../lib/countryCodes";
 
 const TEXTURE_WIDTH = 4096;
@@ -144,9 +141,7 @@ export class ChoroplethRenderer {
 
     // Set topology config with defaults
     this.topologyConfig = {
-      url:
-        topologyConfig?.url ??
-        "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json",
+      url: topologyConfig?.url ?? "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json",
       objectName: topologyConfig?.objectName || "countries",
       disableNormalization: topologyConfig?.disableNormalization || false,
       idProperty: topologyConfig?.idProperty,
@@ -205,8 +200,7 @@ export class ChoroplethRenderer {
             });
 
             // Calculate progress for path generation (0.4 to 1.0)
-            const currentProgress =
-              0.4 + (0.6 * (i + BATCH_SIZE)) / totalFeatures;
+            const currentProgress = 0.4 + (0.6 * (i + BATCH_SIZE)) / totalFeatures;
             this.onProgress?.(Math.min(0.99, currentProgress));
 
             // Yield to main thread every batch
@@ -293,8 +287,7 @@ export class ChoroplethRenderer {
       const absoluteUrl = new URL(url, window.location.href).href;
       // Also resolve the topojson client library relative to the window
       // Use CDN for topojson-client so it works in all consuming applications
-      const topojsonLibUrl =
-        "https://unpkg.com/topojson-client@3/dist/topojson-client.min.js";
+      const topojsonLibUrl = "https://unpkg.com/topojson-client@3/dist/topojson-client.min.js";
 
       worker.postMessage({
         url: absoluteUrl,
@@ -313,9 +306,7 @@ export class ChoroplethRenderer {
     while (!this.loaded) {
       // Failsafe: if loading takes > 20s, bust the lock to prevent infinite hanging
       if (Date.now() - startTime > 20000) {
-        console.error(
-          "ChoroplethRenderer.waitForLoad timed out after 20s. Forcing continuation.",
-        );
+        console.error("ChoroplethRenderer.waitForLoad timed out after 20s. Forcing continuation.");
         this.loaded = true;
         break;
       }
@@ -428,9 +419,7 @@ export class ChoroplethRenderer {
           lon: centroid[0],
         };
       })
-      .filter(
-        (l): l is FeatureLabel => l !== null && l.id !== "" && l.name !== "",
-      );
+      .filter((l): l is FeatureLabel => l !== null && l.id !== "" && l.name !== "");
   }
 
   /**
@@ -544,11 +533,7 @@ export class ChoroplethRenderer {
   }
 
   // Optimized draw using cached Path2D
-  private drawFeature(
-    country: CountryFeature,
-    color: string,
-    stroke: boolean,
-  ): void {
+  private drawFeature(country: CountryFeature, color: string, stroke: boolean): void {
     const path = (country as any).path as Path2D;
     if (path) {
       this.ctx.fillStyle = color;
@@ -589,8 +574,7 @@ export class ChoroplethRenderer {
         const [x, y] = this.projectPoint(lon, lat);
 
         // Detect antimeridian crossing (large longitude jump)
-        const crossesAntimeridian =
-          prevLon !== null && Math.abs(lon - prevLon) > 180;
+        const crossesAntimeridian = prevLon !== null && Math.abs(lon - prevLon) > 180;
 
         if (i === 0) {
           path.moveTo(x, y);
@@ -740,15 +724,10 @@ export class ChoroplethRenderer {
     if (label) return label.name;
 
     // Fallback: look in countries directly
-    const feature = this.countries.find(
-      (c) => c.id === id || c.properties?.id === id,
-    );
+    const feature = this.countries.find((c) => c.id === id || c.properties?.id === id);
     if (feature) {
       return (
-        feature.properties.name ||
-        feature.properties.NAME ||
-        feature.properties.Name ||
-        feature.id
+        feature.properties.name || feature.properties.NAME || feature.properties.Name || feature.id
       );
     }
 

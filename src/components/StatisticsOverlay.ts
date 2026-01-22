@@ -1,6 +1,6 @@
-import * as THREE from 'three';
-import type { StatisticDefinition } from '../data/statistics';
-import { COUNTRY_DATA, STATISTICS, getNormalizedValue } from '../data/statistics';
+import * as THREE from "three";
+import type { StatisticDefinition } from "../data/statistics";
+import { COUNTRY_DATA, getNormalizedValue, STATISTICS } from "../data/statistics";
 
 const SPHERE_RADIUS = 50;
 const PI = Math.PI;
@@ -54,11 +54,11 @@ export class StatisticsOverlay {
     });
 
     const geometry = new THREE.BufferGeometry();
-    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-    geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
-    geometry.setAttribute('aLat', new THREE.BufferAttribute(latitudes, 1));
-    geometry.setAttribute('aLon', new THREE.BufferAttribute(longitudes, 1));
+    geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+    geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+    geometry.setAttribute("size", new THREE.BufferAttribute(sizes, 1));
+    geometry.setAttribute("aLat", new THREE.BufferAttribute(latitudes, 1));
+    geometry.setAttribute("aLon", new THREE.BufferAttribute(longitudes, 1));
 
     // Vertex shader that matches the globe's coordinate system exactly
     const vertexShader = `
@@ -174,13 +174,13 @@ export class StatisticsOverlay {
    * Show statistics overlay with a specific statistic
    */
   show(statId: string): void {
-    const stat = STATISTICS.find(s => s.id === statId);
+    const stat = STATISTICS.find((s) => s.id === statId);
     if (!stat || !this.markers || !this.material) return;
 
     this.currentStat = stat;
     this.visible = true;
 
-    const colors = this.markers.geometry.getAttribute('color');
+    const colors = this.markers.geometry.getAttribute("color");
     const colorsArray = colors.array as Float32Array;
 
     COUNTRY_DATA.forEach((country, i) => {
@@ -231,7 +231,7 @@ export class StatisticsOverlay {
 
   private getColorFromScale(
     scale: [string, string, string],
-    t: number
+    t: number,
   ): { r: number; g: number; b: number } {
     const parseHex = (hex: string) => ({
       r: parseInt(hex.slice(1, 3), 16) / 255,
@@ -267,7 +267,7 @@ export class StatisticsOverlay {
     const animate = () => {
       const elapsed = (performance.now() - startTime) / 1000;
       const progress = Math.min(elapsed / duration, 1);
-      const eased = 1 - Math.pow(1 - progress, 3);
+      const eased = 1 - (1 - progress) ** 3;
 
       if (this.material) {
         this.material.uniforms.uOpacity.value = startOpacity + (target - startOpacity) * eased;

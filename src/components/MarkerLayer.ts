@@ -12,18 +12,14 @@ const DEG_TO_RAD = Math.PI / 180;
 /**
  * Convert latitude/longitude to 3D position on sphere
  */
-function latLngToVector3(
-  lat: number,
-  lng: number,
-  radius: number = SPHERE_RADIUS
-): THREE.Vector3 {
+function latLngToVector3(lat: number, lng: number, radius: number = SPHERE_RADIUS): THREE.Vector3 {
   const phi = (90 - lat) * DEG_TO_RAD;
   const theta = (lng + 180) * DEG_TO_RAD;
 
   return new THREE.Vector3(
     -radius * Math.sin(phi) * Math.cos(theta),
     radius * Math.cos(phi),
-    radius * Math.sin(phi) * Math.sin(theta)
+    radius * Math.sin(phi) * Math.sin(theta),
   );
 }
 
@@ -34,11 +30,7 @@ function latLngToFlat(lat: number, lng: number): THREE.Vector3 {
   const flatWidth = 2 * Math.PI * SPHERE_RADIUS;
   const flatHeight = Math.PI * SPHERE_RADIUS;
 
-  return new THREE.Vector3(
-    (lng / 180) * (flatWidth / 2),
-    (lat / 90) * (flatHeight / 2),
-    0
-  );
+  return new THREE.Vector3((lng / 180) * (flatWidth / 2), (lat / 90) * (flatHeight / 2), 0);
 }
 
 /**
@@ -204,10 +196,7 @@ export class MarkerLayer {
   /**
    * Create a single marker mesh
    */
-  private createMarkerMesh(
-    marker: MarkerData,
-    normalizedValue: number
-  ): THREE.Mesh {
+  private createMarkerMesh(marker: MarkerData, normalizedValue: number): THREE.Mesh {
     let geometry: THREE.BufferGeometry;
     const height = 2 + normalizedValue * this.config.maxHeight;
 
@@ -242,10 +231,7 @@ export class MarkerLayer {
   /**
    * Create glow mesh for marker
    */
-  private createGlowMesh(
-    marker: MarkerData,
-    normalizedValue: number
-  ): THREE.Mesh {
+  private createGlowMesh(marker: MarkerData, normalizedValue: number): THREE.Mesh {
     const size = 2 + normalizedValue * 3;
     const geometry = new THREE.SphereGeometry(size, 16, 12);
 
@@ -320,7 +306,7 @@ export class MarkerLayer {
   getMarkerAtPosition(
     raycaster: THREE.Raycaster,
     camera: THREE.Camera,
-    screenPos: THREE.Vector2
+    screenPos: THREE.Vector2,
   ): MarkerData | null {
     raycaster.setFromCamera(screenPos, camera);
     const intersects = raycaster.intersectObjects(this.markerMeshes);

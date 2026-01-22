@@ -44,9 +44,7 @@ test.describe("Legend Component", () => {
     // Wait for visible class
     await page.waitForTimeout(3000);
 
-    const hasVisibleClass = await heroLegend.evaluate((el) =>
-      el.classList.contains("visible"),
-    );
+    const hasVisibleClass = await heroLegend.evaluate((el) => el.classList.contains("visible"));
     expect(hasVisibleClass).toBe(true);
 
     // Check title has content
@@ -69,9 +67,7 @@ test.describe("Legend Scoped to Container", () => {
     await expect(heroLegend).toBeAttached();
 
     // Legend should be a child of the container, not body
-    const legendParent = await heroLegend.evaluate(
-      (el) => el.parentElement?.id,
-    );
+    const legendParent = await heroLegend.evaluate((el) => el.parentElement?.id);
     expect(legendParent).toBe("globe-stat-life");
   });
 
@@ -85,8 +81,7 @@ test.describe("Legend Scoped to Container", () => {
     // Hero is large, should have size-lg class
     const heroLegend = page.locator("#globe-stat-life .gralobe-legend");
     const hasLgClass = await heroLegend.evaluate(
-      (el) =>
-        el.classList.contains("size-lg") || el.classList.contains("size-md"),
+      (el) => el.classList.contains("size-lg") || el.classList.contains("size-md"),
     );
     expect(hasLgClass).toBe(true);
   });

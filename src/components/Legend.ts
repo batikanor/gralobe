@@ -212,21 +212,11 @@ export class Legend {
   }
 
   show(stat: StatisticDefinition): void {
-    const titleEl = this.element.querySelector(
-      ".gralobe-legend-title",
-    ) as HTMLElement;
-    const gradientEl = this.element.querySelector(
-      ".gralobe-legend-gradient",
-    ) as HTMLElement;
-    const minEl = this.element.querySelector(
-      ".gralobe-legend-min",
-    ) as HTMLElement;
-    const maxEl = this.element.querySelector(
-      ".gralobe-legend-max",
-    ) as HTMLElement;
-    const descEl = this.element.querySelector(
-      ".gralobe-legend-description",
-    ) as HTMLElement;
+    const titleEl = this.element.querySelector(".gralobe-legend-title") as HTMLElement;
+    const gradientEl = this.element.querySelector(".gralobe-legend-gradient") as HTMLElement;
+    const minEl = this.element.querySelector(".gralobe-legend-min") as HTMLElement;
+    const maxEl = this.element.querySelector(".gralobe-legend-max") as HTMLElement;
+    const descEl = this.element.querySelector(".gralobe-legend-description") as HTMLElement;
 
     titleEl.textContent = stat.name;
     descEl.textContent = stat.description;

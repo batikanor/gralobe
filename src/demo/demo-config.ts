@@ -1,4 +1,4 @@
-import { GlobeViz } from "../lib/GlobeViz";
+import type { GlobeViz } from "../lib/GlobeViz";
 import type { GlobeVizConfig } from "../lib/types";
 import { customStats, worldCitiesCoordinates } from "./data";
 
@@ -146,8 +146,7 @@ export const sections: DemoSection[] = [
         id: "globe-us-election", // Reusing the election demo here as it's dense
         title: "US 2020 Election (Simulated)",
         subtitle: "~3000 Data Points (Counties)",
-        description:
-          "Simulates a dense dataset mapped to thousands of county polygons.",
+        description: "Simulates a dense dataset mapped to thousands of county polygons.",
         config: {
           topology: {
             url: "https://cdn.jsdelivr.net/npm/us-atlas@3/counties-10m.json",
@@ -176,8 +175,7 @@ export const sections: DemoSection[] = [
         id: "globe-cities",
         title: "World Cities",
         subtitle: "Population / Density",
-        description:
-          "Generates synthetic circles around city centers using `pointRadius`.",
+        description: "Generates synthetic circles around city centers using `pointRadius`.",
         config: {
           texture: "dark",
           topology: {

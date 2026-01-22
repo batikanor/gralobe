@@ -72,7 +72,7 @@ export function createFormatter(unit: string): (value: number) => string {
 export function formatValue(
   value: number,
   unit: string,
-  customFormatter?: (value: number) => string
+  customFormatter?: (value: number) => string,
 ): string {
   const formatter = customFormatter ?? createFormatter(unit);
   return formatter(value);

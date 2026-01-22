@@ -9,16 +9,12 @@ const MAX_ACTIVE_GLOBES = 6;
 // --- DOM Generation Helpers ---
 
 function createSectionHTML(section: DemoSection, index: number): string {
-  const infoBox = section.infoBox
-    ? `<div class="info-box">${section.infoBox}</div>`
-    : "";
+  const infoBox = section.infoBox ? `<div class="info-box">${section.infoBox}</div>` : "";
 
   // Collapse all except the first one by default
   const isCollapsed = index !== 0; // First one open, rest closed
   const collapsedClass = isCollapsed ? "collapsed" : "";
-  const iconClass = isCollapsed
-    ? "section-toggle-icon collapsed"
-    : "section-toggle-icon";
+  const iconClass = isCollapsed ? "section-toggle-icon collapsed" : "section-toggle-icon";
 
   return `
     <section id="${section.id}">
@@ -81,9 +77,7 @@ function enforceLimit() {
       const el = document.getElementById(id);
       if (!el) continue;
       const rect = el.getBoundingClientRect();
-      const dist = Math.abs(
-        rect.top + rect.height / 2 - window.innerHeight / 2,
-      );
+      const dist = Math.abs(rect.top + rect.height / 2 - window.innerHeight / 2);
       if (dist > furthestDistance) {
         furthestDistance = dist;
         furthestId = id;
@@ -117,9 +111,7 @@ async function initGlobe(demo: DemoConfig) {
 
   const loader = container.querySelector(".globe-loader") as HTMLElement;
   const error = container.querySelector(".globe-error") as HTMLElement;
-  const progressBar = container.querySelector(
-    ".globe-progress-bar",
-  ) as HTMLElement;
+  const progressBar = container.querySelector(".globe-progress-bar") as HTMLElement;
   const progressText = container.querySelector(".globe-progress-text");
   const debugText = container.querySelector(".globe-debug-text");
 
@@ -129,10 +121,8 @@ async function initGlobe(demo: DemoConfig) {
     const config = {
       ...demo.config,
       onLoadProgress: (progress: number, status?: string) => {
-        if (progressBar)
-          progressBar.style.width = `${Math.round(progress * 100)}%`;
-        if (progressText)
-          progressText.textContent = `${Math.round(progress * 100)}%`;
+        if (progressBar) progressBar.style.width = `${Math.round(progress * 100)}%`;
+        if (progressText) progressText.textContent = `${Math.round(progress * 100)}%`;
         if (debugText && status) debugText.textContent = status;
         // console.log(`[${containerId}] Progress: ${progress}, Status: ${status}`);
       },
@@ -226,9 +216,7 @@ function renderApp() {
   });
 
   // 3. Attach Observer
-  document
-    .querySelectorAll(".globe-container")
-    .forEach((el) => observer.observe(el));
+  document.querySelectorAll(".globe-container").forEach((el) => observer.observe(el));
 }
 
 // --- Global Exports (for inline onclicks) ---

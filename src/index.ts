@@ -21,34 +21,28 @@
  * ```
  */
 
+// Built-in statistics
+export { WORLD_STATISTICS } from "./data/worldStatistics";
+// Country code utilities
+export { normalizeCountryValues, toNumericCode } from "./lib/countryCodes";
+// Formatting utilities
+export { createFormatter, formatValue } from "./lib/formatters";
+export type { GlobeVizAPI } from "./lib/GlobeViz";
 // Main exports
 export { GlobeViz } from "./lib/GlobeViz";
-export type { GlobeVizAPI } from "./lib/GlobeViz";
-
+export { BUILT_IN_STATISTICS } from "./lib/statistics";
 // Statistics types and utilities
+// Label styles
+// Texture presets
 export type {
   CountryData,
   EffectsConfig,
   ExportOptions,
   GlobeVizConfig,
+  LabelStyle,
   MarkerConfig,
   MarkerData,
   StatisticData,
   StatisticDefinition,
+  TexturePreset,
 } from "./lib/types";
-
-// Formatting utilities
-export { createFormatter, formatValue } from "./lib/formatters";
-
-// Built-in statistics
-export { WORLD_STATISTICS } from "./data/worldStatistics";
-export { BUILT_IN_STATISTICS } from "./lib/statistics";
-
-// Label styles
-export type { LabelStyle } from "./lib/types";
-
-// Texture presets
-export type { TexturePreset } from "./lib/types";
-
-// Country code utilities
-export { normalizeCountryValues, toNumericCode } from "./lib/countryCodes";

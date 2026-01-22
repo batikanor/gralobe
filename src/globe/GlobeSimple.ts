@@ -1,5 +1,5 @@
-import * as THREE from 'three';
-import { gsap } from 'gsap';
+import { gsap } from "gsap";
+import * as THREE from "three";
 
 export interface SimpleGlobeConfig {
   morphProgress: number;
@@ -28,7 +28,7 @@ export class SimpleGlobe {
       morphProgress: 0,
       autoRotate: false,
       rotationSpeed: 0.1,
-      ...config
+      ...config,
     };
     this.group = new THREE.Group();
   }
@@ -38,16 +38,26 @@ export class SimpleGlobe {
 
     // Load high-quality textures with proper settings
     const [dayMap, bumpMap, specMap] = await Promise.all([
-      loader.loadAsync('https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_atmos_4096.jpg').catch(() =>
-        loader.loadAsync('https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_atmos_2048.jpg')
+      loader
+        .loadAsync(
+          "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_atmos_4096.jpg",
+        )
+        .catch(() =>
+          loader.loadAsync(
+            "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_atmos_2048.jpg",
+          ),
+        ),
+      loader.loadAsync(
+        "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_normal_2048.jpg",
       ),
-      loader.loadAsync('https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_normal_2048.jpg'),
-      loader.loadAsync('https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_specular_2048.jpg'),
+      loader.loadAsync(
+        "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_specular_2048.jpg",
+      ),
     ]);
 
     // Enable anisotropic filtering for sharper textures
     const maxAniso = 16;
-    [dayMap, bumpMap, specMap].forEach(tex => {
+    [dayMap, bumpMap, specMap].forEach((tex) => {
       tex.anisotropy = maxAniso;
       tex.minFilter = THREE.LinearMipmapLinearFilter;
       tex.magFilter = THREE.LinearFilter;
@@ -83,9 +93,7 @@ export class SimpleGlobe {
 
     // Create a single geometry that we'll morph
     const morphGeo = sphereGeo.clone();
-    morphGeo.morphAttributes.position = [
-      new THREE.Float32BufferAttribute(flatPositions, 3)
-    ];
+    morphGeo.morphAttributes.position = [new THREE.Float32BufferAttribute(flatPositions, 3)];
 
     // The sphere mesh with morph targets
     this.sphereMesh = new THREE.Mesh(morphGeo, this.material!);
@@ -144,11 +152,11 @@ export class SimpleGlobe {
   }
 
   morphTo(target: number, duration: number = 2): Promise<void> {
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
       gsap.to(this, {
         morphProgress: target,
         duration,
-        ease: 'power2.inOut',
+        ease: "power2.inOut",
         onUpdate: () => this.setMorphProgress(this.morphProgress),
         onComplete: resolve,
       });

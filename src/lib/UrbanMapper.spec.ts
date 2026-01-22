@@ -1,7 +1,7 @@
-import { expect, test } from "@playwright/test";
+import { describe, expect, test } from "vitest";
 import { UrbanMapper } from "./UrbanMapper";
 
-test.describe("UrbanMapper Unit Tests", () => {
+describe("UrbanMapper Unit Tests", () => {
   test("generateSyntheticBoundary creates a Polygon with correct properties", () => {
     const lat = 40.7128; // NYC
     const lon = -74.006;

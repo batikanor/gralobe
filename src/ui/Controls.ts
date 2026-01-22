@@ -1,8 +1,7 @@
-import GUI from 'lil-gui';
-import * as THREE from 'three';
-import { Globe } from '../globe/Globe';
-import type { FormFactor, MorphStyle } from '../globe/Globe';
-import { gsap } from 'gsap';
+import { gsap } from "gsap";
+import GUI from "lil-gui";
+import * as THREE from "three";
+import type { FormFactor, Globe, MorphStyle } from "../globe/Globe";
 
 export interface ControlsCallbacks {
   onMorphChange?: (progress: number) => void;
@@ -18,11 +17,11 @@ export class Controls {
   private animationParams = {
     morphProgress: 0,
     morphDuration: 2,
-    morphEase: 'power2.inOut',
+    morphEase: "power2.inOut",
   };
 
   private formFactorParams = {
-    current: 'desktop' as FormFactor,
+    current: "desktop" as FormFactor,
     foldAngle: 0,
   };
 
@@ -60,7 +59,7 @@ export class Controls {
   constructor(globe: Globe, callbacks: ControlsCallbacks = {}) {
     this.globe = globe;
     this.callbacks = callbacks;
-    this.gui = new GUI({ title: 'Globe Control Center', width: 320 });
+    this.gui = new GUI({ title: "Globe Control Center", width: 320 });
 
     this.initializeFromConfig();
     this.setupFolders();
@@ -94,147 +93,189 @@ export class Controls {
   }
 
   private setupAnimationFolder(): void {
-    const folder = this.gui.addFolder('🌍 Morphing Animation');
+    const folder = this.gui.addFolder("🌍 Morphing Animation");
     folder.open();
 
-    folder.add(this.animationParams, 'morphProgress', 0, 1, 0.001)
-      .name('Progress')
+    folder
+      .add(this.animationParams, "morphProgress", 0, 1, 0.001)
+      .name("Progress")
       .onChange((value: number) => {
         this.globe.setMorphProgress(value);
         this.callbacks.onMorphChange?.(value);
       });
 
-    folder.add(this.animationParams, 'morphDuration', 0.5, 10, 0.1)
-      .name('Duration (s)');
+    folder.add(this.animationParams, "morphDuration", 0.5, 10, 0.1).name("Duration (s)");
 
-    folder.add(this.animationParams, 'morphEase', [
-      'none', 'power1.inOut', 'power2.inOut', 'power3.inOut', 'power4.inOut',
-      'elastic.out', 'bounce.out', 'back.inOut', 'circ.inOut'
-    ]).name('Easing');
+    folder
+      .add(this.animationParams, "morphEase", [
+        "none",
+        "power1.inOut",
+        "power2.inOut",
+        "power3.inOut",
+        "power4.inOut",
+        "elastic.out",
+        "bounce.out",
+        "back.inOut",
+        "circ.inOut",
+      ])
+      .name("Easing");
 
-    const morphStyle = { style: 'roll' as MorphStyle };
-    folder.add(morphStyle, 'style', ['direct', 'roll', 'wave'])
-      .name('Style')
+    const morphStyle = { style: "roll" as MorphStyle };
+    folder
+      .add(morphStyle, "style", ["direct", "roll", "wave"])
+      .name("Style")
       .onChange((value: MorphStyle) => {
         this.globe.setConfig({ morphStyle: value });
       });
 
-    folder.add({
-      animate: () => {
-        const targetProgress = this.animationParams.morphProgress > 0.5 ? 0 : 1;
-        this.globe.morphTo(targetProgress, this.animationParams.morphDuration, this.animationParams.morphEase);
-        gsap.to(this.animationParams, {
-          morphProgress: targetProgress,
-          duration: this.animationParams.morphDuration,
-          ease: this.animationParams.morphEase,
-        });
-      }
-    }, 'animate').name('▶️ Toggle Animation');
+    folder
+      .add(
+        {
+          animate: () => {
+            const targetProgress = this.animationParams.morphProgress > 0.5 ? 0 : 1;
+            this.globe.morphTo(
+              targetProgress,
+              this.animationParams.morphDuration,
+              this.animationParams.morphEase,
+            );
+            gsap.to(this.animationParams, {
+              morphProgress: targetProgress,
+              duration: this.animationParams.morphDuration,
+              ease: this.animationParams.morphEase,
+            });
+          },
+        },
+        "animate",
+      )
+      .name("▶️ Toggle Animation");
   }
 
   private setupFormFactorFolder(): void {
-    const folder = this.gui.addFolder('📱 Form Factor');
+    const folder = this.gui.addFolder("📱 Form Factor");
 
-    folder.add(this.formFactorParams, 'current', ['desktop', 'phone', 'foldable', 'trifold', 'watch'])
-      .name('Device')
+    folder
+      .add(this.formFactorParams, "current", ["desktop", "phone", "foldable", "trifold", "watch"])
+      .name("Device")
       .onChange((value: FormFactor) => {
         this.globe.setConfig({ formFactor: value });
         this.callbacks.onFormFactorChange?.(value);
       });
 
-    folder.add(this.formFactorParams, 'foldAngle', 0, Math.PI, 0.01)
-      .name('Fold Angle')
+    folder
+      .add(this.formFactorParams, "foldAngle", 0, Math.PI, 0.01)
+      .name("Fold Angle")
       .onChange((value: number) => {
         this.globe.setConfig({ foldAngle: value });
       });
 
-    folder.add({
-      animateFold: async () => {
-        const targetAngle = this.formFactorParams.foldAngle > Math.PI / 2 ? 0 : Math.PI;
-        await this.globe.playFoldAnimation(targetAngle, 1.5);
-        this.formFactorParams.foldAngle = targetAngle;
-      }
-    }, 'animateFold').name('▶️ Fold/Unfold');
+    folder
+      .add(
+        {
+          animateFold: async () => {
+            const targetAngle = this.formFactorParams.foldAngle > Math.PI / 2 ? 0 : Math.PI;
+            await this.globe.playFoldAnimation(targetAngle, 1.5);
+            this.formFactorParams.foldAngle = targetAngle;
+          },
+        },
+        "animateFold",
+      )
+      .name("▶️ Fold/Unfold");
   }
 
   private setupVisualsFolder(): void {
-    const folder = this.gui.addFolder('✨ Visual Effects');
+    const folder = this.gui.addFolder("✨ Visual Effects");
 
-    folder.add(this.visualParams, 'elevationScale', 0, 10, 0.1)
-      .name('Terrain Height')
+    folder
+      .add(this.visualParams, "elevationScale", 0, 10, 0.1)
+      .name("Terrain Height")
       .onChange((value: number) => this.globe.setConfig({ elevationScale: value }));
 
-    folder.add(this.visualParams, 'atmosphereIntensity', 0, 2, 0.01)
-      .name('Atmosphere')
+    folder
+      .add(this.visualParams, "atmosphereIntensity", 0, 2, 0.01)
+      .name("Atmosphere")
       .onChange((value: number) => this.globe.setConfig({ atmosphereIntensity: value }));
 
-    folder.add(this.visualParams, 'cloudOpacity', 0, 1, 0.01)
-      .name('Clouds')
+    folder
+      .add(this.visualParams, "cloudOpacity", 0, 1, 0.01)
+      .name("Clouds")
       .onChange((value: number) => this.globe.setConfig({ cloudOpacity: value }));
 
-    folder.add(this.visualParams, 'oceanSpecular', 0, 2, 0.01)
-      .name('Ocean Shine')
+    folder
+      .add(this.visualParams, "oceanSpecular", 0, 2, 0.01)
+      .name("Ocean Shine")
       .onChange((value: number) => this.globe.setConfig({ oceanSpecular: value }));
 
-    folder.add(this.visualParams, 'cityLightsIntensity', 0, 3, 0.01)
-      .name('City Lights')
+    folder
+      .add(this.visualParams, "cityLightsIntensity", 0, 3, 0.01)
+      .name("City Lights")
       .onChange((value: number) => this.globe.setConfig({ cityLightsIntensity: value }));
 
-    folder.add(this.visualParams, 'dayNightBlend', 0, 1, 0.01)
-      .name('Day/Night Blend')
+    folder
+      .add(this.visualParams, "dayNightBlend", 0, 1, 0.01)
+      .name("Day/Night Blend")
       .onChange((value: number) => this.globe.setConfig({ dayNightBlend: value }));
 
     // Holographic effects subfolder
-    const holoFolder = folder.addFolder('🔮 Holographic');
+    const holoFolder = folder.addFolder("🔮 Holographic");
 
-    holoFolder.add(this.visualParams, 'holoIntensity', 0, 1, 0.01)
-      .name('Holo Grid')
+    holoFolder
+      .add(this.visualParams, "holoIntensity", 0, 1, 0.01)
+      .name("Holo Grid")
       .onChange((value: number) => this.globe.setConfig({ holoIntensity: value }));
 
-    holoFolder.add(this.visualParams, 'gridIntensity', 0, 1, 0.01)
-      .name('Hex Grid')
+    holoFolder
+      .add(this.visualParams, "gridIntensity", 0, 1, 0.01)
+      .name("Hex Grid")
       .onChange((value: number) => this.globe.setConfig({ gridIntensity: value }));
 
-    holoFolder.add(this.visualParams, 'scanLineEnabled')
-      .name('Scan Line')
+    holoFolder
+      .add(this.visualParams, "scanLineEnabled")
+      .name("Scan Line")
       .onChange((value: boolean) => this.globe.setConfig({ scanLineEnabled: value }));
 
-    holoFolder.add(this.visualParams, 'scanLineSpeed', 0, 1, 0.01)
-      .name('Scan Speed')
+    holoFolder
+      .add(this.visualParams, "scanLineSpeed", 0, 1, 0.01)
+      .name("Scan Speed")
       .onChange((value: number) => this.globe.setConfig({ scanLineSpeed: value }));
 
-    holoFolder.add(this.visualParams, 'dataVizIntensity', 0, 2, 0.01)
-      .name('Data Overlay')
+    holoFolder
+      .add(this.visualParams, "dataVizIntensity", 0, 2, 0.01)
+      .name("Data Overlay")
       .onChange((value: number) => this.globe.setConfig({ dataVizIntensity: value }));
   }
 
   private setupLightingFolder(): void {
-    const folder = this.gui.addFolder('☀️ Lighting');
+    const folder = this.gui.addFolder("☀️ Lighting");
 
-    folder.add(this.lightingParams, 'sunX', -200, 200, 1)
-      .name('Sun X')
+    folder
+      .add(this.lightingParams, "sunX", -200, 200, 1)
+      .name("Sun X")
       .onChange(() => this.updateSunPosition());
 
-    folder.add(this.lightingParams, 'sunY', -200, 200, 1)
-      .name('Sun Y')
+    folder
+      .add(this.lightingParams, "sunY", -200, 200, 1)
+      .name("Sun Y")
       .onChange(() => this.updateSunPosition());
 
-    folder.add(this.lightingParams, 'sunZ', -200, 200, 1)
-      .name('Sun Z')
+    folder
+      .add(this.lightingParams, "sunZ", -200, 200, 1)
+      .name("Sun Z")
       .onChange(() => this.updateSunPosition());
 
     // Auto rotation
-    folder.add(this.rotationParams, 'autoRotate')
-      .name('Auto Rotate')
+    folder
+      .add(this.rotationParams, "autoRotate")
+      .name("Auto Rotate")
       .onChange((value: boolean) => this.globe.setConfig({ autoRotate: value }));
 
-    folder.add(this.rotationParams, 'rotationSpeed', 0, 1, 0.01)
-      .name('Rotation Speed')
+    folder
+      .add(this.rotationParams, "rotationSpeed", 0, 1, 0.01)
+      .name("Rotation Speed")
       .onChange((value: number) => this.globe.setConfig({ rotationSpeed: value }));
   }
 
   private setupPresetsFolder(): void {
-    const folder = this.gui.addFolder('🎬 Presets');
+    const folder = this.gui.addFolder("🎬 Presets");
     folder.open();
 
     const presets = {
@@ -242,7 +283,7 @@ export class Controls {
         this.animationParams.morphProgress = 0;
         await this.globe.playIntroAnimation();
         this.animationParams.morphProgress = 1;
-        this.callbacks.onPresetPlay?.('intro');
+        this.callbacks.onPresetPlay?.("intro");
       },
 
       nightMode: () => {
@@ -257,9 +298,9 @@ export class Controls {
               cityLightsIntensity: this.visualParams.cityLightsIntensity,
               atmosphereIntensity: this.visualParams.atmosphereIntensity,
             });
-          }
+          },
         });
-        this.callbacks.onPresetPlay?.('night');
+        this.callbacks.onPresetPlay?.("night");
       },
 
       dayMode: () => {
@@ -274,9 +315,9 @@ export class Controls {
               cityLightsIntensity: this.visualParams.cityLightsIntensity,
               atmosphereIntensity: this.visualParams.atmosphereIntensity,
             });
-          }
+          },
         });
-        this.callbacks.onPresetPlay?.('day');
+        this.callbacks.onPresetPlay?.("day");
       },
 
       cyberMode: () => {
@@ -295,9 +336,9 @@ export class Controls {
               atmosphereIntensity: this.visualParams.atmosphereIntensity,
               dayNightBlend: this.visualParams.dayNightBlend,
             });
-          }
+          },
         });
-        this.callbacks.onPresetPlay?.('cyber');
+        this.callbacks.onPresetPlay?.("cyber");
       },
 
       naturalMode: () => {
@@ -320,9 +361,9 @@ export class Controls {
               cloudOpacity: this.visualParams.cloudOpacity,
               oceanSpecular: this.visualParams.oceanSpecular,
             });
-          }
+          },
         });
-        this.callbacks.onPresetPlay?.('natural');
+        this.callbacks.onPresetPlay?.("natural");
       },
 
       resetAll: () => {
@@ -337,20 +378,20 @@ export class Controls {
           holoIntensity: 0.3,
           gridIntensity: 0.2,
           dataVizIntensity: 0.5,
-          formFactor: 'desktop',
+          formFactor: "desktop",
           foldAngle: 0,
         });
         this.initializeFromConfig();
-        this.callbacks.onPresetPlay?.('reset');
+        this.callbacks.onPresetPlay?.("reset");
       },
     };
 
-    folder.add(presets, 'introAnimation').name('🎬 Play Intro');
-    folder.add(presets, 'nightMode').name('🌙 Night Mode');
-    folder.add(presets, 'dayMode').name('☀️ Day Mode');
-    folder.add(presets, 'cyberMode').name('💠 Cyber Mode');
-    folder.add(presets, 'naturalMode').name('🌿 Natural Mode');
-    folder.add(presets, 'resetAll').name('🔄 Reset All');
+    folder.add(presets, "introAnimation").name("🎬 Play Intro");
+    folder.add(presets, "nightMode").name("🌙 Night Mode");
+    folder.add(presets, "dayMode").name("☀️ Day Mode");
+    folder.add(presets, "cyberMode").name("💠 Cyber Mode");
+    folder.add(presets, "naturalMode").name("🌿 Natural Mode");
+    folder.add(presets, "resetAll").name("🔄 Reset All");
   }
 
   private updateSunPosition(): void {
@@ -358,14 +399,14 @@ export class Controls {
       sunPosition: new THREE.Vector3(
         this.lightingParams.sunX,
         this.lightingParams.sunY,
-        this.lightingParams.sunZ
-      )
+        this.lightingParams.sunZ,
+      ),
     });
   }
 
   private styleGUI(): void {
     // Add custom CSS for a more polished look
-    const style = document.createElement('style');
+    const style = document.createElement("style");
     style.textContent = `
       .lil-gui {
         --background-color: rgba(10, 15, 25, 0.95);
