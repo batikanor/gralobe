@@ -1,203 +1,2109 @@
 import * as S from "three";
-import { OrbitControls as vn } from "three/examples/jsm/controls/OrbitControls.js";
-import { CSS2DRenderer as En, CSS2DObject as Ni } from "three/examples/jsm/renderers/CSS2DRenderer.js";
-function Pe(s) {
+import { OrbitControls as En } from "three/examples/jsm/controls/OrbitControls.js";
+import { CSS2DRenderer as wn, CSS2DObject as Bi } from "three/examples/jsm/renderers/CSS2DRenderer.js";
+const Je = [
+  // Major economies and populous nations
+  {
+    id: "156",
+    code: "CN",
+    name: "China",
+    population: 1412,
+    gdpPerCapita: 21476,
+    co2Emissions: 8,
+    lifeExpectancy: 78.2,
+    humanDevIndex: 0.768,
+    internetUsers: 73,
+    renewableEnergy: 15,
+    urbanPopulation: 64.7,
+    healthExpenditure: 5.4,
+    educationExpenditure: 3.6,
+    forestArea: 23.3,
+    accessElectricity: 100
+  },
+  {
+    id: "356",
+    code: "IN",
+    name: "India",
+    population: 1408,
+    gdpPerCapita: 8379,
+    co2Emissions: 1.9,
+    lifeExpectancy: 70.8,
+    humanDevIndex: 0.633,
+    internetUsers: 47,
+    renewableEnergy: 38,
+    urbanPopulation: 35.9,
+    healthExpenditure: 3,
+    educationExpenditure: 4.5,
+    forestArea: 24.3,
+    accessElectricity: 99.6
+  },
+  {
+    id: "840",
+    code: "US",
+    name: "United States",
+    population: 332,
+    gdpPerCapita: 76399,
+    co2Emissions: 14.4,
+    lifeExpectancy: 77.5,
+    humanDevIndex: 0.921,
+    internetUsers: 92,
+    renewableEnergy: 13,
+    urbanPopulation: 83.1,
+    healthExpenditure: 18.3,
+    educationExpenditure: 6.1,
+    forestArea: 33.9,
+    accessElectricity: 100
+  },
+  {
+    id: "360",
+    code: "ID",
+    name: "Indonesia",
+    population: 276,
+    gdpPerCapita: 14535,
+    co2Emissions: 2.3,
+    lifeExpectancy: 71.9,
+    humanDevIndex: 0.705,
+    internetUsers: 62,
+    renewableEnergy: 12,
+    urbanPopulation: 57.9,
+    healthExpenditure: 2.9,
+    educationExpenditure: 3.5,
+    forestArea: 49.1,
+    accessElectricity: 99
+  },
+  {
+    id: "586",
+    code: "PK",
+    name: "Pakistan",
+    population: 225,
+    gdpPerCapita: 6470,
+    co2Emissions: 1,
+    lifeExpectancy: 67.3,
+    humanDevIndex: 0.544,
+    internetUsers: 21,
+    renewableEnergy: 34,
+    urbanPopulation: 37.4,
+    healthExpenditure: 2.8,
+    educationExpenditure: 2.3,
+    forestArea: 1.9,
+    accessElectricity: 95
+  },
+  {
+    id: "076",
+    code: "BR",
+    name: "Brazil",
+    population: 215,
+    gdpPerCapita: 16154,
+    co2Emissions: 2.2,
+    lifeExpectancy: 76,
+    humanDevIndex: 0.754,
+    internetUsers: 81,
+    renewableEnergy: 47,
+    urbanPopulation: 87.6,
+    healthExpenditure: 10.3,
+    educationExpenditure: 6.3,
+    forestArea: 59.4,
+    accessElectricity: 100
+  },
+  {
+    id: "566",
+    code: "NG",
+    name: "Nigeria",
+    population: 219,
+    gdpPerCapita: 5860,
+    co2Emissions: 0.6,
+    lifeExpectancy: 53.9,
+    humanDevIndex: 0.535,
+    internetUsers: 36,
+    renewableEnergy: 86,
+    urbanPopulation: 53,
+    healthExpenditure: 3,
+    educationExpenditure: 0.5,
+    forestArea: 7.2,
+    accessElectricity: 59.5
+  },
+  {
+    id: "050",
+    code: "BD",
+    name: "Bangladesh",
+    population: 167,
+    gdpPerCapita: 7066,
+    co2Emissions: 0.6,
+    lifeExpectancy: 73.2,
+    humanDevIndex: 0.661,
+    internetUsers: 39,
+    renewableEnergy: 3,
+    urbanPopulation: 39.4,
+    healthExpenditure: 2.3,
+    educationExpenditure: 1.8,
+    forestArea: 11.2,
+    accessElectricity: 99.4
+  },
+  {
+    id: "643",
+    code: "RU",
+    name: "Russia",
+    population: 144,
+    gdpPerCapita: 30820,
+    co2Emissions: 11.4,
+    lifeExpectancy: 72.8,
+    humanDevIndex: 0.822,
+    internetUsers: 85,
+    renewableEnergy: 7,
+    urbanPopulation: 75.1,
+    healthExpenditure: 5.6,
+    educationExpenditure: 3.7,
+    forestArea: 49.8,
+    accessElectricity: 100
+  },
+  {
+    id: "484",
+    code: "MX",
+    name: "Mexico",
+    population: 130,
+    gdpPerCapita: 20824,
+    co2Emissions: 3.5,
+    lifeExpectancy: 75.1,
+    humanDevIndex: 0.758,
+    internetUsers: 72,
+    renewableEnergy: 9,
+    urbanPopulation: 81,
+    healthExpenditure: 5.4,
+    educationExpenditure: 4.3,
+    forestArea: 33.6,
+    accessElectricity: 100
+  },
+  {
+    id: "392",
+    code: "JP",
+    name: "Japan",
+    population: 125,
+    gdpPerCapita: 45546,
+    co2Emissions: 8.5,
+    lifeExpectancy: 84.6,
+    humanDevIndex: 0.925,
+    internetUsers: 93,
+    renewableEnergy: 12,
+    urbanPopulation: 91.9,
+    healthExpenditure: 11,
+    educationExpenditure: 3.4,
+    forestArea: 68.4,
+    accessElectricity: 100
+  },
+  {
+    id: "231",
+    code: "ET",
+    name: "Ethiopia",
+    population: 121,
+    gdpPerCapita: 2771,
+    co2Emissions: 0.2,
+    lifeExpectancy: 66.6,
+    humanDevIndex: 0.498,
+    internetUsers: 17,
+    renewableEnergy: 93,
+    urbanPopulation: 22.2,
+    healthExpenditure: 3.5,
+    educationExpenditure: 4.5,
+    forestArea: 12.5,
+    accessElectricity: 51.1
+  },
+  {
+    id: "608",
+    code: "PH",
+    name: "Philippines",
+    population: 115,
+    gdpPerCapita: 9746,
+    co2Emissions: 1.3,
+    lifeExpectancy: 72.1,
+    humanDevIndex: 0.699,
+    internetUsers: 53,
+    renewableEnergy: 29,
+    urbanPopulation: 47.7,
+    healthExpenditure: 5.1,
+    educationExpenditure: 3.6,
+    forestArea: 27,
+    accessElectricity: 97.2
+  },
+  {
+    id: "818",
+    code: "EG",
+    name: "Egypt",
+    population: 106,
+    gdpPerCapita: 14927,
+    co2Emissions: 2.4,
+    lifeExpectancy: 72,
+    humanDevIndex: 0.731,
+    internetUsers: 72,
+    renewableEnergy: 10,
+    urbanPopulation: 42.8,
+    healthExpenditure: 4.6,
+    educationExpenditure: 4,
+    forestArea: 0.1,
+    accessElectricity: 100
+  },
+  {
+    id: "704",
+    code: "VN",
+    name: "Vietnam",
+    population: 99,
+    gdpPerCapita: 12756,
+    co2Emissions: 3.5,
+    lifeExpectancy: 75.8,
+    humanDevIndex: 0.703,
+    internetUsers: 70,
+    renewableEnergy: 21,
+    urbanPopulation: 38.1,
+    healthExpenditure: 4.7,
+    educationExpenditure: 4.2,
+    forestArea: 47.6,
+    accessElectricity: 100
+  },
+  // Europe
+  {
+    id: "276",
+    code: "DE",
+    name: "Germany",
+    population: 84,
+    gdpPerCapita: 58780,
+    co2Emissions: 8.1,
+    lifeExpectancy: 81.4,
+    humanDevIndex: 0.942,
+    internetUsers: 93,
+    renewableEnergy: 20,
+    urbanPopulation: 77.6,
+    healthExpenditure: 12.8,
+    educationExpenditure: 4.9,
+    forestArea: 32.7,
+    accessElectricity: 100
+  },
+  {
+    id: "792",
+    code: "TR",
+    name: "Turkey",
+    population: 85,
+    gdpPerCapita: 36879,
+    co2Emissions: 4.8,
+    lifeExpectancy: 78.6,
+    humanDevIndex: 0.838,
+    internetUsers: 83,
+    renewableEnergy: 17,
+    urbanPopulation: 76.6,
+    healthExpenditure: 4.3,
+    educationExpenditure: 3.1,
+    forestArea: 28.6,
+    accessElectricity: 100
+  },
+  {
+    id: "364",
+    code: "IR",
+    name: "Iran",
+    population: 87,
+    gdpPerCapita: 16261,
+    co2Emissions: 8.3,
+    lifeExpectancy: 76.7,
+    humanDevIndex: 0.774,
+    internetUsers: 78,
+    renewableEnergy: 6,
+    urbanPopulation: 76.3,
+    healthExpenditure: 5.2,
+    educationExpenditure: 3.6,
+    forestArea: 6.6,
+    accessElectricity: 100
+  },
+  {
+    id: "764",
+    code: "TH",
+    name: "Thailand",
+    population: 70,
+    gdpPerCapita: 19169,
+    co2Emissions: 3.8,
+    lifeExpectancy: 79.3,
+    humanDevIndex: 0.8,
+    internetUsers: 78,
+    renewableEnergy: 15,
+    urbanPopulation: 52.2,
+    healthExpenditure: 3.8,
+    educationExpenditure: 2.9,
+    forestArea: 38.8,
+    accessElectricity: 100
+  },
+  {
+    id: "826",
+    code: "GB",
+    name: "United Kingdom",
+    population: 68,
+    gdpPerCapita: 49675,
+    co2Emissions: 4.7,
+    lifeExpectancy: 81.8,
+    humanDevIndex: 0.929,
+    internetUsers: 97,
+    renewableEnergy: 15,
+    urbanPopulation: 84.2,
+    healthExpenditure: 12,
+    educationExpenditure: 5.5,
+    forestArea: 13.2,
+    accessElectricity: 100
+  },
+  {
+    id: "250",
+    code: "FR",
+    name: "France",
+    population: 68,
+    gdpPerCapita: 50728,
+    co2Emissions: 4.3,
+    lifeExpectancy: 82.7,
+    humanDevIndex: 0.903,
+    internetUsers: 91,
+    renewableEnergy: 12,
+    urbanPopulation: 81.5,
+    healthExpenditure: 12.2,
+    educationExpenditure: 5.5,
+    forestArea: 31.4,
+    accessElectricity: 100
+  },
+  {
+    id: "380",
+    code: "IT",
+    name: "Italy",
+    population: 59,
+    gdpPerCapita: 45936,
+    co2Emissions: 5.3,
+    lifeExpectancy: 83.5,
+    humanDevIndex: 0.895,
+    internetUsers: 86,
+    renewableEnergy: 20,
+    urbanPopulation: 71.3,
+    healthExpenditure: 8.7,
+    educationExpenditure: 4.3,
+    forestArea: 32.1,
+    accessElectricity: 100
+  },
+  {
+    id: "710",
+    code: "ZA",
+    name: "South Africa",
+    population: 60,
+    gdpPerCapita: 15e3,
+    co2Emissions: 6.7,
+    lifeExpectancy: 65.3,
+    humanDevIndex: 0.713,
+    internetUsers: 70,
+    renewableEnergy: 6,
+    urbanPopulation: 68,
+    healthExpenditure: 8.1,
+    educationExpenditure: 6.6,
+    forestArea: 7.6,
+    accessElectricity: 85
+  },
+  {
+    id: "834",
+    code: "TZ",
+    name: "Tanzania",
+    population: 63,
+    gdpPerCapita: 2990,
+    co2Emissions: 0.2,
+    lifeExpectancy: 66.2,
+    humanDevIndex: 0.549,
+    internetUsers: 25,
+    renewableEnergy: 85,
+    urbanPopulation: 37,
+    healthExpenditure: 3.8,
+    educationExpenditure: 3.4,
+    forestArea: 48.1,
+    accessElectricity: 42.7
+  },
+  {
+    id: "404",
+    code: "KE",
+    name: "Kenya",
+    population: 55,
+    gdpPerCapita: 5494,
+    co2Emissions: 0.4,
+    lifeExpectancy: 67,
+    humanDevIndex: 0.575,
+    internetUsers: 29,
+    renewableEnergy: 75,
+    urbanPopulation: 28.5,
+    healthExpenditure: 4.3,
+    educationExpenditure: 5.1,
+    forestArea: 7.8,
+    accessElectricity: 75
+  },
+  {
+    id: "410",
+    code: "KR",
+    name: "South Korea",
+    population: 52,
+    gdpPerCapita: 50071,
+    co2Emissions: 11.5,
+    lifeExpectancy: 83.7,
+    humanDevIndex: 0.925,
+    internetUsers: 97,
+    renewableEnergy: 4,
+    urbanPopulation: 81.4,
+    healthExpenditure: 8.4,
+    educationExpenditure: 5.1,
+    forestArea: 63.4,
+    accessElectricity: 100
+  },
+  {
+    id: "170",
+    code: "CO",
+    name: "Colombia",
+    population: 52,
+    gdpPerCapita: 17063,
+    co2Emissions: 1.8,
+    lifeExpectancy: 77.3,
+    humanDevIndex: 0.752,
+    internetUsers: 73,
+    renewableEnergy: 27,
+    urbanPopulation: 81.7,
+    healthExpenditure: 7.7,
+    educationExpenditure: 4.5,
+    forestArea: 52.7,
+    accessElectricity: 100
+  },
+  {
+    id: "724",
+    code: "ES",
+    name: "Spain",
+    population: 47,
+    gdpPerCapita: 42190,
+    co2Emissions: 5,
+    lifeExpectancy: 83.6,
+    humanDevIndex: 0.905,
+    internetUsers: 94,
+    renewableEnergy: 21,
+    urbanPopulation: 81.1,
+    healthExpenditure: 10.7,
+    educationExpenditure: 4.8,
+    forestArea: 37.4,
+    accessElectricity: 100
+  },
+  {
+    id: "032",
+    code: "AR",
+    name: "Argentina",
+    population: 46,
+    gdpPerCapita: 24678,
+    co2Emissions: 3.8,
+    lifeExpectancy: 77.1,
+    humanDevIndex: 0.842,
+    internetUsers: 87,
+    renewableEnergy: 13,
+    urbanPopulation: 92.2,
+    healthExpenditure: 10,
+    educationExpenditure: 5,
+    forestArea: 10.5,
+    accessElectricity: 100
+  },
+  {
+    id: "800",
+    code: "UG",
+    name: "Uganda",
+    population: 48,
+    gdpPerCapita: 2566,
+    co2Emissions: 0.1,
+    lifeExpectancy: 64.4,
+    humanDevIndex: 0.525,
+    internetUsers: 18,
+    renewableEnergy: 89,
+    urbanPopulation: 25.6,
+    healthExpenditure: 3.8,
+    educationExpenditure: 2.7,
+    forestArea: 9.7,
+    accessElectricity: 46
+  },
+  {
+    id: "012",
+    code: "DZ",
+    name: "Algeria",
+    population: 45,
+    gdpPerCapita: 12667,
+    co2Emissions: 3.7,
+    lifeExpectancy: 77.1,
+    humanDevIndex: 0.745,
+    internetUsers: 71,
+    renewableEnergy: 1,
+    urbanPopulation: 74.3,
+    healthExpenditure: 5.3,
+    educationExpenditure: 5.6,
+    forestArea: 0.8,
+    accessElectricity: 100
+  },
+  {
+    id: "804",
+    code: "UA",
+    name: "Ukraine",
+    population: 41,
+    gdpPerCapita: 14220,
+    co2Emissions: 4.5,
+    lifeExpectancy: 72.1,
+    humanDevIndex: 0.773,
+    internetUsers: 75,
+    renewableEnergy: 8,
+    urbanPopulation: 69.6,
+    healthExpenditure: 7,
+    educationExpenditure: 5.4,
+    forestArea: 16.7,
+    accessElectricity: 100
+  },
+  {
+    id: "368",
+    code: "IQ",
+    name: "Iraq",
+    population: 43,
+    gdpPerCapita: 10474,
+    co2Emissions: 4,
+    lifeExpectancy: 71.1,
+    humanDevIndex: 0.686,
+    internetUsers: 75,
+    renewableEnergy: 3,
+    urbanPopulation: 71.1,
+    healthExpenditure: 4.6,
+    educationExpenditure: 4.7,
+    forestArea: 1.9,
+    accessElectricity: 100
+  },
+  {
+    id: "616",
+    code: "PL",
+    name: "Poland",
+    population: 38,
+    gdpPerCapita: 40343,
+    co2Emissions: 8,
+    lifeExpectancy: 78.7,
+    humanDevIndex: 0.876,
+    internetUsers: 87,
+    renewableEnergy: 17,
+    urbanPopulation: 60,
+    healthExpenditure: 6.5,
+    educationExpenditure: 4.6,
+    forestArea: 30.9,
+    accessElectricity: 100
+  },
+  {
+    id: "124",
+    code: "CA",
+    name: "Canada",
+    population: 39,
+    gdpPerCapita: 54966,
+    co2Emissions: 14.3,
+    lifeExpectancy: 82.4,
+    humanDevIndex: 0.936,
+    internetUsers: 93,
+    renewableEnergy: 18,
+    urbanPopulation: 81.8,
+    healthExpenditure: 12.8,
+    educationExpenditure: 5.3,
+    forestArea: 38.7,
+    accessElectricity: 100
+  },
+  {
+    id: "504",
+    code: "MA",
+    name: "Morocco",
+    population: 37,
+    gdpPerCapita: 9339,
+    co2Emissions: 1.9,
+    lifeExpectancy: 77,
+    humanDevIndex: 0.683,
+    internetUsers: 84,
+    renewableEnergy: 13,
+    urbanPopulation: 64.6,
+    healthExpenditure: 5.3,
+    educationExpenditure: 6.8,
+    forestArea: 12.8,
+    accessElectricity: 100
+  },
+  {
+    id: "682",
+    code: "SA",
+    name: "Saudi Arabia",
+    population: 36,
+    gdpPerCapita: 56817,
+    co2Emissions: 15.3,
+    lifeExpectancy: 76.9,
+    humanDevIndex: 0.875,
+    internetUsers: 98,
+    renewableEnergy: 0,
+    urbanPopulation: 84.7,
+    healthExpenditure: 6.4,
+    educationExpenditure: 5.1,
+    forestArea: 0.5,
+    accessElectricity: 100
+  },
+  {
+    id: "604",
+    code: "PE",
+    name: "Peru",
+    population: 34,
+    gdpPerCapita: 14225,
+    co2Emissions: 1.6,
+    lifeExpectancy: 77.4,
+    humanDevIndex: 0.762,
+    internetUsers: 71,
+    renewableEnergy: 25,
+    urbanPopulation: 78.6,
+    healthExpenditure: 5.2,
+    educationExpenditure: 4,
+    forestArea: 57.3,
+    accessElectricity: 97
+  },
+  {
+    id: "036",
+    code: "AU",
+    name: "Australia",
+    population: 26,
+    gdpPerCapita: 59934,
+    co2Emissions: 15,
+    lifeExpectancy: 84,
+    humanDevIndex: 0.951,
+    internetUsers: 96,
+    renewableEnergy: 12,
+    urbanPopulation: 86.4,
+    healthExpenditure: 10.7,
+    educationExpenditure: 6.1,
+    forestArea: 17.4,
+    accessElectricity: 100
+  },
+  {
+    id: "458",
+    code: "MY",
+    name: "Malaysia",
+    population: 34,
+    gdpPerCapita: 33550,
+    co2Emissions: 7.6,
+    lifeExpectancy: 76.9,
+    humanDevIndex: 0.803,
+    internetUsers: 90,
+    renewableEnergy: 8,
+    urbanPopulation: 78,
+    healthExpenditure: 3.8,
+    educationExpenditure: 3.9,
+    forestArea: 57.7,
+    accessElectricity: 100
+  },
+  {
+    id: "288",
+    code: "GH",
+    name: "Ghana",
+    population: 33,
+    gdpPerCapita: 6754,
+    co2Emissions: 0.6,
+    lifeExpectancy: 64.9,
+    humanDevIndex: 0.632,
+    internetUsers: 53,
+    renewableEnergy: 42,
+    urbanPopulation: 58,
+    healthExpenditure: 3.4,
+    educationExpenditure: 4,
+    forestArea: 34.5,
+    accessElectricity: 85.9
+  },
+  {
+    id: "524",
+    code: "NP",
+    name: "Nepal",
+    population: 30,
+    gdpPerCapita: 4199,
+    co2Emissions: 0.5,
+    lifeExpectancy: 71.7,
+    humanDevIndex: 0.602,
+    internetUsers: 48,
+    renewableEnergy: 86,
+    urbanPopulation: 21,
+    healthExpenditure: 4.4,
+    educationExpenditure: 4.2,
+    forestArea: 25.4,
+    accessElectricity: 90
+  },
+  {
+    id: "862",
+    code: "VE",
+    name: "Venezuela",
+    population: 29,
+    gdpPerCapita: 7045,
+    co2Emissions: 3.1,
+    lifeExpectancy: 72.1,
+    humanDevIndex: 0.691,
+    internetUsers: 72,
+    renewableEnergy: 68,
+    urbanPopulation: 88.3,
+    healthExpenditure: 3.9,
+    educationExpenditure: 6.9,
+    forestArea: 52.1,
+    accessElectricity: 99.9
+  },
+  {
+    id: "450",
+    code: "MG",
+    name: "Madagascar",
+    population: 29,
+    gdpPerCapita: 1724,
+    co2Emissions: 0.2,
+    lifeExpectancy: 67,
+    humanDevIndex: 0.501,
+    internetUsers: 10,
+    renewableEnergy: 68,
+    urbanPopulation: 39.5,
+    healthExpenditure: 3.9,
+    educationExpenditure: 2.9,
+    forestArea: 21.4,
+    accessElectricity: 34
+  },
+  {
+    id: "120",
+    code: "CM",
+    name: "Cameroon",
+    population: 28,
+    gdpPerCapita: 3977,
+    co2Emissions: 0.4,
+    lifeExpectancy: 60.3,
+    humanDevIndex: 0.576,
+    internetUsers: 34,
+    renewableEnergy: 74,
+    urbanPopulation: 58.4,
+    healthExpenditure: 3.3,
+    educationExpenditure: 3.2,
+    forestArea: 45.6,
+    accessElectricity: 65
+  },
+  // Nordic & small high-HDI
+  {
+    id: "528",
+    code: "NL",
+    name: "Netherlands",
+    population: 18,
+    gdpPerCapita: 64654,
+    co2Emissions: 8.1,
+    lifeExpectancy: 82.3,
+    humanDevIndex: 0.941,
+    internetUsers: 98,
+    renewableEnergy: 13,
+    urbanPopulation: 92.5,
+    healthExpenditure: 11.2,
+    educationExpenditure: 5.3,
+    forestArea: 11.2,
+    accessElectricity: 100
+  },
+  {
+    id: "152",
+    code: "CL",
+    name: "Chile",
+    population: 19,
+    gdpPerCapita: 28526,
+    co2Emissions: 4.3,
+    lifeExpectancy: 80.7,
+    humanDevIndex: 0.855,
+    internetUsers: 88,
+    renewableEnergy: 27,
+    urbanPopulation: 87.9,
+    healthExpenditure: 9.3,
+    educationExpenditure: 5.4,
+    forestArea: 24.4,
+    accessElectricity: 100
+  },
+  {
+    id: "752",
+    code: "SE",
+    name: "Sweden",
+    population: 10,
+    gdpPerCapita: 60239,
+    co2Emissions: 3.5,
+    lifeExpectancy: 83.2,
+    humanDevIndex: 0.947,
+    internetUsers: 96,
+    renewableEnergy: 56,
+    urbanPopulation: 88.2,
+    healthExpenditure: 11.4,
+    educationExpenditure: 7.6,
+    forestArea: 68.9,
+    accessElectricity: 100
+  },
+  {
+    id: "578",
+    code: "NO",
+    name: "Norway",
+    population: 5,
+    gdpPerCapita: 82236,
+    co2Emissions: 7.5,
+    lifeExpectancy: 83.2,
+    humanDevIndex: 0.961,
+    internetUsers: 98,
+    renewableEnergy: 72,
+    urbanPopulation: 83.4,
+    healthExpenditure: 11.4,
+    educationExpenditure: 7.9,
+    forestArea: 33.2,
+    accessElectricity: 100
+  },
+  {
+    id: "702",
+    code: "SG",
+    name: "Singapore",
+    population: 6,
+    gdpPerCapita: 116527,
+    co2Emissions: 8.9,
+    lifeExpectancy: 84.1,
+    humanDevIndex: 0.939,
+    internetUsers: 96,
+    renewableEnergy: 2,
+    urbanPopulation: 100,
+    healthExpenditure: 6.1,
+    educationExpenditure: 2.9,
+    forestArea: 22.5,
+    accessElectricity: 100
+  },
+  {
+    id: "554",
+    code: "NZ",
+    name: "New Zealand",
+    population: 5,
+    gdpPerCapita: 48249,
+    co2Emissions: 6.8,
+    lifeExpectancy: 82.5,
+    humanDevIndex: 0.937,
+    internetUsers: 95,
+    renewableEnergy: 40,
+    urbanPopulation: 86.7,
+    healthExpenditure: 9.7,
+    educationExpenditure: 6.3,
+    forestArea: 38.6,
+    accessElectricity: 100
+  },
+  {
+    id: "372",
+    code: "IE",
+    name: "Ireland",
+    population: 5,
+    gdpPerCapita: 106998,
+    co2Emissions: 7.3,
+    lifeExpectancy: 82.8,
+    humanDevIndex: 0.945,
+    internetUsers: 94,
+    renewableEnergy: 14,
+    urbanPopulation: 64.2,
+    healthExpenditure: 7.1,
+    educationExpenditure: 3.5,
+    forestArea: 11,
+    accessElectricity: 100
+  },
+  {
+    id: "376",
+    code: "IL",
+    name: "Israel",
+    population: 9,
+    gdpPerCapita: 52170,
+    co2Emissions: 6.9,
+    lifeExpectancy: 83.5,
+    humanDevIndex: 0.919,
+    internetUsers: 90,
+    renewableEnergy: 6,
+    urbanPopulation: 92.8,
+    healthExpenditure: 7.5,
+    educationExpenditure: 7.1,
+    forestArea: 7.6,
+    accessElectricity: 100
+  },
+  {
+    id: "784",
+    code: "AE",
+    name: "United Arab Emirates",
+    population: 10,
+    gdpPerCapita: 77272,
+    co2Emissions: 20.7,
+    lifeExpectancy: 78.7,
+    humanDevIndex: 0.911,
+    internetUsers: 100,
+    renewableEnergy: 1,
+    urbanPopulation: 87.4,
+    healthExpenditure: 5,
+    educationExpenditure: 3.9,
+    forestArea: 4.5,
+    accessElectricity: 100
+  },
+  {
+    id: "756",
+    code: "CH",
+    name: "Switzerland",
+    population: 9,
+    gdpPerCapita: 81867,
+    co2Emissions: 4,
+    lifeExpectancy: 84,
+    humanDevIndex: 0.962,
+    internetUsers: 96,
+    renewableEnergy: 28,
+    urbanPopulation: 74,
+    healthExpenditure: 11.3,
+    educationExpenditure: 5,
+    forestArea: 31.9,
+    accessElectricity: 100
+  },
+  {
+    id: "040",
+    code: "AT",
+    name: "Austria",
+    population: 9,
+    gdpPerCapita: 58013,
+    co2Emissions: 6.8,
+    lifeExpectancy: 82,
+    humanDevIndex: 0.916,
+    internetUsers: 93,
+    renewableEnergy: 36,
+    urbanPopulation: 59,
+    healthExpenditure: 10.4,
+    educationExpenditure: 5.4,
+    forestArea: 47.3,
+    accessElectricity: 100
+  },
+  {
+    id: "620",
+    code: "PT",
+    name: "Portugal",
+    population: 10,
+    gdpPerCapita: 38147,
+    co2Emissions: 4,
+    lifeExpectancy: 82.6,
+    humanDevIndex: 0.866,
+    internetUsers: 85,
+    renewableEnergy: 34,
+    urbanPopulation: 66.8,
+    healthExpenditure: 10.6,
+    educationExpenditure: 5,
+    forestArea: 36.1,
+    accessElectricity: 100
+  },
+  {
+    id: "300",
+    code: "GR",
+    name: "Greece",
+    population: 10,
+    gdpPerCapita: 33393,
+    co2Emissions: 5.3,
+    lifeExpectancy: 81.4,
+    humanDevIndex: 0.887,
+    internetUsers: 79,
+    renewableEnergy: 22,
+    urbanPopulation: 80.1,
+    healthExpenditure: 7.8,
+    educationExpenditure: 4.4,
+    forestArea: 32.5,
+    accessElectricity: 100
+  },
+  {
+    id: "203",
+    code: "CZ",
+    name: "Czech Republic",
+    population: 11,
+    gdpPerCapita: 45499,
+    co2Emissions: 9.3,
+    lifeExpectancy: 79.4,
+    humanDevIndex: 0.889,
+    internetUsers: 88,
+    renewableEnergy: 17,
+    urbanPopulation: 74.1,
+    healthExpenditure: 9.2,
+    educationExpenditure: 4.4,
+    forestArea: 34.7,
+    accessElectricity: 100
+  },
+  {
+    id: "056",
+    code: "BE",
+    name: "Belgium",
+    population: 12,
+    gdpPerCapita: 55521,
+    co2Emissions: 8,
+    lifeExpectancy: 82.2,
+    humanDevIndex: 0.937,
+    internetUsers: 94,
+    renewableEnergy: 13,
+    urbanPopulation: 98.1,
+    healthExpenditure: 11.1,
+    educationExpenditure: 6.4,
+    forestArea: 22.8,
+    accessElectricity: 100
+  },
+  {
+    id: "348",
+    code: "HU",
+    name: "Hungary",
+    population: 10,
+    gdpPerCapita: 37935,
+    co2Emissions: 4.6,
+    lifeExpectancy: 77,
+    humanDevIndex: 0.846,
+    internetUsers: 89,
+    renewableEnergy: 14,
+    urbanPopulation: 72.3,
+    healthExpenditure: 6.4,
+    educationExpenditure: 4.6,
+    forestArea: 22.9,
+    accessElectricity: 100
+  },
+  {
+    id: "246",
+    code: "FI",
+    name: "Finland",
+    population: 6,
+    gdpPerCapita: 53654,
+    co2Emissions: 6.5,
+    lifeExpectancy: 82.2,
+    humanDevIndex: 0.94,
+    internetUsers: 96,
+    renewableEnergy: 44,
+    urbanPopulation: 85.5,
+    healthExpenditure: 9.6,
+    educationExpenditure: 6.3,
+    forestArea: 73.7,
+    accessElectricity: 100
+  },
+  {
+    id: "208",
+    code: "DK",
+    name: "Denmark",
+    population: 6,
+    gdpPerCapita: 67803,
+    co2Emissions: 4.4,
+    lifeExpectancy: 81.6,
+    humanDevIndex: 0.948,
+    internetUsers: 98,
+    renewableEnergy: 40,
+    urbanPopulation: 88.2,
+    healthExpenditure: 10.5,
+    educationExpenditure: 6.9,
+    forestArea: 14.7,
+    accessElectricity: 100
+  },
+  {
+    id: "352",
+    code: "IS",
+    name: "Iceland",
+    population: 0.4,
+    gdpPerCapita: 68727,
+    co2Emissions: 9.7,
+    lifeExpectancy: 83.1,
+    humanDevIndex: 0.959,
+    internetUsers: 99,
+    renewableEnergy: 85,
+    urbanPopulation: 93.9,
+    healthExpenditure: 8.9,
+    educationExpenditure: 7.7,
+    forestArea: 0.5,
+    accessElectricity: 100
+  },
+  // Africa
+  {
+    id: "180",
+    code: "CD",
+    name: "DR Congo",
+    population: 99,
+    gdpPerCapita: 1099,
+    co2Emissions: 0.04,
+    lifeExpectancy: 60.7,
+    humanDevIndex: 0.479,
+    internetUsers: 9,
+    renewableEnergy: 97,
+    urbanPopulation: 46.2,
+    healthExpenditure: 3.3,
+    educationExpenditure: 1.5,
+    forestArea: 67.3,
+    accessElectricity: 19.1
+  },
+  {
+    id: "729",
+    code: "SD",
+    name: "Sudan",
+    population: 46,
+    gdpPerCapita: 4232,
+    co2Emissions: 0.5,
+    lifeExpectancy: 66.1,
+    humanDevIndex: 0.508,
+    internetUsers: 31,
+    renewableEnergy: 62,
+    urbanPopulation: 35.6,
+    healthExpenditure: 4.5,
+    educationExpenditure: 2.2,
+    forestArea: 9.7,
+    accessElectricity: 55.5
+  },
+  {
+    id: "024",
+    code: "AO",
+    name: "Angola",
+    population: 35,
+    gdpPerCapita: 6938,
+    co2Emissions: 0.8,
+    lifeExpectancy: 62,
+    humanDevIndex: 0.586,
+    internetUsers: 36,
+    renewableEnergy: 55,
+    urbanPopulation: 68.1,
+    healthExpenditure: 2.6,
+    educationExpenditure: 2.4,
+    forestArea: 46.3,
+    accessElectricity: 46
+  },
+  {
+    id: "508",
+    code: "MZ",
+    name: "Mozambique",
+    population: 33,
+    gdpPerCapita: 1346,
+    co2Emissions: 0.2,
+    lifeExpectancy: 60.9,
+    humanDevIndex: 0.456,
+    internetUsers: 10,
+    renewableEnergy: 79,
+    urbanPopulation: 38,
+    healthExpenditure: 7.5,
+    educationExpenditure: 5.5,
+    forestArea: 48.2,
+    accessElectricity: 31
+  },
+  {
+    id: "384",
+    code: "CI",
+    name: "Ivory Coast",
+    population: 28,
+    gdpPerCapita: 5972,
+    co2Emissions: 0.4,
+    lifeExpectancy: 59.3,
+    humanDevIndex: 0.55,
+    internetUsers: 45,
+    renewableEnergy: 68,
+    urbanPopulation: 52.7,
+    healthExpenditure: 3.3,
+    educationExpenditure: 3.4,
+    forestArea: 9.3,
+    accessElectricity: 70
+  },
+  {
+    id: "562",
+    code: "NE",
+    name: "Niger",
+    population: 26,
+    gdpPerCapita: 1318,
+    co2Emissions: 0.1,
+    lifeExpectancy: 63,
+    humanDevIndex: 0.4,
+    internetUsers: 5,
+    renewableEnergy: 80,
+    urbanPopulation: 16.8,
+    healthExpenditure: 5.2,
+    educationExpenditure: 3.5,
+    forestArea: 0.9,
+    accessElectricity: 19.3
+  },
+  {
+    id: "854",
+    code: "BF",
+    name: "Burkina Faso",
+    population: 22,
+    gdpPerCapita: 2445,
+    co2Emissions: 0.2,
+    lifeExpectancy: 62.7,
+    humanDevIndex: 0.449,
+    internetUsers: 18,
+    renewableEnergy: 79,
+    urbanPopulation: 31.5,
+    healthExpenditure: 5.6,
+    educationExpenditure: 5.4,
+    forestArea: 19.3,
+    accessElectricity: 19
+  },
+  {
+    id: "466",
+    code: "ML",
+    name: "Mali",
+    population: 22,
+    gdpPerCapita: 2462,
+    co2Emissions: 0.2,
+    lifeExpectancy: 59.3,
+    humanDevIndex: 0.428,
+    internetUsers: 27,
+    renewableEnergy: 76,
+    urbanPopulation: 44.6,
+    healthExpenditure: 3.8,
+    educationExpenditure: 3.8,
+    forestArea: 3.9,
+    accessElectricity: 53
+  },
+  {
+    id: "686",
+    code: "SN",
+    name: "Senegal",
+    population: 17,
+    gdpPerCapita: 3942,
+    co2Emissions: 0.7,
+    lifeExpectancy: 68.6,
+    humanDevIndex: 0.511,
+    internetUsers: 58,
+    renewableEnergy: 47,
+    urbanPopulation: 48.6,
+    healthExpenditure: 3.5,
+    educationExpenditure: 5.5,
+    forestArea: 42.5,
+    accessElectricity: 70.4
+  },
+  {
+    id: "894",
+    code: "ZM",
+    name: "Zambia",
+    population: 20,
+    gdpPerCapita: 3574,
+    co2Emissions: 0.4,
+    lifeExpectancy: 65,
+    humanDevIndex: 0.565,
+    internetUsers: 16,
+    renewableEnergy: 88,
+    urbanPopulation: 45.2,
+    healthExpenditure: 4.9,
+    educationExpenditure: 4.6,
+    forestArea: 59.8,
+    accessElectricity: 43
+  },
+  {
+    id: "716",
+    code: "ZW",
+    name: "Zimbabwe",
+    population: 16,
+    gdpPerCapita: 2622,
+    co2Emissions: 0.8,
+    lifeExpectancy: 61.5,
+    humanDevIndex: 0.593,
+    internetUsers: 35,
+    renewableEnergy: 78,
+    urbanPopulation: 32.2,
+    healthExpenditure: 3.4,
+    educationExpenditure: 5,
+    forestArea: 36.4,
+    accessElectricity: 49
+  },
+  {
+    id: "646",
+    code: "RW",
+    name: "Rwanda",
+    population: 14,
+    gdpPerCapita: 2359,
+    co2Emissions: 0.1,
+    lifeExpectancy: 69.6,
+    humanDevIndex: 0.534,
+    internetUsers: 30,
+    renewableEnergy: 84,
+    urbanPopulation: 17.6,
+    healthExpenditure: 7.5,
+    educationExpenditure: 3.1,
+    forestArea: 28.8,
+    accessElectricity: 48
+  },
+  // Asia
+  {
+    id: "004",
+    code: "AF",
+    name: "Afghanistan",
+    population: 41,
+    gdpPerCapita: 2065,
+    co2Emissions: 0.2,
+    lifeExpectancy: 62,
+    humanDevIndex: 0.478,
+    internetUsers: 18,
+    renewableEnergy: 45,
+    urbanPopulation: 26.3,
+    healthExpenditure: 18.2,
+    educationExpenditure: 4.1,
+    forestArea: 1.9,
+    accessElectricity: 97.7
+  },
+  {
+    id: "104",
+    code: "MM",
+    name: "Myanmar",
+    population: 55,
+    gdpPerCapita: 5699,
+    co2Emissions: 0.6,
+    lifeExpectancy: 67.8,
+    humanDevIndex: 0.585,
+    internetUsers: 44,
+    renewableEnergy: 51,
+    urbanPopulation: 31.4,
+    healthExpenditure: 4.8,
+    educationExpenditure: 2,
+    forestArea: 42.2,
+    accessElectricity: 70
+  },
+  {
+    id: "408",
+    code: "KP",
+    name: "North Korea",
+    population: 26,
+    gdpPerCapita: 1800,
+    co2Emissions: 2,
+    lifeExpectancy: 72.6,
+    humanDevIndex: 0.733,
+    internetUsers: 0,
+    renewableEnergy: 12,
+    urbanPopulation: 63,
+    healthExpenditure: 6,
+    educationExpenditure: 4,
+    forestArea: 41,
+    accessElectricity: 26
+  },
+  {
+    id: "496",
+    code: "MN",
+    name: "Mongolia",
+    population: 3.4,
+    gdpPerCapita: 12896,
+    co2Emissions: 14,
+    lifeExpectancy: 70.9,
+    humanDevIndex: 0.739,
+    internetUsers: 84,
+    renewableEnergy: 7,
+    urbanPopulation: 68.8,
+    healthExpenditure: 4,
+    educationExpenditure: 4.7,
+    forestArea: 7.1,
+    accessElectricity: 100
+  },
+  {
+    id: "144",
+    code: "LK",
+    name: "Sri Lanka",
+    population: 22,
+    gdpPerCapita: 14509,
+    co2Emissions: 1,
+    lifeExpectancy: 77.4,
+    humanDevIndex: 0.782,
+    internetUsers: 47,
+    renewableEnergy: 51,
+    urbanPopulation: 18.9,
+    healthExpenditure: 3.8,
+    educationExpenditure: 2.1,
+    forestArea: 29.4,
+    accessElectricity: 100
+  },
+  {
+    id: "398",
+    code: "KZ",
+    name: "Kazakhstan",
+    population: 19,
+    gdpPerCapita: 30500,
+    co2Emissions: 13.2,
+    lifeExpectancy: 74.4,
+    humanDevIndex: 0.811,
+    internetUsers: 91,
+    renewableEnergy: 2,
+    urbanPopulation: 57.8,
+    healthExpenditure: 2.8,
+    educationExpenditure: 2.9,
+    forestArea: 1.2,
+    accessElectricity: 100
+  },
+  {
+    id: "860",
+    code: "UZ",
+    name: "Uzbekistan",
+    population: 35,
+    gdpPerCapita: 9127,
+    co2Emissions: 3.5,
+    lifeExpectancy: 73.8,
+    humanDevIndex: 0.727,
+    internetUsers: 71,
+    renewableEnergy: 11,
+    urbanPopulation: 50.4,
+    healthExpenditure: 6.8,
+    educationExpenditure: 5.3,
+    forestArea: 7.7,
+    accessElectricity: 100
+  },
+  // Latin America
+  {
+    id: "192",
+    code: "CU",
+    name: "Cuba",
+    population: 11,
+    gdpPerCapita: 9478,
+    co2Emissions: 2.3,
+    lifeExpectancy: 79,
+    humanDevIndex: 0.764,
+    internetUsers: 71,
+    renewableEnergy: 32,
+    urbanPopulation: 77.2,
+    healthExpenditure: 11.7,
+    educationExpenditure: 12.8,
+    forestArea: 33,
+    accessElectricity: 100
+  },
+  {
+    id: "218",
+    code: "EC",
+    name: "Ecuador",
+    population: 18,
+    gdpPerCapita: 12171,
+    co2Emissions: 2.3,
+    lifeExpectancy: 77.9,
+    humanDevIndex: 0.74,
+    internetUsers: 70,
+    renewableEnergy: 31,
+    urbanPopulation: 64.2,
+    healthExpenditure: 8.3,
+    educationExpenditure: 4.4,
+    forestArea: 50.1,
+    accessElectricity: 100
+  },
+  {
+    id: "320",
+    code: "GT",
+    name: "Guatemala",
+    population: 18,
+    gdpPerCapita: 9547,
+    co2Emissions: 1,
+    lifeExpectancy: 74.3,
+    humanDevIndex: 0.627,
+    internetUsers: 51,
+    renewableEnergy: 62,
+    urbanPopulation: 52.4,
+    healthExpenditure: 5.8,
+    educationExpenditure: 3.4,
+    forestArea: 33,
+    accessElectricity: 98
+  },
+  {
+    id: "068",
+    code: "BO",
+    name: "Bolivia",
+    population: 12,
+    gdpPerCapita: 9484,
+    co2Emissions: 1.8,
+    lifeExpectancy: 72.1,
+    humanDevIndex: 0.692,
+    internetUsers: 66,
+    renewableEnergy: 24,
+    urbanPopulation: 70.4,
+    healthExpenditure: 6.9,
+    educationExpenditure: 7.3,
+    forestArea: 50.1,
+    accessElectricity: 99.3
+  },
+  {
+    id: "340",
+    code: "HN",
+    name: "Honduras",
+    population: 10,
+    gdpPerCapita: 6289,
+    co2Emissions: 1,
+    lifeExpectancy: 75.3,
+    humanDevIndex: 0.621,
+    internetUsers: 48,
+    renewableEnergy: 61,
+    urbanPopulation: 59,
+    healthExpenditure: 7.9,
+    educationExpenditure: 6.1,
+    forestArea: 38.1,
+    accessElectricity: 94
+  },
+  {
+    id: "600",
+    code: "PY",
+    name: "Paraguay",
+    population: 7,
+    gdpPerCapita: 15030,
+    co2Emissions: 1.1,
+    lifeExpectancy: 74.3,
+    humanDevIndex: 0.717,
+    internetUsers: 77,
+    renewableEnergy: 78,
+    urbanPopulation: 62.5,
+    healthExpenditure: 7.6,
+    educationExpenditure: 3.4,
+    forestArea: 38.6,
+    accessElectricity: 100
+  },
+  {
+    id: "858",
+    code: "UY",
+    name: "Uruguay",
+    population: 3.5,
+    gdpPerCapita: 25041,
+    co2Emissions: 2,
+    lifeExpectancy: 78.4,
+    humanDevIndex: 0.83,
+    internetUsers: 87,
+    renewableEnergy: 55,
+    urbanPopulation: 95.6,
+    healthExpenditure: 9.3,
+    educationExpenditure: 5,
+    forestArea: 10.5,
+    accessElectricity: 100
+  },
+  {
+    id: "188",
+    code: "CR",
+    name: "Costa Rica",
+    population: 5,
+    gdpPerCapita: 23101,
+    co2Emissions: 1.5,
+    lifeExpectancy: 80.8,
+    humanDevIndex: 0.809,
+    internetUsers: 81,
+    renewableEnergy: 73,
+    urbanPopulation: 81.4,
+    healthExpenditure: 7.3,
+    educationExpenditure: 6.7,
+    forestArea: 59,
+    accessElectricity: 100
+  },
+  {
+    id: "591",
+    code: "PA",
+    name: "Panama",
+    population: 4.4,
+    gdpPerCapita: 35317,
+    co2Emissions: 2.5,
+    lifeExpectancy: 79.2,
+    humanDevIndex: 0.805,
+    internetUsers: 68,
+    renewableEnergy: 35,
+    urbanPopulation: 68.4,
+    healthExpenditure: 7.3,
+    educationExpenditure: 3.2,
+    forestArea: 62.1,
+    accessElectricity: 95
+  }
+], Yt = [
+  {
+    id: "humanDevIndex",
+    name: "Human Development Index",
+    unit: "",
+    description: "UN composite index of life expectancy, education, and income",
+    colorScale: ["#fee5d9", "#fcae91", "#cb181d"],
+    domain: [0.4, 1],
+    accessor: (s) => s.humanDevIndex,
+    format: (s) => s.toFixed(3)
+  },
+  {
+    id: "gdpPerCapita",
+    name: "GDP per Capita (PPP)",
+    unit: "$",
+    description: "Purchasing power parity adjusted GDP per person",
+    colorScale: ["#edf8e9", "#74c476", "#006d2c"],
+    domain: [1e3, 8e4],
+    accessor: (s) => s.gdpPerCapita,
+    format: (s) => `$${(s / 1e3).toFixed(1)}k`
+  },
+  {
+    id: "co2Emissions",
+    name: "CO₂ Emissions",
+    unit: "t/capita",
+    description: "Carbon dioxide emissions per capita",
+    colorScale: ["#f7fbff", "#6baed6", "#08306b"],
+    domain: [0, 20],
+    accessor: (s) => s.co2Emissions,
+    format: (s) => `${s.toFixed(1)}t`
+  },
+  {
+    id: "lifeExpectancy",
+    name: "Life Expectancy",
+    unit: "years",
+    description: "Average life expectancy at birth",
+    colorScale: ["#feedde", "#fdbe85", "#d94701"],
+    domain: [55, 85],
+    accessor: (s) => s.lifeExpectancy,
+    format: (s) => `${s.toFixed(1)} yrs`
+  },
+  {
+    id: "renewableEnergy",
+    name: "Renewable Energy",
+    unit: "%",
+    description: "Share of renewable energy in total energy consumption",
+    colorScale: ["#f7fcf5", "#74c476", "#00441b"],
+    domain: [0, 100],
+    accessor: (s) => s.renewableEnergy,
+    format: (s) => `${s.toFixed(0)}%`
+  },
+  {
+    id: "internetUsers",
+    name: "Internet Penetration",
+    unit: "%",
+    description: "Percentage of population using the internet",
+    colorScale: ["#f2f0f7", "#9e9ac8", "#54278f"],
+    domain: [0, 100],
+    accessor: (s) => s.internetUsers,
+    format: (s) => `${s.toFixed(0)}%`
+  },
+  {
+    id: "urbanPopulation",
+    name: "Urbanization",
+    unit: "%",
+    description: "Percentage of population living in urban areas",
+    colorScale: ["#fff5eb", "#fd8d3c", "#7f2704"],
+    domain: [15, 100],
+    accessor: (s) => s.urbanPopulation,
+    format: (s) => `${s.toFixed(0)}%`
+  },
+  {
+    id: "healthExpenditure",
+    name: "Health Spending",
+    unit: "% GDP",
+    description: "Total health expenditure as percentage of GDP",
+    colorScale: ["#fff5f0", "#fb6a4a", "#99000d"],
+    domain: [2, 18],
+    accessor: (s) => s.healthExpenditure,
+    format: (s) => `${s.toFixed(1)}%`
+  },
+  {
+    id: "forestArea",
+    name: "Forest Coverage",
+    unit: "%",
+    description: "Forest area as percentage of total land area",
+    colorScale: ["#f7fcf5", "#41ab5d", "#00441b"],
+    domain: [0, 75],
+    accessor: (s) => s.forestArea,
+    format: (s) => `${s.toFixed(0)}%`
+  },
+  {
+    id: "accessElectricity",
+    name: "Electricity Access",
+    unit: "%",
+    description: "Percentage of population with access to electricity",
+    colorScale: ["#ffffd4", "#fed98e", "#cc4c02"],
+    domain: [15, 100],
+    accessor: (s) => s.accessElectricity,
+    format: (s) => `${s.toFixed(0)}%`
+  }
+];
+function Cn(s, e) {
+  const [t, i] = s.domain;
+  return Math.max(0, Math.min(1, (e - t) / (i - t)));
+}
+const Pn = {
+  // North America
+  US: "840",
+  USA: "840",
+  "UNITED STATES": "840",
+  AMERICA: "840",
+  CA: "124",
+  CAN: "124",
+  CANADA: "124",
+  MX: "484",
+  MEX: "484",
+  MEXICO: "484",
+  // Europe
+  DE: "276",
+  DEU: "276",
+  GERMANY: "276",
+  DEUTSCHLAND: "276",
+  FR: "250",
+  FRA: "250",
+  FRANCE: "250",
+  GB: "826",
+  GBR: "826",
+  UK: "826",
+  "UNITED KINGDOM": "826",
+  BRITAIN: "826",
+  ENGLAND: "826",
+  IT: "380",
+  ITA: "380",
+  ITALY: "380",
+  ES: "724",
+  ESP: "724",
+  SPAIN: "724",
+  PT: "620",
+  PRT: "620",
+  PORTUGAL: "620",
+  NL: "528",
+  NLD: "528",
+  NETHERLANDS: "528",
+  HOLLAND: "528",
+  BE: "056",
+  BEL: "056",
+  BELGIUM: "056",
+  AT: "040",
+  AUT: "040",
+  AUSTRIA: "040",
+  CH: "756",
+  CHE: "756",
+  SWITZERLAND: "756",
+  PL: "616",
+  POL: "616",
+  POLAND: "616",
+  SE: "752",
+  SWE: "752",
+  SWEDEN: "752",
+  NO: "578",
+  NOR: "578",
+  NORWAY: "578",
+  DK: "208",
+  DNK: "208",
+  DENMARK: "208",
+  FI: "246",
+  FIN: "246",
+  FINLAND: "246",
+  IE: "372",
+  IRL: "372",
+  IRELAND: "372",
+  GR: "300",
+  GRC: "300",
+  GREECE: "300",
+  CZ: "203",
+  CZE: "203",
+  "CZECH REPUBLIC": "203",
+  CZECHIA: "203",
+  RO: "642",
+  ROU: "642",
+  ROMANIA: "642",
+  HU: "348",
+  HUN: "348",
+  HUNGARY: "348",
+  UA: "804",
+  UKR: "804",
+  UKRAINE: "804",
+  RU: "643",
+  RUS: "643",
+  RUSSIA: "643",
+  "RUSSIAN FEDERATION": "643",
+  // Asia
+  CN: "156",
+  CHN: "156",
+  CHINA: "156",
+  JP: "392",
+  JPN: "392",
+  JAPAN: "392",
+  KR: "410",
+  KOR: "410",
+  "SOUTH KOREA": "410",
+  KOREA: "410",
+  IN: "356",
+  IND: "356",
+  INDIA: "356",
+  ID: "360",
+  IDN: "360",
+  INDONESIA: "360",
+  TH: "764",
+  THA: "764",
+  THAILAND: "764",
+  VN: "704",
+  VNM: "704",
+  VIETNAM: "704",
+  PH: "608",
+  PHL: "608",
+  PHILIPPINES: "608",
+  MY: "458",
+  MYS: "458",
+  MALAYSIA: "458",
+  SG: "702",
+  SGP: "702",
+  SINGAPORE: "702",
+  PK: "586",
+  PAK: "586",
+  PAKISTAN: "586",
+  BD: "050",
+  BGD: "050",
+  BANGLADESH: "050",
+  TR: "792",
+  TUR: "792",
+  TURKEY: "792",
+  TURKIYE: "792",
+  SA: "682",
+  SAU: "682",
+  "SAUDI ARABIA": "682",
+  AE: "784",
+  ARE: "784",
+  UAE: "784",
+  "UNITED ARAB EMIRATES": "784",
+  IL: "376",
+  ISR: "376",
+  ISRAEL: "376",
+  IR: "364",
+  IRN: "364",
+  IRAN: "364",
+  IQ: "368",
+  IRQ: "368",
+  IRAQ: "368",
+  // Oceania
+  AU: "036",
+  AUS: "036",
+  AUSTRALIA: "036",
+  NZ: "554",
+  NZL: "554",
+  "NEW ZEALAND": "554",
+  // South America
+  BR: "076",
+  BRA: "076",
+  BRAZIL: "076",
+  AR: "032",
+  ARG: "032",
+  ARGENTINA: "032",
+  CL: "152",
+  CHL: "152",
+  CHILE: "152",
+  CO: "170",
+  COL: "170",
+  COLOMBIA: "170",
+  PE: "604",
+  PER: "604",
+  PERU: "604",
+  VE: "862",
+  VEN: "862",
+  VENEZUELA: "862",
+  // Africa
+  ZA: "710",
+  ZAF: "710",
+  "SOUTH AFRICA": "710",
+  EG: "818",
+  EGY: "818",
+  EGYPT: "818",
+  NG: "566",
+  NGA: "566",
+  NIGERIA: "566",
+  KE: "404",
+  KEN: "404",
+  KENYA: "404",
+  ET: "231",
+  ETH: "231",
+  ETHIOPIA: "231",
+  MA: "504",
+  MAR: "504",
+  MOROCCO: "504",
+  DZ: "012",
+  DZA: "012",
+  ALGERIA: "012",
+  TN: "788",
+  TUN: "788",
+  TUNISIA: "788",
+  GH: "288",
+  GHA: "288",
+  GHANA: "288"
+};
+function $i(s) {
+  const e = s.toUpperCase().trim();
+  return /^\d{1,3}$/.test(s) ? s.padStart(3, "0") : Pn[e] || s;
+}
+function An(s) {
+  const e = {};
+  return s instanceof Map ? s.forEach((t, i) => {
+    e[$i(i)] = t;
+  }) : Object.entries(s).forEach(([t, i]) => {
+    e[$i(t)] = i;
+  }), e;
+}
+const Gi = {
+  "%": (s) => `${s.toFixed(1)}%`,
+  $: (s) => `$${s.toLocaleString()}`,
+  years: (s) => `${s.toFixed(1)} yrs`,
+  "% GDP": (s) => `${s.toFixed(1)}%`,
+  "% of GDP": (s) => `${s.toFixed(1)}%`,
+  index: (s) => s.toFixed(3),
+  "": (s) => s.toFixed(3)
+}, Sn = ["per capita", "per 100", "per 1000"];
+function gr(s) {
+  return Gi[s] ? Gi[s] : Sn.some((e) => s.includes(e)) ? (e) => `${e.toFixed(1)}` : (e) => {
+    const t = Number.isInteger(e) ? e.toLocaleString() : e.toFixed(1);
+    return s ? `${t} ${s}` : t;
+  };
+}
+function jo(s, e, t) {
+  return (t ?? gr(e))(s);
+}
+function Ae(s) {
   if (s === void 0)
     throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
   return s;
 }
-function mr(s, e) {
+function br(s, e) {
   s.prototype = Object.create(e.prototype), s.prototype.constructor = s, s.__proto__ = e;
 }
-var ue = {
+var he = {
   autoSleep: 120,
   force3D: "auto",
   nullTargetWarn: 1,
   units: {
     lineHeight: ""
   }
-}, nt = {
+}, at = {
   duration: 0.5,
   overwrite: !1,
   delay: 0
-}, xi, X, N, ge = 1e8, z = 1 / ge, ri = Math.PI * 2, wn = ri / 4, Cn = 0, gr = Math.sqrt, Pn = Math.cos, An = Math.sin, W = function(e) {
+}, _i, q, N, be = 1e8, z = 1 / be, ni = Math.PI * 2, Tn = ni / 4, Mn = 0, yr = Math.sqrt, Ln = Math.cos, Dn = Math.sin, W = function(e) {
   return typeof e == "string";
 }, G = function(e) {
   return typeof e == "function";
-}, Se = function(e) {
+}, Te = function(e) {
   return typeof e == "number";
-}, _i = function(e) {
+}, vi = function(e) {
   return typeof e > "u";
-}, Ce = function(e) {
+}, Pe = function(e) {
   return typeof e == "object";
-}, te = function(e) {
+}, ie = function(e) {
   return e !== !1;
-}, vi = function() {
+}, Ei = function() {
   return typeof window < "u";
-}, At = function(e) {
+}, St = function(e) {
   return G(e) || W(e);
-}, br = typeof ArrayBuffer == "function" && ArrayBuffer.isView || function() {
-}, K = Array.isArray, ni = /(?:-?\.?\d|\.)+/gi, yr = /[-+=.]*\d+[.e\-+]*\d*[e\-+]*\d*/g, Ke = /[-+=.]*\d+[.e-]*\d*[a-z%]*/g, Ht = /[-+=.]*\d+\.?\d*(?:e-|e\+)?\d*/gi, xr = /[+-]=-?[.\d]+/, _r = /[^,'"\[\]\s]+/gi, Sn = /^[+\-=e\s\d]*\d+[.\d]*([a-z]*|%)\s*$/i, B, _e, ai, Ei, he = {}, Ot = {}, vr, Er = function(e) {
-  return (Ot = at(e, he)) && ae;
-}, wi = function(e, t) {
+}, xr = typeof ArrayBuffer == "function" && ArrayBuffer.isView || function() {
+}, J = Array.isArray, ai = /(?:-?\.?\d|\.)+/gi, _r = /[-+=.]*\d+[.e\-+]*\d*[e\-+]*\d*/g, Qe = /[-+=.]*\d+[.e-]*\d*[a-z%]*/g, Wt = /[-+=.]*\d+\.?\d*(?:e-|e\+)?\d*/gi, vr = /[+-]=-?[.\d]+/, Er = /[^,'"\[\]\s]+/gi, In = /^[+\-=e\s\d]*\d+[.\d]*([a-z]*|%)\s*$/i, B, ve, oi, wi, de = {}, Ft = {}, wr, Cr = function(e) {
+  return (Ft = ot(e, de)) && oe;
+}, Ci = function(e, t) {
   return console.warn("Invalid property", e, "set to", t, "Missing plugin? gsap.registerPlugin()");
-}, bt = function(e, t) {
+}, yt = function(e, t) {
   return !t && console.warn(e);
-}, wr = function(e, t) {
-  return e && (he[e] = t) && Ot && (Ot[e] = t) || he;
-}, yt = function() {
+}, Pr = function(e, t) {
+  return e && (de[e] = t) && Ft && (Ft[e] = t) || de;
+}, xt = function() {
   return 0;
-}, Tn = {
+}, Rn = {
   suppressEvents: !0,
   isStart: !0,
   kill: !1
-}, Lt = {
+}, Dt = {
   suppressEvents: !0,
   kill: !1
-}, Mn = {
+}, kn = {
   suppressEvents: !0
-}, Ci = {}, Re = [], oi = {}, Cr, se = {}, Yt = {}, Bi = 30, Dt = [], Pi = "", Ai = function(e) {
+}, Pi = {}, ke = [], si = {}, Ar, le = {}, Xt = {}, Vi = 30, It = [], Ai = "", Si = function(e) {
   var t = e[0], i, r;
-  if (Ce(t) || G(t) || (e = [e]), !(i = (t._gsap || {}).harness)) {
-    for (r = Dt.length; r-- && !Dt[r].targetTest(t); )
+  if (Pe(t) || G(t) || (e = [e]), !(i = (t._gsap || {}).harness)) {
+    for (r = It.length; r-- && !It[r].targetTest(t); )
       ;
-    i = Dt[r];
+    i = It[r];
   }
   for (r = e.length; r--; )
-    e[r] && (e[r]._gsap || (e[r]._gsap = new Xr(e[r], i))) || e.splice(r, 1);
+    e[r] && (e[r]._gsap || (e[r]._gsap = new Zr(e[r], i))) || e.splice(r, 1);
   return e;
-}, je = function(e) {
-  return e._gsap || Ai(be(e))[0]._gsap;
-}, Pr = function(e, t, i) {
-  return (i = e[t]) && G(i) ? e[t]() : _i(i) && e.getAttribute && e.getAttribute(t) || i;
-}, ie = function(e, t) {
+}, He = function(e) {
+  return e._gsap || Si(ye(e))[0]._gsap;
+}, Sr = function(e, t, i) {
+  return (i = e[t]) && G(i) ? e[t]() : vi(i) && e.getAttribute && e.getAttribute(t) || i;
+}, re = function(e, t) {
   return (e = e.split(",")).forEach(t) || e;
 }, V = function(e) {
   return Math.round(e * 1e5) / 1e5 || 0;
 }, H = function(e) {
   return Math.round(e * 1e7) / 1e7 || 0;
-}, tt = function(e, t) {
+}, it = function(e, t) {
   var i = t.charAt(0), r = parseFloat(t.substr(2));
   return e = parseFloat(e), i === "+" ? e + r : i === "-" ? e - r : i === "*" ? e * r : e / r;
-}, Ln = function(e, t) {
+}, On = function(e, t) {
   for (var i = t.length, r = 0; e.indexOf(t[r]) < 0 && ++r < i; )
     ;
   return r < i;
-}, Ft = function() {
-  var e = Re.length, t = Re.slice(0), i, r;
-  for (oi = {}, Re.length = 0, i = 0; i < e; i++)
+}, zt = function() {
+  var e = ke.length, t = ke.slice(0), i, r;
+  for (si = {}, ke.length = 0, i = 0; i < e; i++)
     r = t[i], r && r._lazy && (r.render(r._lazy[0], r._lazy[1], !0)._lazy = 0);
-}, Si = function(e) {
+}, Ti = function(e) {
   return !!(e._initted || e._startAt || e.add);
-}, Ar = function(e, t, i, r) {
-  Re.length && !X && Ft(), e.render(t, i, !!(X && t < 0 && Si(e))), Re.length && !X && Ft();
-}, Sr = function(e) {
+}, Tr = function(e, t, i, r) {
+  ke.length && !q && zt(), e.render(t, i, !!(q && t < 0 && Ti(e))), ke.length && !q && zt();
+}, Mr = function(e) {
   var t = parseFloat(e);
-  return (t || t === 0) && (e + "").match(_r).length < 2 ? t : W(e) ? e.trim() : e;
-}, Tr = function(e) {
+  return (t || t === 0) && (e + "").match(Er).length < 2 ? t : W(e) ? e.trim() : e;
+}, Lr = function(e) {
   return e;
-}, de = function(e, t) {
+}, pe = function(e, t) {
   for (var i in t)
     i in e || (e[i] = t[i]);
   return e;
-}, Dn = function(e) {
+}, Fn = function(e) {
   return function(t, i) {
     for (var r in i)
       r in t || r === "duration" && e || r === "ease" || (t[r] = i[r]);
   };
-}, at = function(e, t) {
+}, ot = function(e, t) {
   for (var i in t)
     e[i] = t[i];
   return e;
-}, $i = function s(e, t) {
+}, ji = function s(e, t) {
   for (var i in t)
-    i !== "__proto__" && i !== "constructor" && i !== "prototype" && (e[i] = Ce(t[i]) ? s(e[i] || (e[i] = {}), t[i]) : t[i]);
+    i !== "__proto__" && i !== "constructor" && i !== "prototype" && (e[i] = Pe(t[i]) ? s(e[i] || (e[i] = {}), t[i]) : t[i]);
   return e;
-}, zt = function(e, t) {
+}, Ut = function(e, t) {
   var i = {}, r;
   for (r in e)
     r in t || (i[r] = e[r]);
   return i;
-}, pt = function(e) {
-  var t = e.parent || B, i = e.keyframes ? Dn(K(e.keyframes)) : de;
-  if (te(e.inherit))
+}, ft = function(e) {
+  var t = e.parent || B, i = e.keyframes ? Fn(J(e.keyframes)) : pe;
+  if (ie(e.inherit))
     for (; t; )
       i(e, t.vars.defaults), t = t.parent || t._dp;
   return e;
-}, In = function(e, t) {
+}, zn = function(e, t) {
   for (var i = e.length, r = i === t.length; r && i-- && e[i] === t[i]; )
     ;
   return i < 0;
-}, Mr = function(e, t, i, r, n) {
+}, Dr = function(e, t, i, r, n) {
   var a = e[r], o;
   if (n)
     for (o = t[n]; a && a[n] > o; )
       a = a._prev;
   return a ? (t._next = a._next, a._next = t) : (t._next = e[i], e[i] = t), t._next ? t._next._prev = t : e[r] = t, t._prev = a, t.parent = t._dp = e, t;
-}, Gt = function(e, t, i, r) {
+}, Vt = function(e, t, i, r) {
   i === void 0 && (i = "_first"), r === void 0 && (r = "_last");
   var n = t._prev, a = t._next;
   n ? n._next = a : e[i] === t && (e[i] = a), a ? a._prev = n : e[r] === t && (e[r] = n), t._next = t._prev = t.parent = null;
-}, Oe = function(e, t) {
+}, Fe = function(e, t) {
   e.parent && (!t || e.parent.autoRemoveChildren) && e.parent.remove && e.parent.remove(e), e._act = 0;
-}, He = function(e, t) {
+}, Ye = function(e, t) {
   if (e && (!t || t._end > e._dur || t._start < 0))
     for (var i = e; i; )
       i._dirty = 1, i = i.parent;
   return e;
-}, Rn = function(e) {
+}, Un = function(e) {
   for (var t = e.parent; t && t.parent; )
     t._dirty = 1, t.totalDuration(), t = t.parent;
   return e;
-}, si = function(e, t, i, r) {
-  return e._startAt && (X ? e._startAt.revert(Lt) : e.vars.immediateRender && !e.vars.autoRevert || e._startAt.render(t, !0, r));
-}, kn = function s(e) {
+}, li = function(e, t, i, r) {
+  return e._startAt && (q ? e._startAt.revert(Dt) : e.vars.immediateRender && !e.vars.autoRevert || e._startAt.render(t, !0, r));
+}, Nn = function s(e) {
   return !e || e._ts && s(e.parent);
-}, Gi = function(e) {
-  return e._repeat ? ot(e._tTime, e = e.duration() + e._rDelay) * e : 0;
-}, ot = function(e, t) {
+}, Hi = function(e) {
+  return e._repeat ? st(e._tTime, e = e.duration() + e._rDelay) * e : 0;
+}, st = function(e, t) {
   var i = Math.floor(e = H(e / t));
   return e && i === e ? i - 1 : i;
-}, Ut = function(e, t) {
+}, Nt = function(e, t) {
   return (e - t._start) * t._ts + (t._ts >= 0 ? 0 : t._dirty ? t.totalDuration() : t._tDur);
-}, Vt = function(e) {
+}, jt = function(e) {
   return e._end = H(e._start + (e._tDur / Math.abs(e._ts || e._rts || z) || 0));
-}, jt = function(e, t) {
+}, Ht = function(e, t) {
   var i = e._dp;
-  return i && i.smoothChildTiming && e._ts && (e._start = H(i._time - (e._ts > 0 ? t / e._ts : ((e._dirty ? e.totalDuration() : e._tDur) - t) / -e._ts)), Vt(e), i._dirty || He(i, e)), e;
-}, Lr = function(e, t) {
+  return i && i.smoothChildTiming && e._ts && (e._start = H(i._time - (e._ts > 0 ? t / e._ts : ((e._dirty ? e.totalDuration() : e._tDur) - t) / -e._ts)), jt(e), i._dirty || Ye(i, e)), e;
+}, Ir = function(e, t) {
   var i;
-  if ((t._time || !t._dur && t._initted || t._start < e._time && (t._dur || !t.add)) && (i = Ut(e.rawTime(), t), (!t._dur || Pt(0, t.totalDuration(), i) - t._tTime > z) && t.render(i, !0)), He(e, t)._dp && e._initted && e._time >= e._dur && e._ts) {
+  if ((t._time || !t._dur && t._initted || t._start < e._time && (t._dur || !t.add)) && (i = Nt(e.rawTime(), t), (!t._dur || At(0, t.totalDuration(), i) - t._tTime > z) && t.render(i, !0)), Ye(e, t)._dp && e._initted && e._time >= e._dur && e._ts) {
     if (e._dur < e.duration())
       for (i = e; i._dp; )
         i.rawTime() >= 0 && i.totalTime(i._tTime), i = i._dp;
     e._zTime = -z;
   }
-}, ve = function(e, t, i, r) {
-  return t.parent && Oe(t), t._start = H((Se(i) ? i : i || e !== B ? me(e, i, t) : e._time) + t._delay), t._end = H(t._start + (t.totalDuration() / Math.abs(t.timeScale()) || 0)), Mr(e, t, "_first", "_last", e._sort ? "_start" : 0), li(t) || (e._recent = t), r || Lr(e, t), e._ts < 0 && jt(e, e._tTime), e;
-}, Dr = function(e, t) {
-  return (he.ScrollTrigger || wi("scrollTrigger", t)) && he.ScrollTrigger.create(t, e);
-}, Ir = function(e, t, i, r, n) {
-  if (Mi(e, t, n), !e._initted)
+}, Ee = function(e, t, i, r) {
+  return t.parent && Fe(t), t._start = H((Te(i) ? i : i || e !== B ? ge(e, i, t) : e._time) + t._delay), t._end = H(t._start + (t.totalDuration() / Math.abs(t.timeScale()) || 0)), Dr(e, t, "_first", "_last", e._sort ? "_start" : 0), ci(t) || (e._recent = t), r || Ir(e, t), e._ts < 0 && Ht(e, e._tTime), e;
+}, Rr = function(e, t) {
+  return (de.ScrollTrigger || Ci("scrollTrigger", t)) && de.ScrollTrigger.create(t, e);
+}, kr = function(e, t, i, r, n) {
+  if (Li(e, t, n), !e._initted)
     return 1;
-  if (!i && e._pt && !X && (e._dur && e.vars.lazy !== !1 || !e._dur && e.vars.lazy) && Cr !== le.frame)
-    return Re.push(e), e._lazy = [n, r], 1;
-}, On = function s(e) {
+  if (!i && e._pt && !q && (e._dur && e.vars.lazy !== !1 || !e._dur && e.vars.lazy) && Ar !== ce.frame)
+    return ke.push(e), e._lazy = [n, r], 1;
+}, Bn = function s(e) {
   var t = e.parent;
   return t && t._ts && t._initted && !t._lock && (t.rawTime() < 0 || s(t));
-}, li = function(e) {
+}, ci = function(e) {
   var t = e.data;
   return t === "isFromStart" || t === "isStart";
-}, Fn = function(e, t, i, r) {
-  var n = e.ratio, a = t < 0 || !t && (!e._start && On(e) && !(!e._initted && li(e)) || (e._ts < 0 || e._dp._ts < 0) && !li(e)) ? 0 : 1, o = e._rDelay, l = 0, u, c, h;
-  if (o && e._repeat && (l = Pt(0, e._tDur, t), c = ot(l, o), e._yoyo && c & 1 && (a = 1 - a), c !== ot(e._tTime, o) && (n = 1 - a, e.vars.repeatRefresh && e._initted && e.invalidate())), a !== n || X || r || e._zTime === z || !t && e._zTime) {
-    if (!e._initted && Ir(e, t, r, i, l))
+}, $n = function(e, t, i, r) {
+  var n = e.ratio, a = t < 0 || !t && (!e._start && Bn(e) && !(!e._initted && ci(e)) || (e._ts < 0 || e._dp._ts < 0) && !ci(e)) ? 0 : 1, o = e._rDelay, l = 0, u, c, h;
+  if (o && e._repeat && (l = At(0, e._tDur, t), c = st(l, o), e._yoyo && c & 1 && (a = 1 - a), c !== st(e._tTime, o) && (n = 1 - a, e.vars.repeatRefresh && e._initted && e.invalidate())), a !== n || q || r || e._zTime === z || !t && e._zTime) {
+    if (!e._initted && kr(e, t, r, i, l))
       return;
     for (h = e._zTime, e._zTime = t || (i ? z : 0), i || (i = t && !h), e.ratio = a, e._from && (a = 1 - a), e._time = 0, e._tTime = l, u = e._pt; u; )
       u.r(a, u.d), u = u._next;
-    t < 0 && si(e, t, i, !0), e._onUpdate && !i && ce(e, "onUpdate"), l && e._repeat && !i && e.parent && ce(e, "onRepeat"), (t >= e._tDur || t < 0) && e.ratio === a && (a && Oe(e, 1), !i && !X && (ce(e, a ? "onComplete" : "onReverseComplete", !0), e._prom && e._prom()));
+    t < 0 && li(e, t, i, !0), e._onUpdate && !i && ue(e, "onUpdate"), l && e._repeat && !i && e.parent && ue(e, "onRepeat"), (t >= e._tDur || t < 0) && e.ratio === a && (a && Fe(e, 1), !i && !q && (ue(e, a ? "onComplete" : "onReverseComplete", !0), e._prom && e._prom()));
   } else e._zTime || (e._zTime = t);
-}, zn = function(e, t, i) {
+}, Gn = function(e, t, i) {
   var r;
   if (i > t)
     for (r = e._first; r && r._start <= i; ) {
@@ -211,60 +2117,60 @@ var ue = {
         return r;
       r = r._prev;
     }
-}, st = function(e, t, i, r) {
+}, lt = function(e, t, i, r) {
   var n = e._repeat, a = H(t) || 0, o = e._tTime / e._tDur;
-  return o && !r && (e._time *= a / e._dur), e._dur = a, e._tDur = n ? n < 0 ? 1e10 : H(a * (n + 1) + e._rDelay * n) : a, o > 0 && !r && jt(e, e._tTime = e._tDur * o), e.parent && Vt(e), i || He(e.parent, e), e;
-}, Vi = function(e) {
-  return e instanceof ee ? He(e) : st(e, e._dur);
-}, Un = {
+  return o && !r && (e._time *= a / e._dur), e._dur = a, e._tDur = n ? n < 0 ? 1e10 : H(a * (n + 1) + e._rDelay * n) : a, o > 0 && !r && Ht(e, e._tTime = e._tDur * o), e.parent && jt(e), i || Ye(e.parent, e), e;
+}, Yi = function(e) {
+  return e instanceof te ? Ye(e) : lt(e, e._dur);
+}, Vn = {
   _start: 0,
-  endTime: yt,
-  totalDuration: yt
-}, me = function s(e, t, i) {
-  var r = e.labels, n = e._recent || Un, a = e.duration() >= ge ? n.endTime(!1) : e._dur, o, l, u;
-  return W(t) && (isNaN(t) || t in r) ? (l = t.charAt(0), u = t.substr(-1) === "%", o = t.indexOf("="), l === "<" || l === ">" ? (o >= 0 && (t = t.replace(/=/, "")), (l === "<" ? n._start : n.endTime(n._repeat >= 0)) + (parseFloat(t.substr(1)) || 0) * (u ? (o < 0 ? n : i).totalDuration() / 100 : 1)) : o < 0 ? (t in r || (r[t] = a), r[t]) : (l = parseFloat(t.charAt(o - 1) + t.substr(o + 1)), u && i && (l = l / 100 * (K(i) ? i[0] : i).totalDuration()), o > 1 ? s(e, t.substr(0, o - 1), i) + l : a + l)) : t == null ? a : +t;
-}, ft = function(e, t, i) {
-  var r = Se(t[1]), n = (r ? 2 : 1) + (e < 2 ? 0 : 1), a = t[n], o, l;
+  endTime: xt,
+  totalDuration: xt
+}, ge = function s(e, t, i) {
+  var r = e.labels, n = e._recent || Vn, a = e.duration() >= be ? n.endTime(!1) : e._dur, o, l, u;
+  return W(t) && (isNaN(t) || t in r) ? (l = t.charAt(0), u = t.substr(-1) === "%", o = t.indexOf("="), l === "<" || l === ">" ? (o >= 0 && (t = t.replace(/=/, "")), (l === "<" ? n._start : n.endTime(n._repeat >= 0)) + (parseFloat(t.substr(1)) || 0) * (u ? (o < 0 ? n : i).totalDuration() / 100 : 1)) : o < 0 ? (t in r || (r[t] = a), r[t]) : (l = parseFloat(t.charAt(o - 1) + t.substr(o + 1)), u && i && (l = l / 100 * (J(i) ? i[0] : i).totalDuration()), o > 1 ? s(e, t.substr(0, o - 1), i) + l : a + l)) : t == null ? a : +t;
+}, mt = function(e, t, i) {
+  var r = Te(t[1]), n = (r ? 2 : 1) + (e < 2 ? 0 : 1), a = t[n], o, l;
   if (r && (a.duration = t[1]), a.parent = i, e) {
     for (o = a, l = i; l && !("immediateRender" in o); )
-      o = l.vars.defaults || {}, l = te(l.vars.inherit) && l.parent;
-    a.immediateRender = te(o.immediateRender), e < 2 ? a.runBackwards = 1 : a.startAt = t[n - 1];
+      o = l.vars.defaults || {}, l = ie(l.vars.inherit) && l.parent;
+    a.immediateRender = ie(o.immediateRender), e < 2 ? a.runBackwards = 1 : a.startAt = t[n - 1];
   }
   return new j(t[0], a, t[n + 1]);
-}, ze = function(e, t) {
+}, Ue = function(e, t) {
   return e || e === 0 ? t(e) : t;
-}, Pt = function(e, t, i) {
+}, At = function(e, t, i) {
   return i < e ? e : i > t ? t : i;
-}, Z = function(e, t) {
-  return !W(e) || !(t = Sn.exec(e)) ? "" : t[1];
-}, Nn = function(e, t, i) {
-  return ze(i, function(r) {
-    return Pt(e, t, r);
+}, K = function(e, t) {
+  return !W(e) || !(t = In.exec(e)) ? "" : t[1];
+}, jn = function(e, t, i) {
+  return Ue(i, function(r) {
+    return At(e, t, r);
   });
-}, ci = [].slice, Rr = function(e, t) {
-  return e && Ce(e) && "length" in e && (!t && !e.length || e.length - 1 in e && Ce(e[0])) && !e.nodeType && e !== _e;
-}, Bn = function(e, t, i) {
+}, ui = [].slice, Or = function(e, t) {
+  return e && Pe(e) && "length" in e && (!t && !e.length || e.length - 1 in e && Pe(e[0])) && !e.nodeType && e !== ve;
+}, Hn = function(e, t, i) {
   return i === void 0 && (i = []), e.forEach(function(r) {
     var n;
-    return W(r) && !t || Rr(r, 1) ? (n = i).push.apply(n, be(r)) : i.push(r);
+    return W(r) && !t || Or(r, 1) ? (n = i).push.apply(n, ye(r)) : i.push(r);
   }) || i;
-}, be = function(e, t, i) {
-  return N && !t && N.selector ? N.selector(e) : W(e) && !i && (ai || !lt()) ? ci.call((t || Ei).querySelectorAll(e), 0) : K(e) ? Bn(e, i) : Rr(e) ? ci.call(e, 0) : e ? [e] : [];
-}, ui = function(e) {
-  return e = be(e)[0] || bt("Invalid scope") || {}, function(t) {
+}, ye = function(e, t, i) {
+  return N && !t && N.selector ? N.selector(e) : W(e) && !i && (oi || !ct()) ? ui.call((t || wi).querySelectorAll(e), 0) : J(e) ? Hn(e, i) : Or(e) ? ui.call(e, 0) : e ? [e] : [];
+}, hi = function(e) {
+  return e = ye(e)[0] || yt("Invalid scope") || {}, function(t) {
     var i = e.current || e.nativeElement || e;
-    return be(t, i.querySelectorAll ? i : i === e ? bt("Invalid scope") || Ei.createElement("div") : e);
+    return ye(t, i.querySelectorAll ? i : i === e ? yt("Invalid scope") || wi.createElement("div") : e);
   };
-}, kr = function(e) {
+}, Fr = function(e) {
   return e.sort(function() {
     return 0.5 - Math.random();
   });
-}, Or = function(e) {
+}, zr = function(e) {
   if (G(e))
     return e;
-  var t = Ce(e) ? e : {
+  var t = Pe(e) ? e : {
     each: e
-  }, i = Ye(t.ease), r = t.from || 0, n = parseFloat(t.base) || 0, a = {}, o = r > 0 && r < 1, l = isNaN(r) || o, u = t.axis, c = r, h = r;
+  }, i = We(t.ease), r = t.from || 0, n = parseFloat(t.base) || 0, a = {}, o = r > 0 && r < 1, l = isNaN(r) || o, u = t.axis, c = r, h = r;
   return W(r) ? c = h = {
     center: 0.5,
     edges: 0.5,
@@ -272,37 +2178,37 @@ var ue = {
   }[r] || 0 : !o && l && (c = r[0], h = r[1]), function(p, f, m) {
     var d = (m || t).length, g = a[d], b, y, x, v, _, C, w, P, E;
     if (!g) {
-      if (E = t.grid === "auto" ? 0 : (t.grid || [1, ge])[1], !E) {
-        for (w = -ge; w < (w = m[E++].getBoundingClientRect().left) && E < d; )
+      if (E = t.grid === "auto" ? 0 : (t.grid || [1, be])[1], !E) {
+        for (w = -be; w < (w = m[E++].getBoundingClientRect().left) && E < d; )
           ;
         E < d && E--;
       }
-      for (g = a[d] = [], b = l ? Math.min(E, d) * c - 0.5 : r % E, y = E === ge ? 0 : l ? d * h / E - 0.5 : r / E | 0, w = 0, P = ge, C = 0; C < d; C++)
-        x = C % E - b, v = y - (C / E | 0), g[C] = _ = u ? Math.abs(u === "y" ? v : x) : gr(x * x + v * v), _ > w && (w = _), _ < P && (P = _);
-      r === "random" && kr(g), g.max = w - P, g.min = P, g.v = d = (parseFloat(t.amount) || parseFloat(t.each) * (E > d ? d - 1 : u ? u === "y" ? d / E : E : Math.max(E, d / E)) || 0) * (r === "edges" ? -1 : 1), g.b = d < 0 ? n - d : n, g.u = Z(t.amount || t.each) || 0, i = i && d < 0 ? Hr(i) : i;
+      for (g = a[d] = [], b = l ? Math.min(E, d) * c - 0.5 : r % E, y = E === be ? 0 : l ? d * h / E - 0.5 : r / E | 0, w = 0, P = be, C = 0; C < d; C++)
+        x = C % E - b, v = y - (C / E | 0), g[C] = _ = u ? Math.abs(u === "y" ? v : x) : yr(x * x + v * v), _ > w && (w = _), _ < P && (P = _);
+      r === "random" && Fr(g), g.max = w - P, g.min = P, g.v = d = (parseFloat(t.amount) || parseFloat(t.each) * (E > d ? d - 1 : u ? u === "y" ? d / E : E : Math.max(E, d / E)) || 0) * (r === "edges" ? -1 : 1), g.b = d < 0 ? n - d : n, g.u = K(t.amount || t.each) || 0, i = i && d < 0 ? Wr(i) : i;
     }
     return d = (g[p] - g.min) / g.max || 0, H(g.b + (i ? i(d) : d) * g.v) + g.u;
   };
-}, hi = function(e) {
+}, di = function(e) {
   var t = Math.pow(10, ((e + "").split(".")[1] || "").length);
   return function(i) {
     var r = H(Math.round(parseFloat(i) / e) * e * t);
-    return (r - r % 1) / t + (Se(i) ? 0 : Z(i));
+    return (r - r % 1) / t + (Te(i) ? 0 : K(i));
   };
-}, Fr = function(e, t) {
-  var i = K(e), r, n;
-  return !i && Ce(e) && (r = i = e.radius || ge, e.values ? (e = be(e.values), (n = !Se(e[0])) && (r *= r)) : e = hi(e.increment)), ze(t, i ? G(e) ? function(a) {
+}, Ur = function(e, t) {
+  var i = J(e), r, n;
+  return !i && Pe(e) && (r = i = e.radius || be, e.values ? (e = ye(e.values), (n = !Te(e[0])) && (r *= r)) : e = di(e.increment)), Ue(t, i ? G(e) ? function(a) {
     return n = e(a), Math.abs(n - a) <= r ? n : a;
   } : function(a) {
-    for (var o = parseFloat(n ? a.x : a), l = parseFloat(n ? a.y : 0), u = ge, c = 0, h = e.length, p, f; h--; )
+    for (var o = parseFloat(n ? a.x : a), l = parseFloat(n ? a.y : 0), u = be, c = 0, h = e.length, p, f; h--; )
       n ? (p = e[h].x - o, f = e[h].y - l, p = p * p + f * f) : p = Math.abs(e[h] - o), p < u && (u = p, c = h);
-    return c = !r || u <= r ? e[c] : a, n || c === a || Se(a) ? c : c + Z(a);
-  } : hi(e));
-}, zr = function(e, t, i, r) {
-  return ze(K(e) ? !t : i === !0 ? !!(i = 0) : !r, function() {
-    return K(e) ? e[~~(Math.random() * e.length)] : (i = i || 1e-5) && (r = i < 1 ? Math.pow(10, (i + "").length - 2) : 1) && Math.floor(Math.round((e - i / 2 + Math.random() * (t - e + i * 0.99)) / i) * i * r) / r;
+    return c = !r || u <= r ? e[c] : a, n || c === a || Te(a) ? c : c + K(a);
+  } : di(e));
+}, Nr = function(e, t, i, r) {
+  return Ue(J(e) ? !t : i === !0 ? !!(i = 0) : !r, function() {
+    return J(e) ? e[~~(Math.random() * e.length)] : (i = i || 1e-5) && (r = i < 1 ? Math.pow(10, (i + "").length - 2) : 1) && Math.floor(Math.round((e - i / 2 + Math.random() * (t - e + i * 0.99)) / i) * i * r) / r;
   });
-}, $n = function() {
+}, Yn = function() {
   for (var e = arguments.length, t = new Array(e), i = 0; i < e; i++)
     t[i] = arguments[i];
   return function(r) {
@@ -310,36 +2216,36 @@ var ue = {
       return a(n);
     }, r);
   };
-}, Gn = function(e, t) {
+}, Wn = function(e, t) {
   return function(i) {
-    return e(parseFloat(i)) + (t || Z(i));
+    return e(parseFloat(i)) + (t || K(i));
   };
-}, Vn = function(e, t, i) {
-  return Nr(e, t, 0, 1, i);
-}, Ur = function(e, t, i) {
-  return ze(i, function(r) {
+}, Xn = function(e, t, i) {
+  return $r(e, t, 0, 1, i);
+}, Br = function(e, t, i) {
+  return Ue(i, function(r) {
     return e[~~t(r)];
   });
-}, jn = function s(e, t, i) {
+}, qn = function s(e, t, i) {
   var r = t - e;
-  return K(e) ? Ur(e, s(0, e.length), t) : ze(i, function(n) {
+  return J(e) ? Br(e, s(0, e.length), t) : Ue(i, function(n) {
     return (r + (n - e) % r) % r + e;
   });
-}, Hn = function s(e, t, i) {
+}, Zn = function s(e, t, i) {
   var r = t - e, n = r * 2;
-  return K(e) ? Ur(e, s(0, e.length - 1), t) : ze(i, function(a) {
+  return J(e) ? Br(e, s(0, e.length - 1), t) : Ue(i, function(a) {
     return a = (n + (a - e) % n) % n || 0, e + (a > r ? n - a : a);
   });
-}, xt = function(e) {
+}, _t = function(e) {
   for (var t = 0, i = "", r, n, a, o; ~(r = e.indexOf("random(", t)); )
-    a = e.indexOf(")", r), o = e.charAt(r + 7) === "[", n = e.substr(r + 7, a - r - 7).match(o ? _r : ni), i += e.substr(t, r - t) + zr(o ? n : +n[0], o ? 0 : +n[1], +n[2] || 1e-5), t = a + 1;
+    a = e.indexOf(")", r), o = e.charAt(r + 7) === "[", n = e.substr(r + 7, a - r - 7).match(o ? Er : ai), i += e.substr(t, r - t) + Nr(o ? n : +n[0], o ? 0 : +n[1], +n[2] || 1e-5), t = a + 1;
   return i + e.substr(t, e.length - t);
-}, Nr = function(e, t, i, r, n) {
+}, $r = function(e, t, i, r, n) {
   var a = t - e, o = r - i;
-  return ze(n, function(l) {
+  return Ue(n, function(l) {
     return i + ((l - e) / a * o || 0);
   });
-}, Yn = function s(e, t, i, r) {
+}, Kn = function s(e, t, i, r) {
   var n = isNaN(e + t) ? 0 : function(f) {
     return (1 - f) * e + f * t;
   };
@@ -351,7 +2257,7 @@ var ue = {
       }, t = {
         p: t
       };
-    else if (K(e) && !K(t)) {
+    else if (J(e) && !J(t)) {
       for (c = [], h = e.length, p = h - 2, u = 1; u < h; u++)
         c.push(s(e[u - 1], e[u]));
       h--, n = function(m) {
@@ -359,55 +2265,55 @@ var ue = {
         var d = Math.min(p, ~~m);
         return c[d](m - d);
       }, i = t;
-    } else r || (e = at(K(e) ? [] : {}, e));
+    } else r || (e = ot(J(e) ? [] : {}, e));
     if (!c) {
       for (l in t)
-        Ti.call(o, e, l, "get", t[l]);
+        Mi.call(o, e, l, "get", t[l]);
       n = function(m) {
-        return Ii(m, o) || (a ? e.p : e);
+        return Ri(m, o) || (a ? e.p : e);
       };
     }
   }
-  return ze(i, n);
-}, ji = function(e, t, i) {
-  var r = e.labels, n = ge, a, o, l;
+  return Ue(i, n);
+}, Wi = function(e, t, i) {
+  var r = e.labels, n = be, a, o, l;
   for (a in r)
     o = r[a] - t, o < 0 == !!i && o && n > (o = Math.abs(o)) && (l = a, n = o);
   return l;
-}, ce = function(e, t, i) {
+}, ue = function(e, t, i) {
   var r = e.vars, n = r[t], a = N, o = e._ctx, l, u, c;
   if (n)
-    return l = r[t + "Params"], u = r.callbackScope || e, i && Re.length && Ft(), o && (N = o), c = l ? n.apply(u, l) : n.call(u), N = a, c;
-}, ht = function(e) {
-  return Oe(e), e.scrollTrigger && e.scrollTrigger.kill(!!X), e.progress() < 1 && ce(e, "onInterrupt"), e;
-}, Je, Br = [], $r = function(e) {
+    return l = r[t + "Params"], u = r.callbackScope || e, i && ke.length && zt(), o && (N = o), c = l ? n.apply(u, l) : n.call(u), N = a, c;
+}, dt = function(e) {
+  return Fe(e), e.scrollTrigger && e.scrollTrigger.kill(!!q), e.progress() < 1 && ue(e, "onInterrupt"), e;
+}, et, Gr = [], Vr = function(e) {
   if (e)
-    if (e = !e.name && e.default || e, vi() || e.headless) {
+    if (e = !e.name && e.default || e, Ei() || e.headless) {
       var t = e.name, i = G(e), r = t && !i && e.init ? function() {
         this._props = [];
       } : e, n = {
-        init: yt,
-        render: Ii,
-        add: Ti,
-        kill: la,
-        modifier: sa,
+        init: xt,
+        render: Ri,
+        add: Mi,
+        kill: pa,
+        modifier: da,
         rawVars: 0
       }, a = {
         targetTest: 0,
         get: 0,
-        getSetter: Di,
+        getSetter: Ii,
         aliases: {},
         register: 0
       };
-      if (lt(), e !== r) {
-        if (se[t])
+      if (ct(), e !== r) {
+        if (le[t])
           return;
-        de(r, de(zt(e, n), a)), at(r.prototype, at(n, zt(e, a))), se[r.prop = t] = r, e.targetTest && (Dt.push(r), Ci[t] = 1), t = (t === "css" ? "CSS" : t.charAt(0).toUpperCase() + t.substr(1)) + "Plugin";
+        pe(r, pe(Ut(e, n), a)), ot(r.prototype, ot(n, Ut(e, a))), le[r.prop = t] = r, e.targetTest && (It.push(r), Pi[t] = 1), t = (t === "css" ? "CSS" : t.charAt(0).toUpperCase() + t.substr(1)) + "Plugin";
       }
-      wr(t, r), e.register && e.register(ae, r, re);
+      Pr(t, r), e.register && e.register(oe, r, ne);
     } else
-      Br.push(e);
-}, F = 255, dt = {
+      Gr.push(e);
+}, F = 255, pt = {
   aqua: [0, F, F],
   lime: [0, F, 0],
   silver: [192, 192, 192],
@@ -427,56 +2333,56 @@ var ue = {
   pink: [F, 192, 203],
   cyan: [0, F, F],
   transparent: [F, F, F, 0]
-}, Wt = function(e, t, i) {
+}, qt = function(e, t, i) {
   return e += e < 0 ? 1 : e > 1 ? -1 : 0, (e * 6 < 1 ? t + (i - t) * e * 6 : e < 0.5 ? i : e * 3 < 2 ? t + (i - t) * (2 / 3 - e) * 6 : t) * F + 0.5 | 0;
-}, Gr = function(e, t, i) {
-  var r = e ? Se(e) ? [e >> 16, e >> 8 & F, e & F] : 0 : dt.black, n, a, o, l, u, c, h, p, f, m;
+}, jr = function(e, t, i) {
+  var r = e ? Te(e) ? [e >> 16, e >> 8 & F, e & F] : 0 : pt.black, n, a, o, l, u, c, h, p, f, m;
   if (!r) {
-    if (e.substr(-1) === "," && (e = e.substr(0, e.length - 1)), dt[e])
-      r = dt[e];
+    if (e.substr(-1) === "," && (e = e.substr(0, e.length - 1)), pt[e])
+      r = pt[e];
     else if (e.charAt(0) === "#") {
       if (e.length < 6 && (n = e.charAt(1), a = e.charAt(2), o = e.charAt(3), e = "#" + n + n + a + a + o + o + (e.length === 5 ? e.charAt(4) + e.charAt(4) : "")), e.length === 9)
         return r = parseInt(e.substr(1, 6), 16), [r >> 16, r >> 8 & F, r & F, parseInt(e.substr(7), 16) / 255];
       e = parseInt(e.substr(1), 16), r = [e >> 16, e >> 8 & F, e & F];
     } else if (e.substr(0, 3) === "hsl") {
-      if (r = m = e.match(ni), !t)
-        l = +r[0] % 360 / 360, u = +r[1] / 100, c = +r[2] / 100, a = c <= 0.5 ? c * (u + 1) : c + u - c * u, n = c * 2 - a, r.length > 3 && (r[3] *= 1), r[0] = Wt(l + 1 / 3, n, a), r[1] = Wt(l, n, a), r[2] = Wt(l - 1 / 3, n, a);
+      if (r = m = e.match(ai), !t)
+        l = +r[0] % 360 / 360, u = +r[1] / 100, c = +r[2] / 100, a = c <= 0.5 ? c * (u + 1) : c + u - c * u, n = c * 2 - a, r.length > 3 && (r[3] *= 1), r[0] = qt(l + 1 / 3, n, a), r[1] = qt(l, n, a), r[2] = qt(l - 1 / 3, n, a);
       else if (~e.indexOf("="))
-        return r = e.match(yr), i && r.length < 4 && (r[3] = 1), r;
+        return r = e.match(_r), i && r.length < 4 && (r[3] = 1), r;
     } else
-      r = e.match(ni) || dt.transparent;
+      r = e.match(ai) || pt.transparent;
     r = r.map(Number);
   }
   return t && !m && (n = r[0] / F, a = r[1] / F, o = r[2] / F, h = Math.max(n, a, o), p = Math.min(n, a, o), c = (h + p) / 2, h === p ? l = u = 0 : (f = h - p, u = c > 0.5 ? f / (2 - h - p) : f / (h + p), l = h === n ? (a - o) / f + (a < o ? 6 : 0) : h === a ? (o - n) / f + 2 : (n - a) / f + 4, l *= 60), r[0] = ~~(l + 0.5), r[1] = ~~(u * 100 + 0.5), r[2] = ~~(c * 100 + 0.5)), i && r.length < 4 && (r[3] = 1), r;
-}, Vr = function(e) {
+}, Hr = function(e) {
   var t = [], i = [], r = -1;
-  return e.split(ke).forEach(function(n) {
-    var a = n.match(Ke) || [];
+  return e.split(Oe).forEach(function(n) {
+    var a = n.match(Qe) || [];
     t.push.apply(t, a), i.push(r += a.length + 1);
   }), t.c = i, t;
-}, Hi = function(e, t, i) {
-  var r = "", n = (e + r).match(ke), a = t ? "hsla(" : "rgba(", o = 0, l, u, c, h;
+}, Xi = function(e, t, i) {
+  var r = "", n = (e + r).match(Oe), a = t ? "hsla(" : "rgba(", o = 0, l, u, c, h;
   if (!n)
     return e;
   if (n = n.map(function(p) {
-    return (p = Gr(p, t, 1)) && a + (t ? p[0] + "," + p[1] + "%," + p[2] + "%," + p[3] : p.join(",")) + ")";
-  }), i && (c = Vr(e), l = i.c, l.join(r) !== c.c.join(r)))
-    for (u = e.replace(ke, "1").split(Ke), h = u.length - 1; o < h; o++)
+    return (p = jr(p, t, 1)) && a + (t ? p[0] + "," + p[1] + "%," + p[2] + "%," + p[3] : p.join(",")) + ")";
+  }), i && (c = Hr(e), l = i.c, l.join(r) !== c.c.join(r)))
+    for (u = e.replace(Oe, "1").split(Qe), h = u.length - 1; o < h; o++)
       r += u[o] + (~l.indexOf(o) ? n.shift() || a + "0,0,0,0)" : (c.length ? c : n.length ? n : i).shift());
   if (!u)
-    for (u = e.split(ke), h = u.length - 1; o < h; o++)
+    for (u = e.split(Oe), h = u.length - 1; o < h; o++)
       r += u[o] + n[o];
   return r + u[h];
-}, ke = (function() {
+}, Oe = (function() {
   var s = "(?:\\b(?:(?:rgb|rgba|hsl|hsla)\\(.+?\\))|\\B#(?:[0-9a-f]{3,4}){1,2}\\b", e;
-  for (e in dt)
+  for (e in pt)
     s += "|" + e + "\\b";
   return new RegExp(s + ")", "gi");
-})(), Wn = /hsl[a]?\(/, jr = function(e) {
+})(), Jn = /hsl[a]?\(/, Yr = function(e) {
   var t = e.join(" "), i;
-  if (ke.lastIndex = 0, ke.test(t))
-    return i = Wn.test(t), e[1] = Hi(e[1], i), e[0] = Hi(e[0], i, Vr(e[1])), !0;
-}, _t, le = (function() {
+  if (Oe.lastIndex = 0, Oe.test(t))
+    return i = Jn.test(t), e[1] = Xi(e[1], i), e[0] = Xi(e[0], i, Hr(e[1])), !0;
+}, vt, ce = (function() {
   var s = Date.now, e = 500, t = 33, i = s(), r = i, n = 1e3 / 240, a = n, o = [], l, u, c, h, p, f, m = function d(g) {
     var b = s() - r, y = g === !0, x, v, _, C;
     if ((b > e || b < 0) && (i += b - t), r += b, _ = r - i, x = _ - a, (x > 0 || y) && (C = ++h.frame, p = _ - h.time * 1e3, h.time = _ = _ / 1e3, a += x + (x >= n ? 4 : n - x), v = 1), y || (l = u(d)), v)
@@ -493,12 +2399,12 @@ var ue = {
       return p / (1e3 / (g || 60));
     },
     wake: function() {
-      vr && (!ai && vi() && (_e = ai = window, Ei = _e.document || {}, he.gsap = ae, (_e.gsapVersions || (_e.gsapVersions = [])).push(ae.version), Er(Ot || _e.GreenSockGlobals || !_e.gsap && _e || {}), Br.forEach($r)), c = typeof requestAnimationFrame < "u" && requestAnimationFrame, l && h.sleep(), u = c || function(g) {
+      wr && (!oi && Ei() && (ve = oi = window, wi = ve.document || {}, de.gsap = oe, (ve.gsapVersions || (ve.gsapVersions = [])).push(oe.version), Cr(Ft || ve.GreenSockGlobals || !ve.gsap && ve || {}), Gr.forEach(Vr)), c = typeof requestAnimationFrame < "u" && requestAnimationFrame, l && h.sleep(), u = c || function(g) {
         return setTimeout(g, a - h.time * 1e3 + 1 | 0);
-      }, _t = 1, m(2));
+      }, vt = 1, m(2));
     },
     sleep: function() {
-      (c ? cancelAnimationFrame : clearTimeout)(l), _t = 0, u = yt;
+      (c ? cancelAnimationFrame : clearTimeout)(l), vt = 0, u = xt;
     },
     lagSmoothing: function(g, b) {
       e = g || 1 / 0, t = Math.min(b || 33, e);
@@ -510,35 +2416,35 @@ var ue = {
       var x = b ? function(v, _, C, w) {
         g(v, _, C, w), h.remove(x);
       } : g;
-      return h.remove(g), o[y ? "unshift" : "push"](x), lt(), x;
+      return h.remove(g), o[y ? "unshift" : "push"](x), ct(), x;
     },
     remove: function(g, b) {
       ~(b = o.indexOf(g)) && o.splice(b, 1) && f >= b && f--;
     },
     _listeners: o
   }, h;
-})(), lt = function() {
-  return !_t && le.wake();
-}, I = {}, Xn = /^[\d.\-M][\d.\-,\s]/, qn = /["']/g, Zn = function(e) {
+})(), ct = function() {
+  return !vt && ce.wake();
+}, I = {}, Qn = /^[\d.\-M][\d.\-,\s]/, ea = /["']/g, ta = function(e) {
   for (var t = {}, i = e.substr(1, e.length - 3).split(":"), r = i[0], n = 1, a = i.length, o, l, u; n < a; n++)
-    l = i[n], o = n !== a - 1 ? l.lastIndexOf(",") : l.length, u = l.substr(0, o), t[r] = isNaN(u) ? u.replace(qn, "").trim() : +u, r = l.substr(o + 1).trim();
+    l = i[n], o = n !== a - 1 ? l.lastIndexOf(",") : l.length, u = l.substr(0, o), t[r] = isNaN(u) ? u.replace(ea, "").trim() : +u, r = l.substr(o + 1).trim();
   return t;
-}, Kn = function(e) {
+}, ia = function(e) {
   var t = e.indexOf("(") + 1, i = e.indexOf(")"), r = e.indexOf("(", t);
   return e.substring(t, ~r && r < i ? e.indexOf(")", i + 1) : i);
-}, Jn = function(e) {
+}, ra = function(e) {
   var t = (e + "").split("("), i = I[t[0]];
-  return i && t.length > 1 && i.config ? i.config.apply(null, ~e.indexOf("{") ? [Zn(t[1])] : Kn(e).split(",").map(Sr)) : I._CE && Xn.test(e) ? I._CE("", e) : i;
-}, Hr = function(e) {
+  return i && t.length > 1 && i.config ? i.config.apply(null, ~e.indexOf("{") ? [ta(t[1])] : ia(e).split(",").map(Mr)) : I._CE && Qn.test(e) ? I._CE("", e) : i;
+}, Wr = function(e) {
   return function(t) {
     return 1 - e(1 - t);
   };
-}, Yr = function s(e, t) {
+}, Xr = function s(e, t) {
   for (var i = e._first, r; i; )
-    i instanceof ee ? s(i, t) : i.vars.yoyoEase && (!i._yoyo || !i._repeat) && i._yoyo !== t && (i.timeline ? s(i.timeline, t) : (r = i._ease, i._ease = i._yEase, i._yEase = r, i._yoyo = t)), i = i._next;
-}, Ye = function(e, t) {
-  return e && (G(e) ? e : I[e] || Jn(e)) || t;
-}, qe = function(e, t, i, r) {
+    i instanceof te ? s(i, t) : i.vars.yoyoEase && (!i._yoyo || !i._repeat) && i._yoyo !== t && (i.timeline ? s(i.timeline, t) : (r = i._ease, i._ease = i._yEase, i._yEase = r, i._yoyo = t)), i = i._next;
+}, We = function(e, t) {
+  return e && (G(e) ? e : I[e] || ra(e)) || t;
+}, Ze = function(e, t, i, r) {
   i === void 0 && (i = function(l) {
     return 1 - t(1 - l);
   }), r === void 0 && (r = function(l) {
@@ -549,38 +2455,38 @@ var ue = {
     easeOut: i,
     easeInOut: r
   }, a;
-  return ie(e, function(o) {
-    I[o] = he[o] = n, I[a = o.toLowerCase()] = i;
+  return re(e, function(o) {
+    I[o] = de[o] = n, I[a = o.toLowerCase()] = i;
     for (var l in n)
       I[a + (l === "easeIn" ? ".in" : l === "easeOut" ? ".out" : ".inOut")] = I[o + "." + l] = n[l];
   }), n;
-}, Wr = function(e) {
+}, qr = function(e) {
   return function(t) {
     return t < 0.5 ? (1 - e(1 - t * 2)) / 2 : 0.5 + e((t - 0.5) * 2) / 2;
   };
-}, Xt = function s(e, t, i) {
-  var r = t >= 1 ? t : 1, n = (i || (e ? 0.3 : 0.45)) / (t < 1 ? t : 1), a = n / ri * (Math.asin(1 / r) || 0), o = function(c) {
-    return c === 1 ? 1 : r * Math.pow(2, -10 * c) * An((c - a) * n) + 1;
+}, Zt = function s(e, t, i) {
+  var r = t >= 1 ? t : 1, n = (i || (e ? 0.3 : 0.45)) / (t < 1 ? t : 1), a = n / ni * (Math.asin(1 / r) || 0), o = function(c) {
+    return c === 1 ? 1 : r * Math.pow(2, -10 * c) * Dn((c - a) * n) + 1;
   }, l = e === "out" ? o : e === "in" ? function(u) {
     return 1 - o(1 - u);
-  } : Wr(o);
-  return n = ri / n, l.config = function(u, c) {
+  } : qr(o);
+  return n = ni / n, l.config = function(u, c) {
     return s(e, u, c);
   }, l;
-}, qt = function s(e, t) {
+}, Kt = function s(e, t) {
   t === void 0 && (t = 1.70158);
   var i = function(a) {
     return a ? --a * a * ((t + 1) * a + t) + 1 : 0;
   }, r = e === "out" ? i : e === "in" ? function(n) {
     return 1 - i(1 - n);
-  } : Wr(i);
+  } : qr(i);
   return r.config = function(n) {
     return s(e, n);
   }, r;
 };
-ie("Linear,Quad,Cubic,Quart,Quint,Strong", function(s, e) {
+re("Linear,Quad,Cubic,Quart,Quint,Strong", function(s, e) {
   var t = e < 5 ? e + 1 : e;
-  qe(s + ",Power" + (t - 1), e ? function(i) {
+  Ze(s + ",Power" + (t - 1), e ? function(i) {
     return Math.pow(i, t);
   } : function(i) {
     return i;
@@ -591,43 +2497,43 @@ ie("Linear,Quad,Cubic,Quart,Quint,Strong", function(s, e) {
   });
 });
 I.Linear.easeNone = I.none = I.Linear.easeIn;
-qe("Elastic", Xt("in"), Xt("out"), Xt());
+Ze("Elastic", Zt("in"), Zt("out"), Zt());
 (function(s, e) {
   var t = 1 / e, i = 2 * t, r = 2.5 * t, n = function(o) {
     return o < t ? s * o * o : o < i ? s * Math.pow(o - 1.5 / e, 2) + 0.75 : o < r ? s * (o -= 2.25 / e) * o + 0.9375 : s * Math.pow(o - 2.625 / e, 2) + 0.984375;
   };
-  qe("Bounce", function(a) {
+  Ze("Bounce", function(a) {
     return 1 - n(1 - a);
   }, n);
 })(7.5625, 2.75);
-qe("Expo", function(s) {
+Ze("Expo", function(s) {
   return Math.pow(2, 10 * (s - 1)) * s + s * s * s * s * s * s * (1 - s);
 });
-qe("Circ", function(s) {
-  return -(gr(1 - s * s) - 1);
+Ze("Circ", function(s) {
+  return -(yr(1 - s * s) - 1);
 });
-qe("Sine", function(s) {
-  return s === 1 ? 1 : -Pn(s * wn) + 1;
+Ze("Sine", function(s) {
+  return s === 1 ? 1 : -Ln(s * Tn) + 1;
 });
-qe("Back", qt("in"), qt("out"), qt());
-I.SteppedEase = I.steps = he.SteppedEase = {
+Ze("Back", Kt("in"), Kt("out"), Kt());
+I.SteppedEase = I.steps = de.SteppedEase = {
   config: function(e, t) {
     e === void 0 && (e = 1);
     var i = 1 / e, r = e + (t ? 0 : 1), n = t ? 1 : 0, a = 1 - z;
     return function(o) {
-      return ((r * Pt(0, a, o) | 0) + n) * i;
+      return ((r * At(0, a, o) | 0) + n) * i;
     };
   }
 };
-nt.ease = I["quad.out"];
-ie("onComplete,onUpdate,onStart,onRepeat,onReverseComplete,onInterrupt", function(s) {
-  return Pi += s + "," + s + "Params,";
+at.ease = I["quad.out"];
+re("onComplete,onUpdate,onStart,onRepeat,onReverseComplete,onInterrupt", function(s) {
+  return Ai += s + "," + s + "Params,";
 });
-var Xr = function(e, t) {
-  this.id = Cn++, e._gsap = this, this.target = e, this.harness = t, this.get = t ? t.get : Pr, this.set = t ? t.getSetter : Di;
-}, vt = /* @__PURE__ */ (function() {
+var Zr = function(e, t) {
+  this.id = Mn++, e._gsap = this, this.target = e, this.harness = t, this.get = t ? t.get : Sr, this.set = t ? t.getSetter : Ii;
+}, Et = /* @__PURE__ */ (function() {
   function s(t) {
-    this.vars = t, this._delay = +t.delay || 0, (this._repeat = t.repeat === 1 / 0 ? -2 : t.repeat || 0) && (this._rDelay = t.repeatDelay || 0, this._yoyo = !!t.yoyo || !!t.yoyoEase), this._ts = 1, st(this, +t.duration, 1, 1), this.data = t.data, N && (this._ctx = N, N.data.push(this)), _t || le.wake();
+    this.vars = t, this._delay = +t.delay || 0, (this._repeat = t.repeat === 1 / 0 ? -2 : t.repeat || 0) && (this._rDelay = t.repeatDelay || 0, this._yoyo = !!t.yoyo || !!t.yoyoEase), this._ts = 1, lt(this, +t.duration, 1, 1), this.data = t.data, N && (this._ctx = N, N.data.push(this)), vt || ce.wake();
   }
   var e = s.prototype;
   return e.delay = function(i) {
@@ -635,69 +2541,69 @@ var Xr = function(e, t) {
   }, e.duration = function(i) {
     return arguments.length ? this.totalDuration(this._repeat > 0 ? i + (i + this._rDelay) * this._repeat : i) : this.totalDuration() && this._dur;
   }, e.totalDuration = function(i) {
-    return arguments.length ? (this._dirty = 0, st(this, this._repeat < 0 ? i : (i - this._repeat * this._rDelay) / (this._repeat + 1))) : this._tDur;
+    return arguments.length ? (this._dirty = 0, lt(this, this._repeat < 0 ? i : (i - this._repeat * this._rDelay) / (this._repeat + 1))) : this._tDur;
   }, e.totalTime = function(i, r) {
-    if (lt(), !arguments.length)
+    if (ct(), !arguments.length)
       return this._tTime;
     var n = this._dp;
     if (n && n.smoothChildTiming && this._ts) {
-      for (jt(this, i), !n._dp || n.parent || Lr(n, this); n && n.parent; )
+      for (Ht(this, i), !n._dp || n.parent || Ir(n, this); n && n.parent; )
         n.parent._time !== n._start + (n._ts >= 0 ? n._tTime / n._ts : (n.totalDuration() - n._tTime) / -n._ts) && n.totalTime(n._tTime, !0), n = n.parent;
-      !this.parent && this._dp.autoRemoveChildren && (this._ts > 0 && i < this._tDur || this._ts < 0 && i > 0 || !this._tDur && !i) && ve(this._dp, this, this._start - this._delay);
+      !this.parent && this._dp.autoRemoveChildren && (this._ts > 0 && i < this._tDur || this._ts < 0 && i > 0 || !this._tDur && !i) && Ee(this._dp, this, this._start - this._delay);
     }
-    return (this._tTime !== i || !this._dur && !r || this._initted && Math.abs(this._zTime) === z || !i && !this._initted && (this.add || this._ptLookup)) && (this._ts || (this._pTime = i), Ar(this, i, r)), this;
+    return (this._tTime !== i || !this._dur && !r || this._initted && Math.abs(this._zTime) === z || !i && !this._initted && (this.add || this._ptLookup)) && (this._ts || (this._pTime = i), Tr(this, i, r)), this;
   }, e.time = function(i, r) {
-    return arguments.length ? this.totalTime(Math.min(this.totalDuration(), i + Gi(this)) % (this._dur + this._rDelay) || (i ? this._dur : 0), r) : this._time;
+    return arguments.length ? this.totalTime(Math.min(this.totalDuration(), i + Hi(this)) % (this._dur + this._rDelay) || (i ? this._dur : 0), r) : this._time;
   }, e.totalProgress = function(i, r) {
     return arguments.length ? this.totalTime(this.totalDuration() * i, r) : this.totalDuration() ? Math.min(1, this._tTime / this._tDur) : this.rawTime() >= 0 && this._initted ? 1 : 0;
   }, e.progress = function(i, r) {
-    return arguments.length ? this.totalTime(this.duration() * (this._yoyo && !(this.iteration() & 1) ? 1 - i : i) + Gi(this), r) : this.duration() ? Math.min(1, this._time / this._dur) : this.rawTime() > 0 ? 1 : 0;
+    return arguments.length ? this.totalTime(this.duration() * (this._yoyo && !(this.iteration() & 1) ? 1 - i : i) + Hi(this), r) : this.duration() ? Math.min(1, this._time / this._dur) : this.rawTime() > 0 ? 1 : 0;
   }, e.iteration = function(i, r) {
     var n = this.duration() + this._rDelay;
-    return arguments.length ? this.totalTime(this._time + (i - 1) * n, r) : this._repeat ? ot(this._tTime, n) + 1 : 1;
+    return arguments.length ? this.totalTime(this._time + (i - 1) * n, r) : this._repeat ? st(this._tTime, n) + 1 : 1;
   }, e.timeScale = function(i, r) {
     if (!arguments.length)
       return this._rts === -z ? 0 : this._rts;
     if (this._rts === i)
       return this;
-    var n = this.parent && this._ts ? Ut(this.parent._time, this) : this._tTime;
-    return this._rts = +i || 0, this._ts = this._ps || i === -z ? 0 : this._rts, this.totalTime(Pt(-Math.abs(this._delay), this.totalDuration(), n), r !== !1), Vt(this), Rn(this);
+    var n = this.parent && this._ts ? Nt(this.parent._time, this) : this._tTime;
+    return this._rts = +i || 0, this._ts = this._ps || i === -z ? 0 : this._rts, this.totalTime(At(-Math.abs(this._delay), this.totalDuration(), n), r !== !1), jt(this), Un(this);
   }, e.paused = function(i) {
-    return arguments.length ? (this._ps !== i && (this._ps = i, i ? (this._pTime = this._tTime || Math.max(-this._delay, this.rawTime()), this._ts = this._act = 0) : (lt(), this._ts = this._rts, this.totalTime(this.parent && !this.parent.smoothChildTiming ? this.rawTime() : this._tTime || this._pTime, this.progress() === 1 && Math.abs(this._zTime) !== z && (this._tTime -= z)))), this) : this._ps;
+    return arguments.length ? (this._ps !== i && (this._ps = i, i ? (this._pTime = this._tTime || Math.max(-this._delay, this.rawTime()), this._ts = this._act = 0) : (ct(), this._ts = this._rts, this.totalTime(this.parent && !this.parent.smoothChildTiming ? this.rawTime() : this._tTime || this._pTime, this.progress() === 1 && Math.abs(this._zTime) !== z && (this._tTime -= z)))), this) : this._ps;
   }, e.startTime = function(i) {
     if (arguments.length) {
       this._start = i;
       var r = this.parent || this._dp;
-      return r && (r._sort || !this.parent) && ve(r, this, i - this._delay), this;
+      return r && (r._sort || !this.parent) && Ee(r, this, i - this._delay), this;
     }
     return this._start;
   }, e.endTime = function(i) {
-    return this._start + (te(i) ? this.totalDuration() : this.duration()) / Math.abs(this._ts || 1);
+    return this._start + (ie(i) ? this.totalDuration() : this.duration()) / Math.abs(this._ts || 1);
   }, e.rawTime = function(i) {
     var r = this.parent || this._dp;
-    return r ? i && (!this._ts || this._repeat && this._time && this.totalProgress() < 1) ? this._tTime % (this._dur + this._rDelay) : this._ts ? Ut(r.rawTime(i), this) : this._tTime : this._tTime;
+    return r ? i && (!this._ts || this._repeat && this._time && this.totalProgress() < 1) ? this._tTime % (this._dur + this._rDelay) : this._ts ? Nt(r.rawTime(i), this) : this._tTime : this._tTime;
   }, e.revert = function(i) {
-    i === void 0 && (i = Mn);
-    var r = X;
-    return X = i, Si(this) && (this.timeline && this.timeline.revert(i), this.totalTime(-0.01, i.suppressEvents)), this.data !== "nested" && i.kill !== !1 && this.kill(), X = r, this;
+    i === void 0 && (i = kn);
+    var r = q;
+    return q = i, Ti(this) && (this.timeline && this.timeline.revert(i), this.totalTime(-0.01, i.suppressEvents)), this.data !== "nested" && i.kill !== !1 && this.kill(), q = r, this;
   }, e.globalTime = function(i) {
     for (var r = this, n = arguments.length ? i : r.rawTime(); r; )
       n = r._start + n / (Math.abs(r._ts) || 1), r = r._dp;
     return !this.parent && this._sat ? this._sat.globalTime(i) : n;
   }, e.repeat = function(i) {
-    return arguments.length ? (this._repeat = i === 1 / 0 ? -2 : i, Vi(this)) : this._repeat === -2 ? 1 / 0 : this._repeat;
+    return arguments.length ? (this._repeat = i === 1 / 0 ? -2 : i, Yi(this)) : this._repeat === -2 ? 1 / 0 : this._repeat;
   }, e.repeatDelay = function(i) {
     if (arguments.length) {
       var r = this._time;
-      return this._rDelay = i, Vi(this), r ? this.time(r) : this;
+      return this._rDelay = i, Yi(this), r ? this.time(r) : this;
     }
     return this._rDelay;
   }, e.yoyo = function(i) {
     return arguments.length ? (this._yoyo = i, this) : this._yoyo;
   }, e.seek = function(i, r) {
-    return this.totalTime(me(this, i), te(r));
+    return this.totalTime(ge(this, i), ie(r));
   }, e.restart = function(i, r) {
-    return this.play().totalTime(i ? -this._delay : 0, te(r)), this._dur || (this._zTime = -z), this;
+    return this.play().totalTime(i ? -this._delay : 0, ie(r)), this._dur || (this._zTime = -z), this;
   }, e.play = function(i, r) {
     return i != null && this.seek(i, r), this.reversed(!1).paused(!1);
   }, e.reverse = function(i, r) {
@@ -719,17 +2625,17 @@ var Xr = function(e, t) {
   }, e.then = function(i) {
     var r = this;
     return new Promise(function(n) {
-      var a = G(i) ? i : Tr, o = function() {
+      var a = G(i) ? i : Lr, o = function() {
         var u = r.then;
         r.then = null, G(a) && (a = a(r)) && (a.then || a === r) && (r.then = u), n(a), r.then = u;
       };
       r._initted && r.totalProgress() === 1 && r._ts >= 0 || !r._tTime && r._ts < 0 ? o() : r._prom = o;
     });
   }, e.kill = function() {
-    ht(this);
+    dt(this);
   }, s;
 })();
-de(vt.prototype, {
+pe(Et.prototype, {
   _time: 0,
   _start: 0,
   _end: 0,
@@ -749,45 +2655,45 @@ de(vt.prototype, {
   _ps: !1,
   _rts: 1
 });
-var ee = /* @__PURE__ */ (function(s) {
-  mr(e, s);
+var te = /* @__PURE__ */ (function(s) {
+  br(e, s);
   function e(i, r) {
     var n;
-    return i === void 0 && (i = {}), n = s.call(this, i) || this, n.labels = {}, n.smoothChildTiming = !!i.smoothChildTiming, n.autoRemoveChildren = !!i.autoRemoveChildren, n._sort = te(i.sortChildren), B && ve(i.parent || B, Pe(n), r), i.reversed && n.reverse(), i.paused && n.paused(!0), i.scrollTrigger && Dr(Pe(n), i.scrollTrigger), n;
+    return i === void 0 && (i = {}), n = s.call(this, i) || this, n.labels = {}, n.smoothChildTiming = !!i.smoothChildTiming, n.autoRemoveChildren = !!i.autoRemoveChildren, n._sort = ie(i.sortChildren), B && Ee(i.parent || B, Ae(n), r), i.reversed && n.reverse(), i.paused && n.paused(!0), i.scrollTrigger && Rr(Ae(n), i.scrollTrigger), n;
   }
   var t = e.prototype;
   return t.to = function(r, n, a) {
-    return ft(0, arguments, this), this;
+    return mt(0, arguments, this), this;
   }, t.from = function(r, n, a) {
-    return ft(1, arguments, this), this;
+    return mt(1, arguments, this), this;
   }, t.fromTo = function(r, n, a, o) {
-    return ft(2, arguments, this), this;
+    return mt(2, arguments, this), this;
   }, t.set = function(r, n, a) {
-    return n.duration = 0, n.parent = this, pt(n).repeatDelay || (n.repeat = 0), n.immediateRender = !!n.immediateRender, new j(r, n, me(this, a), 1), this;
+    return n.duration = 0, n.parent = this, ft(n).repeatDelay || (n.repeat = 0), n.immediateRender = !!n.immediateRender, new j(r, n, ge(this, a), 1), this;
   }, t.call = function(r, n, a) {
-    return ve(this, j.delayedCall(0, r, n), a);
+    return Ee(this, j.delayedCall(0, r, n), a);
   }, t.staggerTo = function(r, n, a, o, l, u, c) {
-    return a.duration = n, a.stagger = a.stagger || o, a.onComplete = u, a.onCompleteParams = c, a.parent = this, new j(r, a, me(this, l)), this;
+    return a.duration = n, a.stagger = a.stagger || o, a.onComplete = u, a.onCompleteParams = c, a.parent = this, new j(r, a, ge(this, l)), this;
   }, t.staggerFrom = function(r, n, a, o, l, u, c) {
-    return a.runBackwards = 1, pt(a).immediateRender = te(a.immediateRender), this.staggerTo(r, n, a, o, l, u, c);
+    return a.runBackwards = 1, ft(a).immediateRender = ie(a.immediateRender), this.staggerTo(r, n, a, o, l, u, c);
   }, t.staggerFromTo = function(r, n, a, o, l, u, c, h) {
-    return o.startAt = a, pt(o).immediateRender = te(o.immediateRender), this.staggerTo(r, n, o, l, u, c, h);
+    return o.startAt = a, ft(o).immediateRender = ie(o.immediateRender), this.staggerTo(r, n, o, l, u, c, h);
   }, t.render = function(r, n, a) {
     var o = this._time, l = this._dirty ? this.totalDuration() : this._tDur, u = this._dur, c = r <= 0 ? 0 : H(r), h = this._zTime < 0 != r < 0 && (this._initted || !u), p, f, m, d, g, b, y, x, v, _, C, w;
     if (this !== B && c > l && r >= 0 && (c = l), c !== this._tTime || a || h) {
       if (o !== this._time && u && (c += this._time - o, r += this._time - o), p = c, v = this._start, x = this._ts, b = !x, h && (u || (o = this._zTime), (r || !n) && (this._zTime = r)), this._repeat) {
         if (C = this._yoyo, g = u + this._rDelay, this._repeat < -1 && r < 0)
           return this.totalTime(g * 100 + r, n, a);
-        if (p = H(c % g), c === l ? (d = this._repeat, p = u) : (_ = H(c / g), d = ~~_, d && d === _ && (p = u, d--), p > u && (p = u)), _ = ot(this._tTime, g), !o && this._tTime && _ !== d && this._tTime - _ * g - this._dur <= 0 && (_ = d), C && d & 1 && (p = u - p, w = 1), d !== _ && !this._lock) {
+        if (p = H(c % g), c === l ? (d = this._repeat, p = u) : (_ = H(c / g), d = ~~_, d && d === _ && (p = u, d--), p > u && (p = u)), _ = st(this._tTime, g), !o && this._tTime && _ !== d && this._tTime - _ * g - this._dur <= 0 && (_ = d), C && d & 1 && (p = u - p, w = 1), d !== _ && !this._lock) {
           var P = C && _ & 1, E = P === (C && d & 1);
-          if (d < _ && (P = !P), o = P ? 0 : c % u ? u : c, this._lock = 1, this.render(o || (w ? 0 : H(d * g)), n, !u)._lock = 0, this._tTime = c, !n && this.parent && ce(this, "onRepeat"), this.vars.repeatRefresh && !w && (this.invalidate()._lock = 1), o && o !== this._time || b !== !this._ts || this.vars.onRepeat && !this.parent && !this._act)
+          if (d < _ && (P = !P), o = P ? 0 : c % u ? u : c, this._lock = 1, this.render(o || (w ? 0 : H(d * g)), n, !u)._lock = 0, this._tTime = c, !n && this.parent && ue(this, "onRepeat"), this.vars.repeatRefresh && !w && (this.invalidate()._lock = 1), o && o !== this._time || b !== !this._ts || this.vars.onRepeat && !this.parent && !this._act)
             return this;
           if (u = this._dur, l = this._tDur, E && (this._lock = 2, o = P ? u : -1e-4, this.render(o, !0), this.vars.repeatRefresh && !w && this.invalidate()), this._lock = 0, !this._ts && !b)
             return this;
-          Yr(this, w);
+          Xr(this, w);
         }
       }
-      if (this._hasPause && !this._forcing && this._lock < 2 && (y = zn(this, H(o), H(p)), y && (c -= p - (p = y._start))), this._tTime = c, this._time = p, this._act = !x, this._initted || (this._onUpdate = this.vars.onUpdate, this._initted = 1, this._zTime = r, o = 0), !o && c && !n && !_ && (ce(this, "onStart"), this._tTime !== c))
+      if (this._hasPause && !this._forcing && this._lock < 2 && (y = Gn(this, H(o), H(p)), y && (c -= p - (p = y._start))), this._tTime = c, this._time = p, this._act = !x, this._initted || (this._onUpdate = this.vars.onUpdate, this._initted = 1, this._zTime = r, o = 0), !o && c && !n && !_ && (ue(this, "onStart"), this._tTime !== c))
         return this;
       if (p >= o && r >= 0)
         for (f = this._first; f; ) {
@@ -807,7 +2713,7 @@ var ee = /* @__PURE__ */ (function(s) {
           if (m = f._prev, (f._act || T <= f._end) && f._ts && y !== f) {
             if (f.parent !== this)
               return this.render(r, n, a);
-            if (f.render(f._ts > 0 ? (T - f._start) * f._ts : (f._dirty ? f.totalDuration() : f._tDur) + (T - f._start) * f._ts, n, a || X && Si(f)), p !== this._time || !this._ts && !b) {
+            if (f.render(f._ts > 0 ? (T - f._start) * f._ts : (f._dirty ? f.totalDuration() : f._tDur) + (T - f._start) * f._ts, n, a || q && Ti(f)), p !== this._time || !this._ts && !b) {
               y = 0, m && (c += this._zTime = T ? -z : z);
               break;
             }
@@ -816,14 +2722,14 @@ var ee = /* @__PURE__ */ (function(s) {
         }
       }
       if (y && !n && (this.pause(), y.render(p >= o ? 0 : -z)._zTime = p >= o ? 1 : -1, this._ts))
-        return this._start = v, Vt(this), this.render(r, n, a);
-      this._onUpdate && !n && ce(this, "onUpdate", !0), (c === l && this._tTime >= this.totalDuration() || !c && o) && (v === this._start || Math.abs(x) !== Math.abs(this._ts)) && (this._lock || ((r || !u) && (c === l && this._ts > 0 || !c && this._ts < 0) && Oe(this, 1), !n && !(r < 0 && !o) && (c || o || !l) && (ce(this, c === l && r >= 0 ? "onComplete" : "onReverseComplete", !0), this._prom && !(c < l && this.timeScale() > 0) && this._prom())));
+        return this._start = v, jt(this), this.render(r, n, a);
+      this._onUpdate && !n && ue(this, "onUpdate", !0), (c === l && this._tTime >= this.totalDuration() || !c && o) && (v === this._start || Math.abs(x) !== Math.abs(this._ts)) && (this._lock || ((r || !u) && (c === l && this._ts > 0 || !c && this._ts < 0) && Fe(this, 1), !n && !(r < 0 && !o) && (c || o || !l) && (ue(this, c === l && r >= 0 ? "onComplete" : "onReverseComplete", !0), this._prom && !(c < l && this.timeScale() > 0) && this._prom())));
     }
     return this;
   }, t.add = function(r, n) {
     var a = this;
-    if (Se(n) || (n = me(this, n, r)), !(r instanceof vt)) {
-      if (K(r))
+    if (Te(n) || (n = ge(this, n, r)), !(r instanceof Et)) {
+      if (J(r))
         return r.forEach(function(o) {
           return a.add(o, n);
         }), this;
@@ -834,9 +2740,9 @@ var ee = /* @__PURE__ */ (function(s) {
       else
         return this;
     }
-    return this !== r ? ve(this, r, n) : this;
+    return this !== r ? Ee(this, r, n) : this;
   }, t.getChildren = function(r, n, a, o) {
-    r === void 0 && (r = !0), n === void 0 && (n = !0), a === void 0 && (a = !0), o === void 0 && (o = -ge);
+    r === void 0 && (r = !0), n === void 0 && (n = !0), a === void 0 && (a = !0), o === void 0 && (o = -be);
     for (var l = [], u = this._first; u; )
       u._start >= o && (u instanceof j ? n && l.push(u) : (a && l.push(u), r && l.push.apply(l, u.getChildren(!0, n, a)))), u = u._next;
     return l;
@@ -845,31 +2751,31 @@ var ee = /* @__PURE__ */ (function(s) {
       if (n[a].vars.id === r)
         return n[a];
   }, t.remove = function(r) {
-    return W(r) ? this.removeLabel(r) : G(r) ? this.killTweensOf(r) : (r.parent === this && Gt(this, r), r === this._recent && (this._recent = this._last), He(this));
+    return W(r) ? this.removeLabel(r) : G(r) ? this.killTweensOf(r) : (r.parent === this && Vt(this, r), r === this._recent && (this._recent = this._last), Ye(this));
   }, t.totalTime = function(r, n) {
-    return arguments.length ? (this._forcing = 1, !this._dp && this._ts && (this._start = H(le.time - (this._ts > 0 ? r / this._ts : (this.totalDuration() - r) / -this._ts))), s.prototype.totalTime.call(this, r, n), this._forcing = 0, this) : this._tTime;
+    return arguments.length ? (this._forcing = 1, !this._dp && this._ts && (this._start = H(ce.time - (this._ts > 0 ? r / this._ts : (this.totalDuration() - r) / -this._ts))), s.prototype.totalTime.call(this, r, n), this._forcing = 0, this) : this._tTime;
   }, t.addLabel = function(r, n) {
-    return this.labels[r] = me(this, n), this;
+    return this.labels[r] = ge(this, n), this;
   }, t.removeLabel = function(r) {
     return delete this.labels[r], this;
   }, t.addPause = function(r, n, a) {
-    var o = j.delayedCall(0, n || yt, a);
-    return o.data = "isPause", this._hasPause = 1, ve(this, o, me(this, r));
+    var o = j.delayedCall(0, n || xt, a);
+    return o.data = "isPause", this._hasPause = 1, Ee(this, o, ge(this, r));
   }, t.removePause = function(r) {
     var n = this._first;
-    for (r = me(this, r); n; )
-      n._start === r && n.data === "isPause" && Oe(n), n = n._next;
+    for (r = ge(this, r); n; )
+      n._start === r && n.data === "isPause" && Fe(n), n = n._next;
   }, t.killTweensOf = function(r, n, a) {
     for (var o = this.getTweensOf(r, a), l = o.length; l--; )
-      Me !== o[l] && o[l].kill(r, n);
+      Le !== o[l] && o[l].kill(r, n);
     return this;
   }, t.getTweensOf = function(r, n) {
-    for (var a = [], o = be(r), l = this._first, u = Se(n), c; l; )
-      l instanceof j ? Ln(l._targets, o) && (u ? (!Me || l._initted && l._ts) && l.globalTime(0) <= n && l.globalTime(l.totalDuration()) > n : !n || l.isActive()) && a.push(l) : (c = l.getTweensOf(o, n)).length && a.push.apply(a, c), l = l._next;
+    for (var a = [], o = ye(r), l = this._first, u = Te(n), c; l; )
+      l instanceof j ? On(l._targets, o) && (u ? (!Le || l._initted && l._ts) && l.globalTime(0) <= n && l.globalTime(l.totalDuration()) > n : !n || l.isActive()) && a.push(l) : (c = l.getTweensOf(o, n)).length && a.push.apply(a, c), l = l._next;
     return a;
   }, t.tweenTo = function(r, n) {
     n = n || {};
-    var a = this, o = me(a, r), l = n, u = l.startAt, c = l.onStart, h = l.onStartParams, p = l.immediateRender, f, m = j.to(a, de({
+    var a = this, o = ge(a, r), l = n, u = l.startAt, c = l.onStart, h = l.onStartParams, p = l.immediateRender, f, m = j.to(a, pe({
       ease: n.ease || "none",
       lazy: !1,
       immediateRender: !1,
@@ -879,24 +2785,24 @@ var ee = /* @__PURE__ */ (function(s) {
       onStart: function() {
         if (a.pause(), !f) {
           var g = n.duration || Math.abs((o - (u && "time" in u ? u.time : a._time)) / a.timeScale());
-          m._dur !== g && st(m, g, 0, 1).render(m._time, !0, !0), f = 1;
+          m._dur !== g && lt(m, g, 0, 1).render(m._time, !0, !0), f = 1;
         }
         c && c.apply(m, h || []);
       }
     }, n));
     return p ? m.render(0) : m;
   }, t.tweenFromTo = function(r, n, a) {
-    return this.tweenTo(n, de({
+    return this.tweenTo(n, pe({
       startAt: {
-        time: me(this, r)
+        time: ge(this, r)
       }
     }, a));
   }, t.recent = function() {
     return this._recent;
   }, t.nextLabel = function(r) {
-    return r === void 0 && (r = this._time), ji(this, me(this, r));
+    return r === void 0 && (r = this._time), Wi(this, ge(this, r));
   }, t.previousLabel = function(r) {
-    return r === void 0 && (r = this._time), ji(this, me(this, r), 1);
+    return r === void 0 && (r = this._time), Wi(this, ge(this, r), 1);
   }, t.currentLabel = function(r) {
     return arguments.length ? this.seek(r, !0) : this.previousLabel(this._time + z);
   }, t.shiftChildren = function(r, n, a) {
@@ -906,7 +2812,7 @@ var ee = /* @__PURE__ */ (function(s) {
     if (n)
       for (u in l)
         l[u] >= a && (l[u] += r);
-    return He(this);
+    return Ye(this);
   }, t.invalidate = function(r) {
     var n = this._first;
     for (this._lock = 0; n; )
@@ -916,112 +2822,112 @@ var ee = /* @__PURE__ */ (function(s) {
     r === void 0 && (r = !0);
     for (var n = this._first, a; n; )
       a = n._next, this.remove(n), n = a;
-    return this._dp && (this._time = this._tTime = this._pTime = 0), r && (this.labels = {}), He(this);
+    return this._dp && (this._time = this._tTime = this._pTime = 0), r && (this.labels = {}), Ye(this);
   }, t.totalDuration = function(r) {
-    var n = 0, a = this, o = a._last, l = ge, u, c, h;
+    var n = 0, a = this, o = a._last, l = be, u, c, h;
     if (arguments.length)
       return a.timeScale((a._repeat < 0 ? a.duration() : a.totalDuration()) / (a.reversed() ? -r : r));
     if (a._dirty) {
       for (h = a.parent; o; )
-        u = o._prev, o._dirty && o.totalDuration(), c = o._start, c > l && a._sort && o._ts && !a._lock ? (a._lock = 1, ve(a, o, c - o._delay, 1)._lock = 0) : l = c, c < 0 && o._ts && (n -= c, (!h && !a._dp || h && h.smoothChildTiming) && (a._start += c / a._ts, a._time -= c, a._tTime -= c), a.shiftChildren(-c, !1, -1 / 0), l = 0), o._end > n && o._ts && (n = o._end), o = u;
-      st(a, a === B && a._time > n ? a._time : n, 1, 1), a._dirty = 0;
+        u = o._prev, o._dirty && o.totalDuration(), c = o._start, c > l && a._sort && o._ts && !a._lock ? (a._lock = 1, Ee(a, o, c - o._delay, 1)._lock = 0) : l = c, c < 0 && o._ts && (n -= c, (!h && !a._dp || h && h.smoothChildTiming) && (a._start += c / a._ts, a._time -= c, a._tTime -= c), a.shiftChildren(-c, !1, -1 / 0), l = 0), o._end > n && o._ts && (n = o._end), o = u;
+      lt(a, a === B && a._time > n ? a._time : n, 1, 1), a._dirty = 0;
     }
     return a._tDur;
   }, e.updateRoot = function(r) {
-    if (B._ts && (Ar(B, Ut(r, B)), Cr = le.frame), le.frame >= Bi) {
-      Bi += ue.autoSleep || 120;
+    if (B._ts && (Tr(B, Nt(r, B)), Ar = ce.frame), ce.frame >= Vi) {
+      Vi += he.autoSleep || 120;
       var n = B._first;
-      if ((!n || !n._ts) && ue.autoSleep && le._listeners.length < 2) {
+      if ((!n || !n._ts) && he.autoSleep && ce._listeners.length < 2) {
         for (; n && !n._ts; )
           n = n._next;
-        n || le.sleep();
+        n || ce.sleep();
       }
     }
   }, e;
-})(vt);
-de(ee.prototype, {
+})(Et);
+pe(te.prototype, {
   _lock: 0,
   _hasPause: 0,
   _forcing: 0
 });
-var Qn = function(e, t, i, r, n, a, o) {
-  var l = new re(this._pt, e, t, 0, 1, en, null, n), u = 0, c = 0, h, p, f, m, d, g, b, y;
-  for (l.b = i, l.e = r, i += "", r += "", (b = ~r.indexOf("random(")) && (r = xt(r)), a && (y = [i, r], a(y, e, t), i = y[0], r = y[1]), p = i.match(Ht) || []; h = Ht.exec(r); )
+var na = function(e, t, i, r, n, a, o) {
+  var l = new ne(this._pt, e, t, 0, 1, rn, null, n), u = 0, c = 0, h, p, f, m, d, g, b, y;
+  for (l.b = i, l.e = r, i += "", r += "", (b = ~r.indexOf("random(")) && (r = _t(r)), a && (y = [i, r], a(y, e, t), i = y[0], r = y[1]), p = i.match(Wt) || []; h = Wt.exec(r); )
     m = h[0], d = r.substring(u, h.index), f ? f = (f + 1) % 5 : d.substr(-5) === "rgba(" && (f = 1), m !== p[c++] && (g = parseFloat(p[c - 1]) || 0, l._pt = {
       _next: l._pt,
       p: d || c === 1 ? d : ",",
       //note: SVG spec allows omission of comma/space when a negative sign is wedged between two numbers, like 2.5-5.3 instead of 2.5,-5.3 but when tweening, the negative value may switch to positive, so we insert the comma just in case.
       s: g,
-      c: m.charAt(1) === "=" ? tt(g, m) - g : parseFloat(m) - g,
+      c: m.charAt(1) === "=" ? it(g, m) - g : parseFloat(m) - g,
       m: f && f < 4 ? Math.round : 0
-    }, u = Ht.lastIndex);
-  return l.c = u < r.length ? r.substring(u, r.length) : "", l.fp = o, (xr.test(r) || b) && (l.e = 0), this._pt = l, l;
-}, Ti = function(e, t, i, r, n, a, o, l, u, c) {
+    }, u = Wt.lastIndex);
+  return l.c = u < r.length ? r.substring(u, r.length) : "", l.fp = o, (vr.test(r) || b) && (l.e = 0), this._pt = l, l;
+}, Mi = function(e, t, i, r, n, a, o, l, u, c) {
   G(r) && (r = r(n || 0, e, a));
-  var h = e[t], p = i !== "get" ? i : G(h) ? u ? e[t.indexOf("set") || !G(e["get" + t.substr(3)]) ? t : "get" + t.substr(3)](u) : e[t]() : h, f = G(h) ? u ? na : Jr : Li, m;
-  if (W(r) && (~r.indexOf("random(") && (r = xt(r)), r.charAt(1) === "=" && (m = tt(p, r) + (Z(p) || 0), (m || m === 0) && (r = m))), !c || p !== r || di)
-    return !isNaN(p * r) && r !== "" ? (m = new re(this._pt, e, t, +p || 0, r - (p || 0), typeof h == "boolean" ? oa : Qr, 0, f), u && (m.fp = u), o && m.modifier(o, this, e), this._pt = m) : (!h && !(t in e) && wi(t, r), Qn.call(this, e, t, p, r, f, l || ue.stringFilter, u));
-}, ea = function(e, t, i, r, n) {
-  if (G(e) && (e = mt(e, n, t, i, r)), !Ce(e) || e.style && e.nodeType || K(e) || br(e))
-    return W(e) ? mt(e, n, t, i, r) : e;
+  var h = e[t], p = i !== "get" ? i : G(h) ? u ? e[t.indexOf("set") || !G(e["get" + t.substr(3)]) ? t : "get" + t.substr(3)](u) : e[t]() : h, f = G(h) ? u ? ca : en : Di, m;
+  if (W(r) && (~r.indexOf("random(") && (r = _t(r)), r.charAt(1) === "=" && (m = it(p, r) + (K(p) || 0), (m || m === 0) && (r = m))), !c || p !== r || pi)
+    return !isNaN(p * r) && r !== "" ? (m = new ne(this._pt, e, t, +p || 0, r - (p || 0), typeof h == "boolean" ? ha : tn, 0, f), u && (m.fp = u), o && m.modifier(o, this, e), this._pt = m) : (!h && !(t in e) && Ci(t, r), na.call(this, e, t, p, r, f, l || he.stringFilter, u));
+}, aa = function(e, t, i, r, n) {
+  if (G(e) && (e = gt(e, n, t, i, r)), !Pe(e) || e.style && e.nodeType || J(e) || xr(e))
+    return W(e) ? gt(e, n, t, i, r) : e;
   var a = {}, o;
   for (o in e)
-    a[o] = mt(e[o], n, t, i, r);
+    a[o] = gt(e[o], n, t, i, r);
   return a;
-}, qr = function(e, t, i, r, n, a) {
+}, Kr = function(e, t, i, r, n, a) {
   var o, l, u, c;
-  if (se[e] && (o = new se[e]()).init(n, o.rawVars ? t[e] : ea(t[e], r, n, a, i), i, r, a) !== !1 && (i._pt = l = new re(i._pt, n, e, 0, 1, o.render, o, 0, o.priority), i !== Je))
+  if (le[e] && (o = new le[e]()).init(n, o.rawVars ? t[e] : aa(t[e], r, n, a, i), i, r, a) !== !1 && (i._pt = l = new ne(i._pt, n, e, 0, 1, o.render, o, 0, o.priority), i !== et))
     for (u = i._ptLookup[i._targets.indexOf(n)], c = o._props.length; c--; )
       u[o._props[c]] = l;
   return o;
-}, Me, di, Mi = function s(e, t, i) {
-  var r = e.vars, n = r.ease, a = r.startAt, o = r.immediateRender, l = r.lazy, u = r.onUpdate, c = r.runBackwards, h = r.yoyoEase, p = r.keyframes, f = r.autoRevert, m = e._dur, d = e._startAt, g = e._targets, b = e.parent, y = b && b.data === "nested" ? b.vars.targets : g, x = e._overwrite === "auto" && !xi, v = e.timeline, _, C, w, P, E, T, L, M, D, R, U, k, O;
-  if (v && (!p || !n) && (n = "none"), e._ease = Ye(n, nt.ease), e._yEase = h ? Hr(Ye(h === !0 ? n : h, nt.ease)) : 0, h && e._yoyo && !e._repeat && (h = e._yEase, e._yEase = e._ease, e._ease = h), e._from = !v && !!r.runBackwards, !v || p && !r.stagger) {
-    if (M = g[0] ? je(g[0]).harness : 0, k = M && r[M.prop], _ = zt(r, Ci), d && (d._zTime < 0 && d.progress(1), t < 0 && c && o && !f ? d.render(-1, !0) : d.revert(c && m ? Lt : Tn), d._lazy = 0), a) {
-      if (Oe(e._startAt = j.set(g, de({
+}, Le, pi, Li = function s(e, t, i) {
+  var r = e.vars, n = r.ease, a = r.startAt, o = r.immediateRender, l = r.lazy, u = r.onUpdate, c = r.runBackwards, h = r.yoyoEase, p = r.keyframes, f = r.autoRevert, m = e._dur, d = e._startAt, g = e._targets, b = e.parent, y = b && b.data === "nested" ? b.vars.targets : g, x = e._overwrite === "auto" && !_i, v = e.timeline, _, C, w, P, E, T, L, M, D, R, U, k, O;
+  if (v && (!p || !n) && (n = "none"), e._ease = We(n, at.ease), e._yEase = h ? Wr(We(h === !0 ? n : h, at.ease)) : 0, h && e._yoyo && !e._repeat && (h = e._yEase, e._yEase = e._ease, e._ease = h), e._from = !v && !!r.runBackwards, !v || p && !r.stagger) {
+    if (M = g[0] ? He(g[0]).harness : 0, k = M && r[M.prop], _ = Ut(r, Pi), d && (d._zTime < 0 && d.progress(1), t < 0 && c && o && !f ? d.render(-1, !0) : d.revert(c && m ? Dt : Rn), d._lazy = 0), a) {
+      if (Fe(e._startAt = j.set(g, pe({
         data: "isStart",
         overwrite: !1,
         parent: b,
         immediateRender: !0,
-        lazy: !d && te(l),
+        lazy: !d && ie(l),
         startAt: null,
         delay: 0,
         onUpdate: u && function() {
-          return ce(e, "onUpdate");
+          return ue(e, "onUpdate");
         },
         stagger: 0
-      }, a))), e._startAt._dp = 0, e._startAt._sat = e, t < 0 && (X || !o && !f) && e._startAt.revert(Lt), o && m && t <= 0 && i <= 0) {
+      }, a))), e._startAt._dp = 0, e._startAt._sat = e, t < 0 && (q || !o && !f) && e._startAt.revert(Dt), o && m && t <= 0 && i <= 0) {
         t && (e._zTime = t);
         return;
       }
     } else if (c && m && !d) {
-      if (t && (o = !1), w = de({
+      if (t && (o = !1), w = pe({
         overwrite: !1,
         data: "isFromStart",
         //we tag the tween with as "isFromStart" so that if [inside a plugin] we need to only do something at the very END of a tween, we have a way of identifying this tween as merely the one that's setting the beginning values for a "from()" tween. For example, clearProps in CSSPlugin should only get applied at the very END of a tween and without this tag, from(...{height:100, clearProps:"height", delay:1}) would wipe the height at the beginning of the tween and after 1 second, it'd kick back in.
-        lazy: o && !d && te(l),
+        lazy: o && !d && ie(l),
         immediateRender: o,
         //zero-duration tweens render immediately by default, but if we're not specifically instructed to render this tween immediately, we should skip this and merely _init() to record the starting values (rendering them immediately would push them to completion which is wasteful in that case - we'd have to render(-1) immediately after)
         stagger: 0,
         parent: b
         //ensures that nested tweens that had a stagger are handled properly, like gsap.from(".class", {y: gsap.utils.wrap([-100,100]), stagger: 0.5})
-      }, _), k && (w[M.prop] = k), Oe(e._startAt = j.set(g, w)), e._startAt._dp = 0, e._startAt._sat = e, t < 0 && (X ? e._startAt.revert(Lt) : e._startAt.render(-1, !0)), e._zTime = t, !o)
+      }, _), k && (w[M.prop] = k), Fe(e._startAt = j.set(g, w)), e._startAt._dp = 0, e._startAt._sat = e, t < 0 && (q ? e._startAt.revert(Dt) : e._startAt.render(-1, !0)), e._zTime = t, !o)
         s(e._startAt, z, z);
       else if (!t)
         return;
     }
-    for (e._pt = e._ptCache = 0, l = m && te(l) || l && !m, C = 0; C < g.length; C++) {
-      if (E = g[C], L = E._gsap || Ai(g)[C]._gsap, e._ptLookup[C] = R = {}, oi[L.id] && Re.length && Ft(), U = y === g ? C : y.indexOf(E), M && (D = new M()).init(E, k || _, e, U, y) !== !1 && (e._pt = P = new re(e._pt, E, D.name, 0, 1, D.render, D, 0, D.priority), D._props.forEach(function(q) {
-        R[q] = P;
+    for (e._pt = e._ptCache = 0, l = m && ie(l) || l && !m, C = 0; C < g.length; C++) {
+      if (E = g[C], L = E._gsap || Si(g)[C]._gsap, e._ptLookup[C] = R = {}, si[L.id] && ke.length && zt(), U = y === g ? C : y.indexOf(E), M && (D = new M()).init(E, k || _, e, U, y) !== !1 && (e._pt = P = new ne(e._pt, E, D.name, 0, 1, D.render, D, 0, D.priority), D._props.forEach(function(Z) {
+        R[Z] = P;
       }), D.priority && (T = 1)), !M || k)
         for (w in _)
-          se[w] && (D = qr(w, _, e, U, E, y)) ? D.priority && (T = 1) : R[w] = P = Ti.call(e, E, w, "get", _[w], U, y, 0, r.stringFilter);
-      e._op && e._op[C] && e.kill(E, e._op[C]), x && e._pt && (Me = e, B.killTweensOf(E, R, e.globalTime(t)), O = !e.parent, Me = 0), e._pt && l && (oi[L.id] = 1);
+          le[w] && (D = Kr(w, _, e, U, E, y)) ? D.priority && (T = 1) : R[w] = P = Mi.call(e, E, w, "get", _[w], U, y, 0, r.stringFilter);
+      e._op && e._op[C] && e.kill(E, e._op[C]), x && e._pt && (Le = e, B.killTweensOf(E, R, e.globalTime(t)), O = !e.parent, Le = 0), e._pt && l && (si[L.id] = 1);
     }
-    T && tn(e), e._onInit && e._onInit(e);
+    T && nn(e), e._onInit && e._onInit(e);
   }
-  e._onUpdate = u, e._initted = (!e._op || e._pt) && !O, p && t <= 0 && v.render(ge, !0, !0);
-}, ta = function(e, t, i, r, n, a, o, l) {
+  e._onUpdate = u, e._initted = (!e._op || e._pt) && !O, p && t <= 0 && v.render(be, !0, !0);
+}, oa = function(e, t, i, r, n, a, o, l) {
   var u = (e._pt && e._ptCache || (e._ptCache = {}))[t], c, h, p, f;
   if (!u)
     for (u = e._ptCache[t] = [], p = e._ptLookup, f = e._targets.length; f--; ) {
@@ -1029,24 +2935,24 @@ var Qn = function(e, t, i, r, n, a, o) {
         for (c = c.d._pt; c && c.p !== t && c.fp !== t; )
           c = c._next;
       if (!c)
-        return di = 1, e.vars[t] = "+=0", Mi(e, o), di = 0, l ? bt(t + " not eligible for reset") : 1;
+        return pi = 1, e.vars[t] = "+=0", Li(e, o), pi = 0, l ? yt(t + " not eligible for reset") : 1;
       u.push(c);
     }
   for (f = u.length; f--; )
-    h = u[f], c = h._pt || h, c.s = (r || r === 0) && !n ? r : c.s + (r || 0) + a * c.c, c.c = i - c.s, h.e && (h.e = V(i) + Z(h.e)), h.b && (h.b = c.s + Z(h.b));
-}, ia = function(e, t) {
-  var i = e[0] ? je(e[0]).harness : 0, r = i && i.aliases, n, a, o, l;
+    h = u[f], c = h._pt || h, c.s = (r || r === 0) && !n ? r : c.s + (r || 0) + a * c.c, c.c = i - c.s, h.e && (h.e = V(i) + K(h.e)), h.b && (h.b = c.s + K(h.b));
+}, sa = function(e, t) {
+  var i = e[0] ? He(e[0]).harness : 0, r = i && i.aliases, n, a, o, l;
   if (!r)
     return t;
-  n = at({}, t);
+  n = ot({}, t);
   for (a in r)
     if (a in n)
       for (l = r[a].split(","), o = l.length; o--; )
         n[l[o]] = n[a];
   return n;
-}, ra = function(e, t, i, r) {
+}, la = function(e, t, i, r) {
   var n = t.ease || r || "power1.inOut", a, o;
-  if (K(t))
+  if (J(t))
     o = i[e] || (i[e] = []), t.forEach(function(l, u) {
       return o.push({
         t: u / (t.length - 1) * 100,
@@ -1061,43 +2967,43 @@ var Qn = function(e, t, i, r, n, a, o) {
         v: t[a],
         e: n
       });
-}, mt = function(e, t, i, r, n) {
-  return G(e) ? e.call(t, i, r, n) : W(e) && ~e.indexOf("random(") ? xt(e) : e;
-}, Zr = Pi + "repeat,repeatDelay,yoyo,repeatRefresh,yoyoEase,autoRevert", Kr = {};
-ie(Zr + ",id,stagger,delay,duration,paused,scrollTrigger", function(s) {
-  return Kr[s] = 1;
+}, gt = function(e, t, i, r, n) {
+  return G(e) ? e.call(t, i, r, n) : W(e) && ~e.indexOf("random(") ? _t(e) : e;
+}, Jr = Ai + "repeat,repeatDelay,yoyo,repeatRefresh,yoyoEase,autoRevert", Qr = {};
+re(Jr + ",id,stagger,delay,duration,paused,scrollTrigger", function(s) {
+  return Qr[s] = 1;
 });
 var j = /* @__PURE__ */ (function(s) {
-  mr(e, s);
+  br(e, s);
   function e(i, r, n, a) {
     var o;
-    typeof r == "number" && (n.duration = r, r = n, n = null), o = s.call(this, a ? r : pt(r)) || this;
-    var l = o.vars, u = l.duration, c = l.delay, h = l.immediateRender, p = l.stagger, f = l.overwrite, m = l.keyframes, d = l.defaults, g = l.scrollTrigger, b = l.yoyoEase, y = r.parent || B, x = (K(i) || br(i) ? Se(i[0]) : "length" in r) ? [i] : be(i), v, _, C, w, P, E, T, L;
-    if (o._targets = x.length ? Ai(x) : bt("GSAP target " + i + " not found. https://gsap.com", !ue.nullTargetWarn) || [], o._ptLookup = [], o._overwrite = f, m || p || At(u) || At(c)) {
-      if (r = o.vars, v = o.timeline = new ee({
+    typeof r == "number" && (n.duration = r, r = n, n = null), o = s.call(this, a ? r : ft(r)) || this;
+    var l = o.vars, u = l.duration, c = l.delay, h = l.immediateRender, p = l.stagger, f = l.overwrite, m = l.keyframes, d = l.defaults, g = l.scrollTrigger, b = l.yoyoEase, y = r.parent || B, x = (J(i) || xr(i) ? Te(i[0]) : "length" in r) ? [i] : ye(i), v, _, C, w, P, E, T, L;
+    if (o._targets = x.length ? Si(x) : yt("GSAP target " + i + " not found. https://gsap.com", !he.nullTargetWarn) || [], o._ptLookup = [], o._overwrite = f, m || p || St(u) || St(c)) {
+      if (r = o.vars, v = o.timeline = new te({
         data: "nested",
         defaults: d || {},
         targets: y && y.data === "nested" ? y.vars.targets : x
-      }), v.kill(), v.parent = v._dp = Pe(o), v._start = 0, p || At(u) || At(c)) {
-        if (w = x.length, T = p && Or(p), Ce(p))
+      }), v.kill(), v.parent = v._dp = Ae(o), v._start = 0, p || St(u) || St(c)) {
+        if (w = x.length, T = p && zr(p), Pe(p))
           for (P in p)
-            ~Zr.indexOf(P) && (L || (L = {}), L[P] = p[P]);
+            ~Jr.indexOf(P) && (L || (L = {}), L[P] = p[P]);
         for (_ = 0; _ < w; _++)
-          C = zt(r, Kr), C.stagger = 0, b && (C.yoyoEase = b), L && at(C, L), E = x[_], C.duration = +mt(u, Pe(o), _, E, x), C.delay = (+mt(c, Pe(o), _, E, x) || 0) - o._delay, !p && w === 1 && C.delay && (o._delay = c = C.delay, o._start += c, C.delay = 0), v.to(E, C, T ? T(_, E, x) : 0), v._ease = I.none;
+          C = Ut(r, Qr), C.stagger = 0, b && (C.yoyoEase = b), L && ot(C, L), E = x[_], C.duration = +gt(u, Ae(o), _, E, x), C.delay = (+gt(c, Ae(o), _, E, x) || 0) - o._delay, !p && w === 1 && C.delay && (o._delay = c = C.delay, o._start += c, C.delay = 0), v.to(E, C, T ? T(_, E, x) : 0), v._ease = I.none;
         v.duration() ? u = c = 0 : o.timeline = 0;
       } else if (m) {
-        pt(de(v.vars.defaults, {
+        ft(pe(v.vars.defaults, {
           ease: "none"
-        })), v._ease = Ye(m.ease || r.ease || "none");
+        })), v._ease = We(m.ease || r.ease || "none");
         var M = 0, D, R, U;
-        if (K(m))
+        if (J(m))
           m.forEach(function(k) {
             return v.to(x, k, ">");
           }), v.duration();
         else {
           C = {};
           for (P in m)
-            P === "ease" || P === "easeEach" || ra(P, m[P], C, m.easeEach);
+            P === "ease" || P === "easeEach" || la(P, m[P], C, m.easeEach);
           for (P in C)
             for (D = C[P].sort(function(k, O) {
               return k.t - O.t;
@@ -1114,34 +3020,34 @@ var j = /* @__PURE__ */ (function(s) {
       u || o.duration(u = v.duration());
     } else
       o.timeline = 0;
-    return f === !0 && !xi && (Me = Pe(o), B.killTweensOf(x), Me = 0), ve(y, Pe(o), n), r.reversed && o.reverse(), r.paused && o.paused(!0), (h || !u && !m && o._start === H(y._time) && te(h) && kn(Pe(o)) && y.data !== "nested") && (o._tTime = -z, o.render(Math.max(0, -c) || 0)), g && Dr(Pe(o), g), o;
+    return f === !0 && !_i && (Le = Ae(o), B.killTweensOf(x), Le = 0), Ee(y, Ae(o), n), r.reversed && o.reverse(), r.paused && o.paused(!0), (h || !u && !m && o._start === H(y._time) && ie(h) && Nn(Ae(o)) && y.data !== "nested") && (o._tTime = -z, o.render(Math.max(0, -c) || 0)), g && Rr(Ae(o), g), o;
   }
   var t = e.prototype;
   return t.render = function(r, n, a) {
     var o = this._time, l = this._tDur, u = this._dur, c = r < 0, h = r > l - z && !c ? l : r < z ? 0 : r, p, f, m, d, g, b, y, x, v;
     if (!u)
-      Fn(this, r, n, a);
+      $n(this, r, n, a);
     else if (h !== this._tTime || !r || a || !this._initted && this._tTime || this._startAt && this._zTime < 0 !== c || this._lazy) {
       if (p = h, x = this.timeline, this._repeat) {
         if (d = u + this._rDelay, this._repeat < -1 && c)
           return this.totalTime(d * 100 + r, n, a);
-        if (p = H(h % d), h === l ? (m = this._repeat, p = u) : (g = H(h / d), m = ~~g, m && m === g ? (p = u, m--) : p > u && (p = u)), b = this._yoyo && m & 1, b && (v = this._yEase, p = u - p), g = ot(this._tTime, d), p === o && !a && this._initted && m === g)
+        if (p = H(h % d), h === l ? (m = this._repeat, p = u) : (g = H(h / d), m = ~~g, m && m === g ? (p = u, m--) : p > u && (p = u)), b = this._yoyo && m & 1, b && (v = this._yEase, p = u - p), g = st(this._tTime, d), p === o && !a && this._initted && m === g)
           return this._tTime = h, this;
-        m !== g && (x && this._yEase && Yr(x, b), this.vars.repeatRefresh && !b && !this._lock && p !== d && this._initted && (this._lock = a = 1, this.render(H(d * m), !0).invalidate()._lock = 0));
+        m !== g && (x && this._yEase && Xr(x, b), this.vars.repeatRefresh && !b && !this._lock && p !== d && this._initted && (this._lock = a = 1, this.render(H(d * m), !0).invalidate()._lock = 0));
       }
       if (!this._initted) {
-        if (Ir(this, c ? r : p, a, n, h))
+        if (kr(this, c ? r : p, a, n, h))
           return this._tTime = 0, this;
         if (o !== this._time && !(a && this.vars.repeatRefresh && m !== g))
           return this;
         if (u !== this._dur)
           return this.render(r, n, a);
       }
-      if (this._tTime = h, this._time = p, !this._act && this._ts && (this._act = 1, this._lazy = 0), this.ratio = y = (v || this._ease)(p / u), this._from && (this.ratio = y = 1 - y), !o && h && !n && !g && (ce(this, "onStart"), this._tTime !== h))
+      if (this._tTime = h, this._time = p, !this._act && this._ts && (this._act = 1, this._lazy = 0), this.ratio = y = (v || this._ease)(p / u), this._from && (this.ratio = y = 1 - y), !o && h && !n && !g && (ue(this, "onStart"), this._tTime !== h))
         return this;
       for (f = this._pt; f; )
         f.r(y, f.d), f = f._next;
-      x && x.render(r < 0 ? r : x._dur * x._ease(p / this._dur), n, a) || this._startAt && (this._zTime = r), this._onUpdate && !n && (c && si(this, r, n, a), ce(this, "onUpdate")), this._repeat && m !== g && this.vars.onRepeat && !n && this.parent && ce(this, "onRepeat"), (h === this._tDur || !h) && this._tTime === h && (c && !this._onUpdate && si(this, r, !0, !0), (r || !u) && (h === this._tDur && this._ts > 0 || !h && this._ts < 0) && Oe(this, 1), !n && !(c && !o) && (h || o || b) && (ce(this, h === l ? "onComplete" : "onReverseComplete", !0), this._prom && !(h < l && this.timeScale() > 0) && this._prom()));
+      x && x.render(r < 0 ? r : x._dur * x._ease(p / this._dur), n, a) || this._startAt && (this._zTime = r), this._onUpdate && !n && (c && li(this, r, n, a), ue(this, "onUpdate")), this._repeat && m !== g && this.vars.onRepeat && !n && this.parent && ue(this, "onRepeat"), (h === this._tDur || !h) && this._tTime === h && (c && !this._onUpdate && li(this, r, !0, !0), (r || !u) && (h === this._tDur && this._ts > 0 || !h && this._ts < 0) && Fe(this, 1), !n && !(c && !o) && (h || o || b) && (ue(this, h === l ? "onComplete" : "onReverseComplete", !0), this._prom && !(h < l && this.timeScale() > 0) && this._prom()));
     }
     return this;
   }, t.targets = function() {
@@ -1149,32 +3055,32 @@ var j = /* @__PURE__ */ (function(s) {
   }, t.invalidate = function(r) {
     return (!r || !this.vars.runBackwards) && (this._startAt = 0), this._pt = this._op = this._onUpdate = this._lazy = this.ratio = 0, this._ptLookup = [], this.timeline && this.timeline.invalidate(r), s.prototype.invalidate.call(this, r);
   }, t.resetTo = function(r, n, a, o, l) {
-    _t || le.wake(), this._ts || this.play();
+    vt || ce.wake(), this._ts || this.play();
     var u = Math.min(this._dur, (this._dp._time - this._start) * this._ts), c;
-    return this._initted || Mi(this, u), c = this._ease(u / this._dur), ta(this, r, n, a, o, c, u, l) ? this.resetTo(r, n, a, o, 1) : (jt(this, 0), this.parent || Mr(this._dp, this, "_first", "_last", this._dp._sort ? "_start" : 0), this.render(0));
+    return this._initted || Li(this, u), c = this._ease(u / this._dur), oa(this, r, n, a, o, c, u, l) ? this.resetTo(r, n, a, o, 1) : (Ht(this, 0), this.parent || Dr(this._dp, this, "_first", "_last", this._dp._sort ? "_start" : 0), this.render(0));
   }, t.kill = function(r, n) {
     if (n === void 0 && (n = "all"), !r && (!n || n === "all"))
-      return this._lazy = this._pt = 0, this.parent ? ht(this) : this.scrollTrigger && this.scrollTrigger.kill(!!X), this;
+      return this._lazy = this._pt = 0, this.parent ? dt(this) : this.scrollTrigger && this.scrollTrigger.kill(!!q), this;
     if (this.timeline) {
       var a = this.timeline.totalDuration();
-      return this.timeline.killTweensOf(r, n, Me && Me.vars.overwrite !== !0)._first || ht(this), this.parent && a !== this.timeline.totalDuration() && st(this, this._dur * this.timeline._tDur / a, 0, 1), this;
+      return this.timeline.killTweensOf(r, n, Le && Le.vars.overwrite !== !0)._first || dt(this), this.parent && a !== this.timeline.totalDuration() && lt(this, this._dur * this.timeline._tDur / a, 0, 1), this;
     }
-    var o = this._targets, l = r ? be(r) : o, u = this._ptLookup, c = this._pt, h, p, f, m, d, g, b;
-    if ((!n || n === "all") && In(o, l))
-      return n === "all" && (this._pt = 0), ht(this);
-    for (h = this._op = this._op || [], n !== "all" && (W(n) && (d = {}, ie(n, function(y) {
+    var o = this._targets, l = r ? ye(r) : o, u = this._ptLookup, c = this._pt, h, p, f, m, d, g, b;
+    if ((!n || n === "all") && zn(o, l))
+      return n === "all" && (this._pt = 0), dt(this);
+    for (h = this._op = this._op || [], n !== "all" && (W(n) && (d = {}, re(n, function(y) {
       return d[y] = 1;
-    }), n = d), n = ia(o, n)), b = o.length; b--; )
+    }), n = d), n = sa(o, n)), b = o.length; b--; )
       if (~l.indexOf(o[b])) {
         p = u[b], n === "all" ? (h[b] = n, m = p, f = {}) : (f = h[b] = h[b] || {}, m = n);
         for (d in m)
-          g = p && p[d], g && ((!("kill" in g.d) || g.d.kill(d) === !0) && Gt(this, g, "_pt"), delete p[d]), f !== "all" && (f[d] = 1);
+          g = p && p[d], g && ((!("kill" in g.d) || g.d.kill(d) === !0) && Vt(this, g, "_pt"), delete p[d]), f !== "all" && (f[d] = 1);
       }
-    return this._initted && !this._pt && c && ht(this), this;
+    return this._initted && !this._pt && c && dt(this), this;
   }, e.to = function(r, n) {
     return new e(r, n, arguments[2]);
   }, e.from = function(r, n) {
-    return ft(1, arguments);
+    return mt(1, arguments);
   }, e.delayedCall = function(r, n, a, o) {
     return new e(n, 0, {
       immediateRender: !1,
@@ -1188,41 +3094,41 @@ var j = /* @__PURE__ */ (function(s) {
       callbackScope: o
     });
   }, e.fromTo = function(r, n, a) {
-    return ft(2, arguments);
+    return mt(2, arguments);
   }, e.set = function(r, n) {
     return n.duration = 0, n.repeatDelay || (n.repeat = 0), new e(r, n);
   }, e.killTweensOf = function(r, n, a) {
     return B.killTweensOf(r, n, a);
   }, e;
-})(vt);
-de(j.prototype, {
+})(Et);
+pe(j.prototype, {
   _targets: [],
   _lazy: 0,
   _startAt: 0,
   _op: 0,
   _onInit: 0
 });
-ie("staggerTo,staggerFrom,staggerFromTo", function(s) {
+re("staggerTo,staggerFrom,staggerFromTo", function(s) {
   j[s] = function() {
-    var e = new ee(), t = ci.call(arguments, 0);
+    var e = new te(), t = ui.call(arguments, 0);
     return t.splice(s === "staggerFromTo" ? 5 : 4, 0, 0), e[s].apply(e, t);
   };
 });
-var Li = function(e, t, i) {
+var Di = function(e, t, i) {
   return e[t] = i;
-}, Jr = function(e, t, i) {
+}, en = function(e, t, i) {
   return e[t](i);
-}, na = function(e, t, i, r) {
+}, ca = function(e, t, i, r) {
   return e[t](r.fp, i);
-}, aa = function(e, t, i) {
+}, ua = function(e, t, i) {
   return e.setAttribute(t, i);
-}, Di = function(e, t) {
-  return G(e[t]) ? Jr : _i(e[t]) && e.setAttribute ? aa : Li;
-}, Qr = function(e, t) {
+}, Ii = function(e, t) {
+  return G(e[t]) ? en : vi(e[t]) && e.setAttribute ? ua : Di;
+}, tn = function(e, t) {
   return t.set(t.t, t.p, Math.round((t.s + t.c * e) * 1e6) / 1e6, t);
-}, oa = function(e, t) {
+}, ha = function(e, t) {
   return t.set(t.t, t.p, !!(t.s + t.c * e), t);
-}, en = function(e, t) {
+}, rn = function(e, t) {
   var i = t._pt, r = "";
   if (!e && t.b)
     r = t.b;
@@ -1234,73 +3140,73 @@ var Li = function(e, t, i) {
     r += t.c;
   }
   t.set(t.t, t.p, r, t);
-}, Ii = function(e, t) {
+}, Ri = function(e, t) {
   for (var i = t._pt; i; )
     i.r(e, i.d), i = i._next;
-}, sa = function(e, t, i, r) {
+}, da = function(e, t, i, r) {
   for (var n = this._pt, a; n; )
     a = n._next, n.p === r && n.modifier(e, t, i), n = a;
-}, la = function(e) {
+}, pa = function(e) {
   for (var t = this._pt, i, r; t; )
-    r = t._next, t.p === e && !t.op || t.op === e ? Gt(this, t, "_pt") : t.dep || (i = 1), t = r;
+    r = t._next, t.p === e && !t.op || t.op === e ? Vt(this, t, "_pt") : t.dep || (i = 1), t = r;
   return !i;
-}, ca = function(e, t, i, r) {
+}, fa = function(e, t, i, r) {
   r.mSet(e, t, r.m.call(r.tween, i, r.mt), r);
-}, tn = function(e) {
+}, nn = function(e) {
   for (var t = e._pt, i, r, n, a; t; ) {
     for (i = t._next, r = n; r && r.pr > t.pr; )
       r = r._next;
     (t._prev = r ? r._prev : a) ? t._prev._next = t : n = t, (t._next = r) ? r._prev = t : a = t, t = i;
   }
   e._pt = n;
-}, re = /* @__PURE__ */ (function() {
+}, ne = /* @__PURE__ */ (function() {
   function s(t, i, r, n, a, o, l, u, c) {
-    this.t = i, this.s = n, this.c = a, this.p = r, this.r = o || Qr, this.d = l || this, this.set = u || Li, this.pr = c || 0, this._next = t, t && (t._prev = this);
+    this.t = i, this.s = n, this.c = a, this.p = r, this.r = o || tn, this.d = l || this, this.set = u || Di, this.pr = c || 0, this._next = t, t && (t._prev = this);
   }
   var e = s.prototype;
   return e.modifier = function(i, r, n) {
-    this.mSet = this.mSet || this.set, this.set = ca, this.m = i, this.mt = n, this.tween = r;
+    this.mSet = this.mSet || this.set, this.set = fa, this.m = i, this.mt = n, this.tween = r;
   }, s;
 })();
-ie(Pi + "parent,duration,ease,delay,overwrite,runBackwards,startAt,yoyo,immediateRender,repeat,repeatDelay,data,paused,reversed,lazy,callbackScope,stringFilter,id,yoyoEase,stagger,inherit,repeatRefresh,keyframes,autoRevert,scrollTrigger", function(s) {
-  return Ci[s] = 1;
+re(Ai + "parent,duration,ease,delay,overwrite,runBackwards,startAt,yoyo,immediateRender,repeat,repeatDelay,data,paused,reversed,lazy,callbackScope,stringFilter,id,yoyoEase,stagger,inherit,repeatRefresh,keyframes,autoRevert,scrollTrigger", function(s) {
+  return Pi[s] = 1;
 });
-he.TweenMax = he.TweenLite = j;
-he.TimelineLite = he.TimelineMax = ee;
-B = new ee({
+de.TweenMax = de.TweenLite = j;
+de.TimelineLite = de.TimelineMax = te;
+B = new te({
   sortChildren: !1,
-  defaults: nt,
+  defaults: at,
   autoRemoveChildren: !0,
   id: "root",
   smoothChildTiming: !0
 });
-ue.stringFilter = jr;
-var We = [], It = {}, ua = [], Yi = 0, ha = 0, Zt = function(e) {
-  return (It[e] || ua).map(function(t) {
+he.stringFilter = Yr;
+var Xe = [], Rt = {}, ma = [], qi = 0, ga = 0, Jt = function(e) {
+  return (Rt[e] || ma).map(function(t) {
     return t();
   });
-}, pi = function() {
+}, fi = function() {
   var e = Date.now(), t = [];
-  e - Yi > 2 && (Zt("matchMediaInit"), We.forEach(function(i) {
+  e - qi > 2 && (Jt("matchMediaInit"), Xe.forEach(function(i) {
     var r = i.queries, n = i.conditions, a, o, l, u;
     for (o in r)
-      a = _e.matchMedia(r[o]).matches, a && (l = 1), a !== n[o] && (n[o] = a, u = 1);
+      a = ve.matchMedia(r[o]).matches, a && (l = 1), a !== n[o] && (n[o] = a, u = 1);
     u && (i.revert(), l && t.push(i));
-  }), Zt("matchMediaRevert"), t.forEach(function(i) {
+  }), Jt("matchMediaRevert"), t.forEach(function(i) {
     return i.onMatch(i, function(r) {
       return i.add(null, r);
     });
-  }), Yi = e, Zt("matchMedia"));
-}, rn = /* @__PURE__ */ (function() {
+  }), qi = e, Jt("matchMedia"));
+}, an = /* @__PURE__ */ (function() {
   function s(t, i) {
-    this.selector = i && ui(i), this.data = [], this._r = [], this.isReverted = !1, this.id = ha++, t && this.add(t);
+    this.selector = i && hi(i), this.data = [], this._r = [], this.isReverted = !1, this.id = ga++, t && this.add(t);
   }
   var e = s.prototype;
   return e.add = function(i, r, n) {
     G(i) && (n = r, r = i, i = G);
     var a = this, o = function() {
       var u = N, c = a.selector, h;
-      return u && u !== a && u.data.push(a), n && (a.selector = ui(n)), N = a, h = r.apply(a, arguments), G(h) && a._r.push(h), N = u, a.selector = c, a.isReverted = !1, h;
+      return u && u !== a && u.data.push(a), n && (a.selector = hi(n)), N = a, h = r.apply(a, arguments), G(h) && a._r.push(h), N = u, a.selector = c, a.isReverted = !1, h;
     };
     return a.last = o, i === G ? o(a, function(l) {
       return a.add(null, l);
@@ -1332,31 +3238,31 @@ var We = [], It = {}, ua = [], Yi = 0, ha = 0, Zt = function(e) {
       }).forEach(function(c) {
         return c.t.revert(i);
       }), l = n.data.length; l--; )
-        u = n.data[l], u instanceof ee ? u.data !== "nested" && (u.scrollTrigger && u.scrollTrigger.revert(), u.kill()) : !(u instanceof j) && u.revert && u.revert(i);
+        u = n.data[l], u instanceof te ? u.data !== "nested" && (u.scrollTrigger && u.scrollTrigger.revert(), u.kill()) : !(u instanceof j) && u.revert && u.revert(i);
       n._r.forEach(function(c) {
         return c(i, n);
       }), n.isReverted = !0;
     })() : this.data.forEach(function(o) {
       return o.kill && o.kill();
     }), this.clear(), r)
-      for (var a = We.length; a--; )
-        We[a].id === this.id && We.splice(a, 1);
+      for (var a = Xe.length; a--; )
+        Xe[a].id === this.id && Xe.splice(a, 1);
   }, e.revert = function(i) {
     this.kill(i || {});
   }, s;
-})(), da = /* @__PURE__ */ (function() {
+})(), ba = /* @__PURE__ */ (function() {
   function s(t) {
     this.contexts = [], this.scope = t, N && N.data.push(this);
   }
   var e = s.prototype;
   return e.add = function(i, r, n) {
-    Ce(i) || (i = {
+    Pe(i) || (i = {
       matches: i
     });
-    var a = new rn(0, n || this.scope), o = a.conditions = {}, l, u, c;
+    var a = new an(0, n || this.scope), o = a.conditions = {}, l, u, c;
     N && !a.selector && (a.selector = N.selector), this.contexts.push(a), r = a.add("onMatch", r), a.queries = i;
     for (u in i)
-      u === "all" ? c = 1 : (l = _e.matchMedia(i[u]), l && (We.indexOf(a) < 0 && We.push(a), (o[u] = l.matches) && (c = 1), l.addListener ? l.addListener(pi) : l.addEventListener("change", pi)));
+      u === "all" ? c = 1 : (l = ve.matchMedia(i[u]), l && (Xe.indexOf(a) < 0 && Xe.push(a), (o[u] = l.matches) && (c = 1), l.addListener ? l.addListener(fi) : l.addEventListener("change", fi)));
     return c && r(a, function(h) {
       return a.add(null, h);
     }), this;
@@ -1367,31 +3273,31 @@ var We = [], It = {}, ua = [], Yi = 0, ha = 0, Zt = function(e) {
       return r.kill(i, !0);
     });
   }, s;
-})(), Nt = {
+})(), Bt = {
   registerPlugin: function() {
     for (var e = arguments.length, t = new Array(e), i = 0; i < e; i++)
       t[i] = arguments[i];
     t.forEach(function(r) {
-      return $r(r);
+      return Vr(r);
     });
   },
   timeline: function(e) {
-    return new ee(e);
+    return new te(e);
   },
   getTweensOf: function(e, t) {
     return B.getTweensOf(e, t);
   },
   getProperty: function(e, t, i, r) {
-    W(e) && (e = be(e)[0]);
-    var n = je(e || {}).get, a = i ? Tr : Sr;
-    return i === "native" && (i = ""), e && (t ? a((se[t] && se[t].get || n)(e, t, i, r)) : function(o, l, u) {
-      return a((se[o] && se[o].get || n)(e, o, l, u));
+    W(e) && (e = ye(e)[0]);
+    var n = He(e || {}).get, a = i ? Lr : Mr;
+    return i === "native" && (i = ""), e && (t ? a((le[t] && le[t].get || n)(e, t, i, r)) : function(o, l, u) {
+      return a((le[o] && le[o].get || n)(e, o, l, u));
     });
   },
   quickSetter: function(e, t, i) {
-    if (e = be(e), e.length > 1) {
+    if (e = ye(e), e.length > 1) {
       var r = e.map(function(c) {
-        return ae.quickSetter(c, t, i);
+        return oe.quickSetter(c, t, i);
       }), n = r.length;
       return function(c) {
         for (var h = n; h--; )
@@ -1399,16 +3305,16 @@ var We = [], It = {}, ua = [], Yi = 0, ha = 0, Zt = function(e) {
       };
     }
     e = e[0] || {};
-    var a = se[t], o = je(e), l = o.harness && (o.harness.aliases || {})[t] || t, u = a ? function(c) {
+    var a = le[t], o = He(e), l = o.harness && (o.harness.aliases || {})[t] || t, u = a ? function(c) {
       var h = new a();
-      Je._pt = 0, h.init(e, i ? c + i : c, Je, 0, [e]), h.render(1, h), Je._pt && Ii(1, Je);
+      et._pt = 0, h.init(e, i ? c + i : c, et, 0, [e]), h.render(1, h), et._pt && Ri(1, et);
     } : o.set(e, l);
     return a ? u : function(c) {
       return u(e, l, i ? c + i : c, o, 1);
     };
   },
   quickTo: function(e, t, i) {
-    var r, n = ae.to(e, de((r = {}, r[t] = "+=0.1", r.paused = !0, r.stagger = 0, r), i || {})), a = function(l, u, c) {
+    var r, n = oe.to(e, pe((r = {}, r[t] = "+=0.1", r.paused = !0, r.stagger = 0, r), i || {})), a = function(l, u, c) {
       return n.resetTo(t, l, u, c);
     };
     return a.tween = n, a;
@@ -1417,119 +3323,119 @@ var We = [], It = {}, ua = [], Yi = 0, ha = 0, Zt = function(e) {
     return B.getTweensOf(e, !0).length > 0;
   },
   defaults: function(e) {
-    return e && e.ease && (e.ease = Ye(e.ease, nt.ease)), $i(nt, e || {});
+    return e && e.ease && (e.ease = We(e.ease, at.ease)), ji(at, e || {});
   },
   config: function(e) {
-    return $i(ue, e || {});
+    return ji(he, e || {});
   },
   registerEffect: function(e) {
     var t = e.name, i = e.effect, r = e.plugins, n = e.defaults, a = e.extendTimeline;
     (r || "").split(",").forEach(function(o) {
-      return o && !se[o] && !he[o] && bt(t + " effect requires " + o + " plugin.");
-    }), Yt[t] = function(o, l, u) {
-      return i(be(o), de(l || {}, n), u);
-    }, a && (ee.prototype[t] = function(o, l, u) {
-      return this.add(Yt[t](o, Ce(l) ? l : (u = l) && {}, this), u);
+      return o && !le[o] && !de[o] && yt(t + " effect requires " + o + " plugin.");
+    }), Xt[t] = function(o, l, u) {
+      return i(ye(o), pe(l || {}, n), u);
+    }, a && (te.prototype[t] = function(o, l, u) {
+      return this.add(Xt[t](o, Pe(l) ? l : (u = l) && {}, this), u);
     });
   },
   registerEase: function(e, t) {
-    I[e] = Ye(t);
+    I[e] = We(t);
   },
   parseEase: function(e, t) {
-    return arguments.length ? Ye(e, t) : I;
+    return arguments.length ? We(e, t) : I;
   },
   getById: function(e) {
     return B.getById(e);
   },
   exportRoot: function(e, t) {
     e === void 0 && (e = {});
-    var i = new ee(e), r, n;
-    for (i.smoothChildTiming = te(e.smoothChildTiming), B.remove(i), i._dp = 0, i._time = i._tTime = B._time, r = B._first; r; )
-      n = r._next, (t || !(!r._dur && r instanceof j && r.vars.onComplete === r._targets[0])) && ve(i, r, r._start - r._delay), r = n;
-    return ve(B, i, 0), i;
+    var i = new te(e), r, n;
+    for (i.smoothChildTiming = ie(e.smoothChildTiming), B.remove(i), i._dp = 0, i._time = i._tTime = B._time, r = B._first; r; )
+      n = r._next, (t || !(!r._dur && r instanceof j && r.vars.onComplete === r._targets[0])) && Ee(i, r, r._start - r._delay), r = n;
+    return Ee(B, i, 0), i;
   },
   context: function(e, t) {
-    return e ? new rn(e, t) : N;
+    return e ? new an(e, t) : N;
   },
   matchMedia: function(e) {
-    return new da(e);
+    return new ba(e);
   },
   matchMediaRefresh: function() {
-    return We.forEach(function(e) {
+    return Xe.forEach(function(e) {
       var t = e.conditions, i, r;
       for (r in t)
         t[r] && (t[r] = !1, i = 1);
       i && e.revert();
-    }) || pi();
+    }) || fi();
   },
   addEventListener: function(e, t) {
-    var i = It[e] || (It[e] = []);
+    var i = Rt[e] || (Rt[e] = []);
     ~i.indexOf(t) || i.push(t);
   },
   removeEventListener: function(e, t) {
-    var i = It[e], r = i && i.indexOf(t);
+    var i = Rt[e], r = i && i.indexOf(t);
     r >= 0 && i.splice(r, 1);
   },
   utils: {
-    wrap: jn,
-    wrapYoyo: Hn,
-    distribute: Or,
-    random: zr,
-    snap: Fr,
-    normalize: Vn,
-    getUnit: Z,
-    clamp: Nn,
-    splitColor: Gr,
-    toArray: be,
-    selector: ui,
-    mapRange: Nr,
-    pipe: $n,
-    unitize: Gn,
-    interpolate: Yn,
-    shuffle: kr
+    wrap: qn,
+    wrapYoyo: Zn,
+    distribute: zr,
+    random: Nr,
+    snap: Ur,
+    normalize: Xn,
+    getUnit: K,
+    clamp: jn,
+    splitColor: jr,
+    toArray: ye,
+    selector: hi,
+    mapRange: $r,
+    pipe: Yn,
+    unitize: Wn,
+    interpolate: Kn,
+    shuffle: Fr
   },
-  install: Er,
-  effects: Yt,
-  ticker: le,
-  updateRoot: ee.updateRoot,
-  plugins: se,
+  install: Cr,
+  effects: Xt,
+  ticker: ce,
+  updateRoot: te.updateRoot,
+  plugins: le,
   globalTimeline: B,
   core: {
-    PropTween: re,
-    globals: wr,
+    PropTween: ne,
+    globals: Pr,
     Tween: j,
-    Timeline: ee,
-    Animation: vt,
-    getCache: je,
-    _removeLinkedListItem: Gt,
+    Timeline: te,
+    Animation: Et,
+    getCache: He,
+    _removeLinkedListItem: Vt,
     reverting: function() {
-      return X;
+      return q;
     },
     context: function(e) {
       return e && N && (N.data.push(e), e._ctx = N), N;
     },
     suppressOverwrites: function(e) {
-      return xi = e;
+      return _i = e;
     }
   }
 };
-ie("to,from,fromTo,delayedCall,set,killTweensOf", function(s) {
-  return Nt[s] = j[s];
+re("to,from,fromTo,delayedCall,set,killTweensOf", function(s) {
+  return Bt[s] = j[s];
 });
-le.add(ee.updateRoot);
-Je = Nt.to({}, {
+ce.add(te.updateRoot);
+et = Bt.to({}, {
   duration: 0
 });
-var pa = function(e, t) {
+var ya = function(e, t) {
   for (var i = e._pt; i && i.p !== t && i.op !== t && i.fp !== t; )
     i = i._next;
   return i;
-}, fa = function(e, t) {
+}, xa = function(e, t) {
   var i = e._targets, r, n, a;
   for (r in t)
     for (n = i.length; n--; )
-      a = e._ptLookup[n][r], a && (a = a.d) && (a._pt && (a = pa(a, r)), a && a.modifier && a.modifier(t[r], e, i[n], r));
-}, Kt = function(e, t) {
+      a = e._ptLookup[n][r], a && (a = a.d) && (a._pt && (a = ya(a, r)), a && a.modifier && a.modifier(t[r], e, i[n], r));
+}, Qt = function(e, t) {
   return {
     name: e,
     headless: 1,
@@ -1538,7 +3444,7 @@ var pa = function(e, t) {
     init: function(r, n, a) {
       a._onInit = function(o) {
         var l, u;
-        if (W(n) && (l = {}, ie(n, function(c) {
+        if (W(n) && (l = {}, re(n, function(c) {
           return l[c] = 1;
         }), n = l), t) {
           l = {};
@@ -1546,11 +3452,11 @@ var pa = function(e, t) {
             l[u] = t(n[u]);
           n = l;
         }
-        fa(o, n);
+        xa(o, n);
       };
     }
   };
-}, ae = Nt.registerPlugin({
+}, oe = Bt.registerPlugin({
   name: "attr",
   init: function(e, t, i, r, n) {
     var a, o, l;
@@ -1560,7 +3466,7 @@ var pa = function(e, t) {
   },
   render: function(e, t) {
     for (var i = t._pt; i; )
-      X ? i.set(i.t, i.p, i.b, i) : i.r(e, i.d), i = i._next;
+      q ? i.set(i.t, i.p, i.b, i) : i.r(e, i.d), i = i._next;
   }
 }, {
   name: "endArray",
@@ -1569,10 +3475,10 @@ var pa = function(e, t) {
     for (var i = t.length; i--; )
       this.add(e, i, e[i] || 0, t[i], 0, 0, 0, 0, 0, 1);
   }
-}, Kt("roundProps", hi), Kt("modifiers"), Kt("snap", Fr)) || Nt;
-j.version = ee.version = ae.version = "3.13.0";
-vr = 1;
-vi() && lt();
+}, Qt("roundProps", di), Qt("modifiers"), Qt("snap", Ur)) || Bt;
+j.version = te.version = oe.version = "3.13.0";
+wr = 1;
+Ei() && ct();
 I.Power0;
 I.Power1;
 I.Power2;
@@ -1591,161 +3497,161 @@ I.Bounce;
 I.Sine;
 I.Expo;
 I.Circ;
-var Wi, Le, it, Ri, Ge, Xi, ki, ma = function() {
+var Zi, De, rt, ki, Ve, Ki, Oi, _a = function() {
   return typeof window < "u";
-}, Te = {}, $e = 180 / Math.PI, rt = Math.PI / 180, Ze = Math.atan2, qi = 1e8, Oi = /([A-Z])/g, ga = /(left|right|width|margin|padding|x)/i, ba = /[\s,\(]\S/, Ee = {
+}, Me = {}, Ge = 180 / Math.PI, nt = Math.PI / 180, Ke = Math.atan2, Ji = 1e8, Fi = /([A-Z])/g, va = /(left|right|width|margin|padding|x)/i, Ea = /[\s,\(]\S/, we = {
   autoAlpha: "opacity,visibility",
   scale: "scaleX,scaleY",
   alpha: "opacity"
-}, fi = function(e, t) {
+}, mi = function(e, t) {
   return t.set(t.t, t.p, Math.round((t.s + t.c * e) * 1e4) / 1e4 + t.u, t);
-}, ya = function(e, t) {
+}, wa = function(e, t) {
   return t.set(t.t, t.p, e === 1 ? t.e : Math.round((t.s + t.c * e) * 1e4) / 1e4 + t.u, t);
-}, xa = function(e, t) {
+}, Ca = function(e, t) {
   return t.set(t.t, t.p, e ? Math.round((t.s + t.c * e) * 1e4) / 1e4 + t.u : t.b, t);
-}, _a = function(e, t) {
+}, Pa = function(e, t) {
   var i = t.s + t.c * e;
   t.set(t.t, t.p, ~~(i + (i < 0 ? -0.5 : 0.5)) + t.u, t);
-}, nn = function(e, t) {
+}, on = function(e, t) {
   return t.set(t.t, t.p, e ? t.e : t.b, t);
-}, an = function(e, t) {
+}, sn = function(e, t) {
   return t.set(t.t, t.p, e !== 1 ? t.b : t.e, t);
-}, va = function(e, t, i) {
+}, Aa = function(e, t, i) {
   return e.style[t] = i;
-}, Ea = function(e, t, i) {
+}, Sa = function(e, t, i) {
   return e.style.setProperty(t, i);
-}, wa = function(e, t, i) {
+}, Ta = function(e, t, i) {
   return e._gsap[t] = i;
-}, Ca = function(e, t, i) {
+}, Ma = function(e, t, i) {
   return e._gsap.scaleX = e._gsap.scaleY = i;
-}, Pa = function(e, t, i, r, n) {
+}, La = function(e, t, i, r, n) {
   var a = e._gsap;
   a.scaleX = a.scaleY = i, a.renderTransform(n, a);
-}, Aa = function(e, t, i, r, n) {
+}, Da = function(e, t, i, r, n) {
   var a = e._gsap;
   a[t] = i, a.renderTransform(n, a);
-}, $ = "transform", ne = $ + "Origin", Sa = function s(e, t) {
+}, $ = "transform", ae = $ + "Origin", Ia = function s(e, t) {
   var i = this, r = this.target, n = r.style, a = r._gsap;
-  if (e in Te && n) {
+  if (e in Me && n) {
     if (this.tfm = this.tfm || {}, e !== "transform")
-      e = Ee[e] || e, ~e.indexOf(",") ? e.split(",").forEach(function(o) {
-        return i.tfm[o] = Ae(r, o);
-      }) : this.tfm[e] = a.x ? a[e] : Ae(r, e), e === ne && (this.tfm.zOrigin = a.zOrigin);
+      e = we[e] || e, ~e.indexOf(",") ? e.split(",").forEach(function(o) {
+        return i.tfm[o] = Se(r, o);
+      }) : this.tfm[e] = a.x ? a[e] : Se(r, e), e === ae && (this.tfm.zOrigin = a.zOrigin);
     else
-      return Ee.transform.split(",").forEach(function(o) {
+      return we.transform.split(",").forEach(function(o) {
         return s.call(i, o, t);
       });
     if (this.props.indexOf($) >= 0)
       return;
-    a.svg && (this.svgo = r.getAttribute("data-svg-origin"), this.props.push(ne, t, "")), e = $;
+    a.svg && (this.svgo = r.getAttribute("data-svg-origin"), this.props.push(ae, t, "")), e = $;
   }
   (n || t) && this.props.push(e, t, n[e]);
-}, on = function(e) {
+}, ln = function(e) {
   e.translate && (e.removeProperty("translate"), e.removeProperty("scale"), e.removeProperty("rotate"));
-}, Ta = function() {
+}, Ra = function() {
   var e = this.props, t = this.target, i = t.style, r = t._gsap, n, a;
   for (n = 0; n < e.length; n += 3)
-    e[n + 1] ? e[n + 1] === 2 ? t[e[n]](e[n + 2]) : t[e[n]] = e[n + 2] : e[n + 2] ? i[e[n]] = e[n + 2] : i.removeProperty(e[n].substr(0, 2) === "--" ? e[n] : e[n].replace(Oi, "-$1").toLowerCase());
+    e[n + 1] ? e[n + 1] === 2 ? t[e[n]](e[n + 2]) : t[e[n]] = e[n + 2] : e[n + 2] ? i[e[n]] = e[n + 2] : i.removeProperty(e[n].substr(0, 2) === "--" ? e[n] : e[n].replace(Fi, "-$1").toLowerCase());
   if (this.tfm) {
     for (a in this.tfm)
       r[a] = this.tfm[a];
-    r.svg && (r.renderTransform(), t.setAttribute("data-svg-origin", this.svgo || "")), n = ki(), (!n || !n.isStart) && !i[$] && (on(i), r.zOrigin && i[ne] && (i[ne] += " " + r.zOrigin + "px", r.zOrigin = 0, r.renderTransform()), r.uncache = 1);
+    r.svg && (r.renderTransform(), t.setAttribute("data-svg-origin", this.svgo || "")), n = Oi(), (!n || !n.isStart) && !i[$] && (ln(i), r.zOrigin && i[ae] && (i[ae] += " " + r.zOrigin + "px", r.zOrigin = 0, r.renderTransform()), r.uncache = 1);
   }
-}, sn = function(e, t) {
+}, cn = function(e, t) {
   var i = {
     target: e,
     props: [],
-    revert: Ta,
-    save: Sa
+    revert: Ra,
+    save: Ia
   };
-  return e._gsap || ae.core.getCache(e), t && e.style && e.nodeType && t.split(",").forEach(function(r) {
+  return e._gsap || oe.core.getCache(e), t && e.style && e.nodeType && t.split(",").forEach(function(r) {
     return i.save(r);
   }), i;
-}, ln, mi = function(e, t) {
-  var i = Le.createElementNS ? Le.createElementNS((t || "http://www.w3.org/1999/xhtml").replace(/^https/, "http"), e) : Le.createElement(e);
-  return i && i.style ? i : Le.createElement(e);
-}, ye = function s(e, t, i) {
+}, un, gi = function(e, t) {
+  var i = De.createElementNS ? De.createElementNS((t || "http://www.w3.org/1999/xhtml").replace(/^https/, "http"), e) : De.createElement(e);
+  return i && i.style ? i : De.createElement(e);
+}, xe = function s(e, t, i) {
   var r = getComputedStyle(e);
-  return r[t] || r.getPropertyValue(t.replace(Oi, "-$1").toLowerCase()) || r.getPropertyValue(t) || !i && s(e, ct(t) || t, 1) || "";
-}, Zi = "O,Moz,ms,Ms,Webkit".split(","), ct = function(e, t, i) {
-  var r = t || Ge, n = r.style, a = 5;
+  return r[t] || r.getPropertyValue(t.replace(Fi, "-$1").toLowerCase()) || r.getPropertyValue(t) || !i && s(e, ut(t) || t, 1) || "";
+}, Qi = "O,Moz,ms,Ms,Webkit".split(","), ut = function(e, t, i) {
+  var r = t || Ve, n = r.style, a = 5;
   if (e in n && !i)
     return e;
-  for (e = e.charAt(0).toUpperCase() + e.substr(1); a-- && !(Zi[a] + e in n); )
+  for (e = e.charAt(0).toUpperCase() + e.substr(1); a-- && !(Qi[a] + e in n); )
     ;
-  return a < 0 ? null : (a === 3 ? "ms" : a >= 0 ? Zi[a] : "") + e;
-}, gi = function() {
-  ma() && window.document && (Wi = window, Le = Wi.document, it = Le.documentElement, Ge = mi("div") || {
+  return a < 0 ? null : (a === 3 ? "ms" : a >= 0 ? Qi[a] : "") + e;
+}, bi = function() {
+  _a() && window.document && (Zi = window, De = Zi.document, rt = De.documentElement, Ve = gi("div") || {
     style: {}
-  }, mi("div"), $ = ct($), ne = $ + "Origin", Ge.style.cssText = "border-width:0;line-height:0;position:absolute;padding:0", ln = !!ct("perspective"), ki = ae.core.reverting, Ri = 1);
-}, Ki = function(e) {
-  var t = e.ownerSVGElement, i = mi("svg", t && t.getAttribute("xmlns") || "http://www.w3.org/2000/svg"), r = e.cloneNode(!0), n;
-  r.style.display = "block", i.appendChild(r), it.appendChild(i);
+  }, gi("div"), $ = ut($), ae = $ + "Origin", Ve.style.cssText = "border-width:0;line-height:0;position:absolute;padding:0", un = !!ut("perspective"), Oi = oe.core.reverting, ki = 1);
+}, er = function(e) {
+  var t = e.ownerSVGElement, i = gi("svg", t && t.getAttribute("xmlns") || "http://www.w3.org/2000/svg"), r = e.cloneNode(!0), n;
+  r.style.display = "block", i.appendChild(r), rt.appendChild(i);
   try {
     n = r.getBBox();
   } catch {
   }
-  return i.removeChild(r), it.removeChild(i), n;
-}, Ji = function(e, t) {
+  return i.removeChild(r), rt.removeChild(i), n;
+}, tr = function(e, t) {
   for (var i = t.length; i--; )
     if (e.hasAttribute(t[i]))
       return e.getAttribute(t[i]);
-}, cn = function(e) {
+}, hn = function(e) {
   var t, i;
   try {
     t = e.getBBox();
   } catch {
-    t = Ki(e), i = 1;
+    t = er(e), i = 1;
   }
-  return t && (t.width || t.height) || i || (t = Ki(e)), t && !t.width && !t.x && !t.y ? {
-    x: +Ji(e, ["x", "cx", "x1"]) || 0,
-    y: +Ji(e, ["y", "cy", "y1"]) || 0,
+  return t && (t.width || t.height) || i || (t = er(e)), t && !t.width && !t.x && !t.y ? {
+    x: +tr(e, ["x", "cx", "x1"]) || 0,
+    y: +tr(e, ["y", "cy", "y1"]) || 0,
     width: 0,
     height: 0
   } : t;
-}, un = function(e) {
-  return !!(e.getCTM && (!e.parentNode || e.ownerSVGElement) && cn(e));
-}, Xe = function(e, t) {
+}, dn = function(e) {
+  return !!(e.getCTM && (!e.parentNode || e.ownerSVGElement) && hn(e));
+}, qe = function(e, t) {
   if (t) {
     var i = e.style, r;
-    t in Te && t !== ne && (t = $), i.removeProperty ? (r = t.substr(0, 2), (r === "ms" || t.substr(0, 6) === "webkit") && (t = "-" + t), i.removeProperty(r === "--" ? t : t.replace(Oi, "-$1").toLowerCase())) : i.removeAttribute(t);
+    t in Me && t !== ae && (t = $), i.removeProperty ? (r = t.substr(0, 2), (r === "ms" || t.substr(0, 6) === "webkit") && (t = "-" + t), i.removeProperty(r === "--" ? t : t.replace(Fi, "-$1").toLowerCase())) : i.removeAttribute(t);
   }
-}, De = function(e, t, i, r, n, a) {
-  var o = new re(e._pt, t, i, 0, 1, a ? an : nn);
+}, Ie = function(e, t, i, r, n, a) {
+  var o = new ne(e._pt, t, i, 0, 1, a ? sn : on);
   return e._pt = o, o.b = r, o.e = n, e._props.push(i), o;
-}, Qi = {
+}, ir = {
   deg: 1,
   rad: 1,
   turn: 1
-}, Ma = {
+}, ka = {
   grid: 1,
   flex: 1
-}, Fe = function s(e, t, i, r) {
-  var n = parseFloat(i) || 0, a = (i + "").trim().substr((n + "").length) || "px", o = Ge.style, l = ga.test(t), u = e.tagName.toLowerCase() === "svg", c = (u ? "client" : "offset") + (l ? "Width" : "Height"), h = 100, p = r === "px", f = r === "%", m, d, g, b;
-  if (r === a || !n || Qi[r] || Qi[a])
+}, ze = function s(e, t, i, r) {
+  var n = parseFloat(i) || 0, a = (i + "").trim().substr((n + "").length) || "px", o = Ve.style, l = va.test(t), u = e.tagName.toLowerCase() === "svg", c = (u ? "client" : "offset") + (l ? "Width" : "Height"), h = 100, p = r === "px", f = r === "%", m, d, g, b;
+  if (r === a || !n || ir[r] || ir[a])
     return n;
-  if (a !== "px" && !p && (n = s(e, t, i, "px")), b = e.getCTM && un(e), (f || a === "%") && (Te[t] || ~t.indexOf("adius")))
+  if (a !== "px" && !p && (n = s(e, t, i, "px")), b = e.getCTM && dn(e), (f || a === "%") && (Me[t] || ~t.indexOf("adius")))
     return m = b ? e.getBBox()[l ? "width" : "height"] : e[c], V(f ? n / m * h : n / 100 * m);
-  if (o[l ? "width" : "height"] = h + (p ? a : r), d = r !== "rem" && ~t.indexOf("adius") || r === "em" && e.appendChild && !u ? e : e.parentNode, b && (d = (e.ownerSVGElement || {}).parentNode), (!d || d === Le || !d.appendChild) && (d = Le.body), g = d._gsap, g && f && g.width && l && g.time === le.time && !g.uncache)
+  if (o[l ? "width" : "height"] = h + (p ? a : r), d = r !== "rem" && ~t.indexOf("adius") || r === "em" && e.appendChild && !u ? e : e.parentNode, b && (d = (e.ownerSVGElement || {}).parentNode), (!d || d === De || !d.appendChild) && (d = De.body), g = d._gsap, g && f && g.width && l && g.time === ce.time && !g.uncache)
     return V(n / g.width * h);
   if (f && (t === "height" || t === "width")) {
     var y = e.style[t];
-    e.style[t] = h + r, m = e[c], y ? e.style[t] = y : Xe(e, t);
+    e.style[t] = h + r, m = e[c], y ? e.style[t] = y : qe(e, t);
   } else
-    (f || a === "%") && !Ma[ye(d, "display")] && (o.position = ye(e, "position")), d === e && (o.position = "static"), d.appendChild(Ge), m = Ge[c], d.removeChild(Ge), o.position = "absolute";
-  return l && f && (g = je(d), g.time = le.time, g.width = d[c]), V(p ? m * n / h : m && n ? h / m * n : 0);
-}, Ae = function(e, t, i, r) {
+    (f || a === "%") && !ka[xe(d, "display")] && (o.position = xe(e, "position")), d === e && (o.position = "static"), d.appendChild(Ve), m = Ve[c], d.removeChild(Ve), o.position = "absolute";
+  return l && f && (g = He(d), g.time = ce.time, g.width = d[c]), V(p ? m * n / h : m && n ? h / m * n : 0);
+}, Se = function(e, t, i, r) {
   var n;
-  return Ri || gi(), t in Ee && t !== "transform" && (t = Ee[t], ~t.indexOf(",") && (t = t.split(",")[0])), Te[t] && t !== "transform" ? (n = wt(e, r), n = t !== "transformOrigin" ? n[t] : n.svg ? n.origin : $t(ye(e, ne)) + " " + n.zOrigin + "px") : (n = e.style[t], (!n || n === "auto" || r || ~(n + "").indexOf("calc(")) && (n = Bt[t] && Bt[t](e, t, i) || ye(e, t) || Pr(e, t) || (t === "opacity" ? 1 : 0))), i && !~(n + "").trim().indexOf(" ") ? Fe(e, t, n, i) + i : n;
-}, La = function(e, t, i, r) {
+  return ki || bi(), t in we && t !== "transform" && (t = we[t], ~t.indexOf(",") && (t = t.split(",")[0])), Me[t] && t !== "transform" ? (n = Ct(e, r), n = t !== "transformOrigin" ? n[t] : n.svg ? n.origin : Gt(xe(e, ae)) + " " + n.zOrigin + "px") : (n = e.style[t], (!n || n === "auto" || r || ~(n + "").indexOf("calc(")) && (n = $t[t] && $t[t](e, t, i) || xe(e, t) || Sr(e, t) || (t === "opacity" ? 1 : 0))), i && !~(n + "").trim().indexOf(" ") ? ze(e, t, n, i) + i : n;
+}, Oa = function(e, t, i, r) {
   if (!i || i === "none") {
-    var n = ct(t, e, 1), a = n && ye(e, n, 1);
-    a && a !== i ? (t = n, i = a) : t === "borderColor" && (i = ye(e, "borderTopColor"));
+    var n = ut(t, e, 1), a = n && xe(e, n, 1);
+    a && a !== i ? (t = n, i = a) : t === "borderColor" && (i = xe(e, "borderTopColor"));
   }
-  var o = new re(this._pt, e.style, t, 0, 1, en), l = 0, u = 0, c, h, p, f, m, d, g, b, y, x, v, _;
-  if (o.b = i, o.e = r, i += "", r += "", r.substring(0, 6) === "var(--" && (r = ye(e, r.substring(4, r.indexOf(")")))), r === "auto" && (d = e.style[t], e.style[t] = r, r = ye(e, t) || r, d ? e.style[t] = d : Xe(e, t)), c = [i, r], jr(c), i = c[0], r = c[1], p = i.match(Ke) || [], _ = r.match(Ke) || [], _.length) {
-    for (; h = Ke.exec(r); )
-      g = h[0], y = r.substring(l, h.index), m ? m = (m + 1) % 5 : (y.substr(-5) === "rgba(" || y.substr(-5) === "hsla(") && (m = 1), g !== (d = p[u++] || "") && (f = parseFloat(d) || 0, v = d.substr((f + "").length), g.charAt(1) === "=" && (g = tt(f, g) + v), b = parseFloat(g), x = g.substr((b + "").length), l = Ke.lastIndex - x.length, x || (x = x || ue.units[t] || v, l === r.length && (r += x, o.e += x)), v !== x && (f = Fe(e, t, d, x) || 0), o._pt = {
+  var o = new ne(this._pt, e.style, t, 0, 1, rn), l = 0, u = 0, c, h, p, f, m, d, g, b, y, x, v, _;
+  if (o.b = i, o.e = r, i += "", r += "", r.substring(0, 6) === "var(--" && (r = xe(e, r.substring(4, r.indexOf(")")))), r === "auto" && (d = e.style[t], e.style[t] = r, r = xe(e, t) || r, d ? e.style[t] = d : qe(e, t)), c = [i, r], Yr(c), i = c[0], r = c[1], p = i.match(Qe) || [], _ = r.match(Qe) || [], _.length) {
+    for (; h = Qe.exec(r); )
+      g = h[0], y = r.substring(l, h.index), m ? m = (m + 1) % 5 : (y.substr(-5) === "rgba(" || y.substr(-5) === "hsla(") && (m = 1), g !== (d = p[u++] || "") && (f = parseFloat(d) || 0, v = d.substr((f + "").length), g.charAt(1) === "=" && (g = it(f, g) + v), b = parseFloat(g), x = g.substr((b + "").length), l = Qe.lastIndex - x.length, x || (x = x || he.units[t] || v, l === r.length && (r += x, o.e += x)), v !== x && (f = ze(e, t, d, x) || 0), o._pt = {
         _next: o._pt,
         p: y || u === 1 ? y : ",",
         //note: SVG spec allows omission of comma/space when a negative sign is wedged between two numbers, like 2.5-5.3 instead of 2.5,-5.3 but when tweening, the negative value may switch to positive, so we insert the comma just in case.
@@ -1755,31 +3661,31 @@ var Wi, Le, it, Ri, Ge, Xi, ki, ma = function() {
       });
     o.c = l < r.length ? r.substring(l, r.length) : "";
   } else
-    o.r = t === "display" && r === "none" ? an : nn;
-  return xr.test(r) && (o.e = 0), this._pt = o, o;
-}, er = {
+    o.r = t === "display" && r === "none" ? sn : on;
+  return vr.test(r) && (o.e = 0), this._pt = o, o;
+}, rr = {
   top: "0%",
   bottom: "100%",
   left: "0%",
   right: "100%",
   center: "50%"
-}, Da = function(e) {
+}, Fa = function(e) {
   var t = e.split(" "), i = t[0], r = t[1] || "50%";
-  return (i === "top" || i === "bottom" || r === "left" || r === "right") && (e = i, i = r, r = e), t[0] = er[i] || i, t[1] = er[r] || r, t.join(" ");
-}, Ia = function(e, t) {
+  return (i === "top" || i === "bottom" || r === "left" || r === "right") && (e = i, i = r, r = e), t[0] = rr[i] || i, t[1] = rr[r] || r, t.join(" ");
+}, za = function(e, t) {
   if (t.tween && t.tween._time === t.tween._dur) {
     var i = t.t, r = i.style, n = t.u, a = i._gsap, o, l, u;
     if (n === "all" || n === !0)
       r.cssText = "", l = 1;
     else
       for (n = n.split(","), u = n.length; --u > -1; )
-        o = n[u], Te[o] && (l = 1, o = o === "transformOrigin" ? ne : $), Xe(i, o);
-    l && (Xe(i, $), a && (a.svg && i.removeAttribute("transform"), r.scale = r.rotate = r.translate = "none", wt(i, 1), a.uncache = 1, on(r)));
+        o = n[u], Me[o] && (l = 1, o = o === "transformOrigin" ? ae : $), qe(i, o);
+    l && (qe(i, $), a && (a.svg && i.removeAttribute("transform"), r.scale = r.rotate = r.translate = "none", Ct(i, 1), a.uncache = 1, ln(r)));
   }
-}, Bt = {
+}, $t = {
   clearProps: function(e, t, i, r, n) {
     if (n.data !== "isFromStart") {
-      var a = e._pt = new re(e._pt, t, i, 0, 0, Ia);
+      var a = e._pt = new ne(e._pt, t, i, 0, 0, za);
       return a.u = r, a.pr = -10, a.tween = n, e._props.push(i), 1;
     }
   }
@@ -1846,163 +3752,163 @@ var Wi, Le, it, Ri, Ge, Xi, ki, ma = function() {
   	return 1;
   }
   */
-}, Et = [1, 0, 0, 1, 0, 0], hn = {}, dn = function(e) {
+}, wt = [1, 0, 0, 1, 0, 0], pn = {}, fn = function(e) {
   return e === "matrix(1, 0, 0, 1, 0, 0)" || e === "none" || !e;
-}, tr = function(e) {
-  var t = ye(e, $);
-  return dn(t) ? Et : t.substr(7).match(yr).map(V);
-}, Fi = function(e, t) {
-  var i = e._gsap || je(e), r = e.style, n = tr(e), a, o, l, u;
-  return i.svg && e.getAttribute("transform") ? (l = e.transform.baseVal.consolidate().matrix, n = [l.a, l.b, l.c, l.d, l.e, l.f], n.join(",") === "1,0,0,1,0,0" ? Et : n) : (n === Et && !e.offsetParent && e !== it && !i.svg && (l = r.display, r.display = "block", a = e.parentNode, (!a || !e.offsetParent && !e.getBoundingClientRect().width) && (u = 1, o = e.nextElementSibling, it.appendChild(e)), n = tr(e), l ? r.display = l : Xe(e, "display"), u && (o ? a.insertBefore(e, o) : a ? a.appendChild(e) : it.removeChild(e))), t && n.length > 6 ? [n[0], n[1], n[4], n[5], n[12], n[13]] : n);
-}, bi = function(e, t, i, r, n, a) {
-  var o = e._gsap, l = n || Fi(e, !0), u = o.xOrigin || 0, c = o.yOrigin || 0, h = o.xOffset || 0, p = o.yOffset || 0, f = l[0], m = l[1], d = l[2], g = l[3], b = l[4], y = l[5], x = t.split(" "), v = parseFloat(x[0]) || 0, _ = parseFloat(x[1]) || 0, C, w, P, E;
-  i ? l !== Et && (w = f * g - m * d) && (P = v * (g / w) + _ * (-d / w) + (d * y - g * b) / w, E = v * (-m / w) + _ * (f / w) - (f * y - m * b) / w, v = P, _ = E) : (C = cn(e), v = C.x + (~x[0].indexOf("%") ? v / 100 * C.width : v), _ = C.y + (~(x[1] || x[0]).indexOf("%") ? _ / 100 * C.height : _)), r || r !== !1 && o.smooth ? (b = v - u, y = _ - c, o.xOffset = h + (b * f + y * d) - b, o.yOffset = p + (b * m + y * g) - y) : o.xOffset = o.yOffset = 0, o.xOrigin = v, o.yOrigin = _, o.smooth = !!r, o.origin = t, o.originIsAbsolute = !!i, e.style[ne] = "0px 0px", a && (De(a, o, "xOrigin", u, v), De(a, o, "yOrigin", c, _), De(a, o, "xOffset", h, o.xOffset), De(a, o, "yOffset", p, o.yOffset)), e.setAttribute("data-svg-origin", v + " " + _);
-}, wt = function(e, t) {
-  var i = e._gsap || new Xr(e);
+}, nr = function(e) {
+  var t = xe(e, $);
+  return fn(t) ? wt : t.substr(7).match(_r).map(V);
+}, zi = function(e, t) {
+  var i = e._gsap || He(e), r = e.style, n = nr(e), a, o, l, u;
+  return i.svg && e.getAttribute("transform") ? (l = e.transform.baseVal.consolidate().matrix, n = [l.a, l.b, l.c, l.d, l.e, l.f], n.join(",") === "1,0,0,1,0,0" ? wt : n) : (n === wt && !e.offsetParent && e !== rt && !i.svg && (l = r.display, r.display = "block", a = e.parentNode, (!a || !e.offsetParent && !e.getBoundingClientRect().width) && (u = 1, o = e.nextElementSibling, rt.appendChild(e)), n = nr(e), l ? r.display = l : qe(e, "display"), u && (o ? a.insertBefore(e, o) : a ? a.appendChild(e) : rt.removeChild(e))), t && n.length > 6 ? [n[0], n[1], n[4], n[5], n[12], n[13]] : n);
+}, yi = function(e, t, i, r, n, a) {
+  var o = e._gsap, l = n || zi(e, !0), u = o.xOrigin || 0, c = o.yOrigin || 0, h = o.xOffset || 0, p = o.yOffset || 0, f = l[0], m = l[1], d = l[2], g = l[3], b = l[4], y = l[5], x = t.split(" "), v = parseFloat(x[0]) || 0, _ = parseFloat(x[1]) || 0, C, w, P, E;
+  i ? l !== wt && (w = f * g - m * d) && (P = v * (g / w) + _ * (-d / w) + (d * y - g * b) / w, E = v * (-m / w) + _ * (f / w) - (f * y - m * b) / w, v = P, _ = E) : (C = hn(e), v = C.x + (~x[0].indexOf("%") ? v / 100 * C.width : v), _ = C.y + (~(x[1] || x[0]).indexOf("%") ? _ / 100 * C.height : _)), r || r !== !1 && o.smooth ? (b = v - u, y = _ - c, o.xOffset = h + (b * f + y * d) - b, o.yOffset = p + (b * m + y * g) - y) : o.xOffset = o.yOffset = 0, o.xOrigin = v, o.yOrigin = _, o.smooth = !!r, o.origin = t, o.originIsAbsolute = !!i, e.style[ae] = "0px 0px", a && (Ie(a, o, "xOrigin", u, v), Ie(a, o, "yOrigin", c, _), Ie(a, o, "xOffset", h, o.xOffset), Ie(a, o, "yOffset", p, o.yOffset)), e.setAttribute("data-svg-origin", v + " " + _);
+}, Ct = function(e, t) {
+  var i = e._gsap || new Zr(e);
   if ("x" in i && !t && !i.uncache)
     return i;
-  var r = e.style, n = i.scaleX < 0, a = "px", o = "deg", l = getComputedStyle(e), u = ye(e, ne) || "0", c, h, p, f, m, d, g, b, y, x, v, _, C, w, P, E, T, L, M, D, R, U, k, O, q, Ue, A, xe, J, oe, pe, fe;
-  return c = h = p = d = g = b = y = x = v = 0, f = m = 1, i.svg = !!(e.getCTM && un(e)), l.translate && ((l.translate !== "none" || l.scale !== "none" || l.rotate !== "none") && (r[$] = (l.translate !== "none" ? "translate3d(" + (l.translate + " 0 0").split(" ").slice(0, 3).join(", ") + ") " : "") + (l.rotate !== "none" ? "rotate(" + l.rotate + ") " : "") + (l.scale !== "none" ? "scale(" + l.scale.split(" ").join(",") + ") " : "") + (l[$] !== "none" ? l[$] : "")), r.scale = r.rotate = r.translate = "none"), w = Fi(e, i.svg), i.svg && (i.uncache ? (q = e.getBBox(), u = i.xOrigin - q.x + "px " + (i.yOrigin - q.y) + "px", O = "") : O = !t && e.getAttribute("data-svg-origin"), bi(e, O || u, !!O || i.originIsAbsolute, i.smooth !== !1, w)), _ = i.xOrigin || 0, C = i.yOrigin || 0, w !== Et && (L = w[0], M = w[1], D = w[2], R = w[3], c = U = w[4], h = k = w[5], w.length === 6 ? (f = Math.sqrt(L * L + M * M), m = Math.sqrt(R * R + D * D), d = L || M ? Ze(M, L) * $e : 0, y = D || R ? Ze(D, R) * $e + d : 0, y && (m *= Math.abs(Math.cos(y * rt))), i.svg && (c -= _ - (_ * L + C * D), h -= C - (_ * M + C * R))) : (fe = w[6], oe = w[7], A = w[8], xe = w[9], J = w[10], pe = w[11], c = w[12], h = w[13], p = w[14], P = Ze(fe, J), g = P * $e, P && (E = Math.cos(-P), T = Math.sin(-P), O = U * E + A * T, q = k * E + xe * T, Ue = fe * E + J * T, A = U * -T + A * E, xe = k * -T + xe * E, J = fe * -T + J * E, pe = oe * -T + pe * E, U = O, k = q, fe = Ue), P = Ze(-D, J), b = P * $e, P && (E = Math.cos(-P), T = Math.sin(-P), O = L * E - A * T, q = M * E - xe * T, Ue = D * E - J * T, pe = R * T + pe * E, L = O, M = q, D = Ue), P = Ze(M, L), d = P * $e, P && (E = Math.cos(P), T = Math.sin(P), O = L * E + M * T, q = U * E + k * T, M = M * E - L * T, k = k * E - U * T, L = O, U = q), g && Math.abs(g) + Math.abs(d) > 359.9 && (g = d = 0, b = 180 - b), f = V(Math.sqrt(L * L + M * M + D * D)), m = V(Math.sqrt(k * k + fe * fe)), P = Ze(U, k), y = Math.abs(P) > 2e-4 ? P * $e : 0, v = pe ? 1 / (pe < 0 ? -pe : pe) : 0), i.svg && (O = e.getAttribute("transform"), i.forceCSS = e.setAttribute("transform", "") || !dn(ye(e, $)), O && e.setAttribute("transform", O))), Math.abs(y) > 90 && Math.abs(y) < 270 && (n ? (f *= -1, y += d <= 0 ? 180 : -180, d += d <= 0 ? 180 : -180) : (m *= -1, y += y <= 0 ? 180 : -180)), t = t || i.uncache, i.x = c - ((i.xPercent = c && (!t && i.xPercent || (Math.round(e.offsetWidth / 2) === Math.round(-c) ? -50 : 0))) ? e.offsetWidth * i.xPercent / 100 : 0) + a, i.y = h - ((i.yPercent = h && (!t && i.yPercent || (Math.round(e.offsetHeight / 2) === Math.round(-h) ? -50 : 0))) ? e.offsetHeight * i.yPercent / 100 : 0) + a, i.z = p + a, i.scaleX = V(f), i.scaleY = V(m), i.rotation = V(d) + o, i.rotationX = V(g) + o, i.rotationY = V(b) + o, i.skewX = y + o, i.skewY = x + o, i.transformPerspective = v + a, (i.zOrigin = parseFloat(u.split(" ")[2]) || !t && i.zOrigin || 0) && (r[ne] = $t(u)), i.xOffset = i.yOffset = 0, i.force3D = ue.force3D, i.renderTransform = i.svg ? ka : ln ? pn : Ra, i.uncache = 0, i;
-}, $t = function(e) {
+  var r = e.style, n = i.scaleX < 0, a = "px", o = "deg", l = getComputedStyle(e), u = xe(e, ae) || "0", c, h, p, f, m, d, g, b, y, x, v, _, C, w, P, E, T, L, M, D, R, U, k, O, Z, Ne, A, _e, Q, se, fe, me;
+  return c = h = p = d = g = b = y = x = v = 0, f = m = 1, i.svg = !!(e.getCTM && dn(e)), l.translate && ((l.translate !== "none" || l.scale !== "none" || l.rotate !== "none") && (r[$] = (l.translate !== "none" ? "translate3d(" + (l.translate + " 0 0").split(" ").slice(0, 3).join(", ") + ") " : "") + (l.rotate !== "none" ? "rotate(" + l.rotate + ") " : "") + (l.scale !== "none" ? "scale(" + l.scale.split(" ").join(",") + ") " : "") + (l[$] !== "none" ? l[$] : "")), r.scale = r.rotate = r.translate = "none"), w = zi(e, i.svg), i.svg && (i.uncache ? (Z = e.getBBox(), u = i.xOrigin - Z.x + "px " + (i.yOrigin - Z.y) + "px", O = "") : O = !t && e.getAttribute("data-svg-origin"), yi(e, O || u, !!O || i.originIsAbsolute, i.smooth !== !1, w)), _ = i.xOrigin || 0, C = i.yOrigin || 0, w !== wt && (L = w[0], M = w[1], D = w[2], R = w[3], c = U = w[4], h = k = w[5], w.length === 6 ? (f = Math.sqrt(L * L + M * M), m = Math.sqrt(R * R + D * D), d = L || M ? Ke(M, L) * Ge : 0, y = D || R ? Ke(D, R) * Ge + d : 0, y && (m *= Math.abs(Math.cos(y * nt))), i.svg && (c -= _ - (_ * L + C * D), h -= C - (_ * M + C * R))) : (me = w[6], se = w[7], A = w[8], _e = w[9], Q = w[10], fe = w[11], c = w[12], h = w[13], p = w[14], P = Ke(me, Q), g = P * Ge, P && (E = Math.cos(-P), T = Math.sin(-P), O = U * E + A * T, Z = k * E + _e * T, Ne = me * E + Q * T, A = U * -T + A * E, _e = k * -T + _e * E, Q = me * -T + Q * E, fe = se * -T + fe * E, U = O, k = Z, me = Ne), P = Ke(-D, Q), b = P * Ge, P && (E = Math.cos(-P), T = Math.sin(-P), O = L * E - A * T, Z = M * E - _e * T, Ne = D * E - Q * T, fe = R * T + fe * E, L = O, M = Z, D = Ne), P = Ke(M, L), d = P * Ge, P && (E = Math.cos(P), T = Math.sin(P), O = L * E + M * T, Z = U * E + k * T, M = M * E - L * T, k = k * E - U * T, L = O, U = Z), g && Math.abs(g) + Math.abs(d) > 359.9 && (g = d = 0, b = 180 - b), f = V(Math.sqrt(L * L + M * M + D * D)), m = V(Math.sqrt(k * k + me * me)), P = Ke(U, k), y = Math.abs(P) > 2e-4 ? P * Ge : 0, v = fe ? 1 / (fe < 0 ? -fe : fe) : 0), i.svg && (O = e.getAttribute("transform"), i.forceCSS = e.setAttribute("transform", "") || !fn(xe(e, $)), O && e.setAttribute("transform", O))), Math.abs(y) > 90 && Math.abs(y) < 270 && (n ? (f *= -1, y += d <= 0 ? 180 : -180, d += d <= 0 ? 180 : -180) : (m *= -1, y += y <= 0 ? 180 : -180)), t = t || i.uncache, i.x = c - ((i.xPercent = c && (!t && i.xPercent || (Math.round(e.offsetWidth / 2) === Math.round(-c) ? -50 : 0))) ? e.offsetWidth * i.xPercent / 100 : 0) + a, i.y = h - ((i.yPercent = h && (!t && i.yPercent || (Math.round(e.offsetHeight / 2) === Math.round(-h) ? -50 : 0))) ? e.offsetHeight * i.yPercent / 100 : 0) + a, i.z = p + a, i.scaleX = V(f), i.scaleY = V(m), i.rotation = V(d) + o, i.rotationX = V(g) + o, i.rotationY = V(b) + o, i.skewX = y + o, i.skewY = x + o, i.transformPerspective = v + a, (i.zOrigin = parseFloat(u.split(" ")[2]) || !t && i.zOrigin || 0) && (r[ae] = Gt(u)), i.xOffset = i.yOffset = 0, i.force3D = he.force3D, i.renderTransform = i.svg ? Na : un ? mn : Ua, i.uncache = 0, i;
+}, Gt = function(e) {
   return (e = e.split(" "))[0] + " " + e[1];
-}, Jt = function(e, t, i) {
-  var r = Z(t);
-  return V(parseFloat(t) + parseFloat(Fe(e, "x", i + "px", r))) + r;
-}, Ra = function(e, t) {
-  t.z = "0px", t.rotationY = t.rotationX = "0deg", t.force3D = 0, pn(e, t);
-}, Ne = "0deg", ut = "0px", Be = ") ", pn = function(e, t) {
+}, ei = function(e, t, i) {
+  var r = K(t);
+  return V(parseFloat(t) + parseFloat(ze(e, "x", i + "px", r))) + r;
+}, Ua = function(e, t) {
+  t.z = "0px", t.rotationY = t.rotationX = "0deg", t.force3D = 0, mn(e, t);
+}, Be = "0deg", ht = "0px", $e = ") ", mn = function(e, t) {
   var i = t || this, r = i.xPercent, n = i.yPercent, a = i.x, o = i.y, l = i.z, u = i.rotation, c = i.rotationY, h = i.rotationX, p = i.skewX, f = i.skewY, m = i.scaleX, d = i.scaleY, g = i.transformPerspective, b = i.force3D, y = i.target, x = i.zOrigin, v = "", _ = b === "auto" && e && e !== 1 || b === !0;
-  if (x && (h !== Ne || c !== Ne)) {
-    var C = parseFloat(c) * rt, w = Math.sin(C), P = Math.cos(C), E;
-    C = parseFloat(h) * rt, E = Math.cos(C), a = Jt(y, a, w * E * -x), o = Jt(y, o, -Math.sin(C) * -x), l = Jt(y, l, P * E * -x + x);
+  if (x && (h !== Be || c !== Be)) {
+    var C = parseFloat(c) * nt, w = Math.sin(C), P = Math.cos(C), E;
+    C = parseFloat(h) * nt, E = Math.cos(C), a = ei(y, a, w * E * -x), o = ei(y, o, -Math.sin(C) * -x), l = ei(y, l, P * E * -x + x);
   }
-  g !== ut && (v += "perspective(" + g + Be), (r || n) && (v += "translate(" + r + "%, " + n + "%) "), (_ || a !== ut || o !== ut || l !== ut) && (v += l !== ut || _ ? "translate3d(" + a + ", " + o + ", " + l + ") " : "translate(" + a + ", " + o + Be), u !== Ne && (v += "rotate(" + u + Be), c !== Ne && (v += "rotateY(" + c + Be), h !== Ne && (v += "rotateX(" + h + Be), (p !== Ne || f !== Ne) && (v += "skew(" + p + ", " + f + Be), (m !== 1 || d !== 1) && (v += "scale(" + m + ", " + d + Be), y.style[$] = v || "translate(0, 0)";
-}, ka = function(e, t) {
+  g !== ht && (v += "perspective(" + g + $e), (r || n) && (v += "translate(" + r + "%, " + n + "%) "), (_ || a !== ht || o !== ht || l !== ht) && (v += l !== ht || _ ? "translate3d(" + a + ", " + o + ", " + l + ") " : "translate(" + a + ", " + o + $e), u !== Be && (v += "rotate(" + u + $e), c !== Be && (v += "rotateY(" + c + $e), h !== Be && (v += "rotateX(" + h + $e), (p !== Be || f !== Be) && (v += "skew(" + p + ", " + f + $e), (m !== 1 || d !== 1) && (v += "scale(" + m + ", " + d + $e), y.style[$] = v || "translate(0, 0)";
+}, Na = function(e, t) {
   var i = t || this, r = i.xPercent, n = i.yPercent, a = i.x, o = i.y, l = i.rotation, u = i.skewX, c = i.skewY, h = i.scaleX, p = i.scaleY, f = i.target, m = i.xOrigin, d = i.yOrigin, g = i.xOffset, b = i.yOffset, y = i.forceCSS, x = parseFloat(a), v = parseFloat(o), _, C, w, P, E;
-  l = parseFloat(l), u = parseFloat(u), c = parseFloat(c), c && (c = parseFloat(c), u += c, l += c), l || u ? (l *= rt, u *= rt, _ = Math.cos(l) * h, C = Math.sin(l) * h, w = Math.sin(l - u) * -p, P = Math.cos(l - u) * p, u && (c *= rt, E = Math.tan(u - c), E = Math.sqrt(1 + E * E), w *= E, P *= E, c && (E = Math.tan(c), E = Math.sqrt(1 + E * E), _ *= E, C *= E)), _ = V(_), C = V(C), w = V(w), P = V(P)) : (_ = h, P = p, C = w = 0), (x && !~(a + "").indexOf("px") || v && !~(o + "").indexOf("px")) && (x = Fe(f, "x", a, "px"), v = Fe(f, "y", o, "px")), (m || d || g || b) && (x = V(x + m - (m * _ + d * w) + g), v = V(v + d - (m * C + d * P) + b)), (r || n) && (E = f.getBBox(), x = V(x + r / 100 * E.width), v = V(v + n / 100 * E.height)), E = "matrix(" + _ + "," + C + "," + w + "," + P + "," + x + "," + v + ")", f.setAttribute("transform", E), y && (f.style[$] = E);
-}, Oa = function(e, t, i, r, n) {
-  var a = 360, o = W(n), l = parseFloat(n) * (o && ~n.indexOf("rad") ? $e : 1), u = l - r, c = r + u + "deg", h, p;
-  return o && (h = n.split("_")[1], h === "short" && (u %= a, u !== u % (a / 2) && (u += u < 0 ? a : -a)), h === "cw" && u < 0 ? u = (u + a * qi) % a - ~~(u / a) * a : h === "ccw" && u > 0 && (u = (u - a * qi) % a - ~~(u / a) * a)), e._pt = p = new re(e._pt, t, i, r, u, ya), p.e = c, p.u = "deg", e._props.push(i), p;
-}, ir = function(e, t) {
+  l = parseFloat(l), u = parseFloat(u), c = parseFloat(c), c && (c = parseFloat(c), u += c, l += c), l || u ? (l *= nt, u *= nt, _ = Math.cos(l) * h, C = Math.sin(l) * h, w = Math.sin(l - u) * -p, P = Math.cos(l - u) * p, u && (c *= nt, E = Math.tan(u - c), E = Math.sqrt(1 + E * E), w *= E, P *= E, c && (E = Math.tan(c), E = Math.sqrt(1 + E * E), _ *= E, C *= E)), _ = V(_), C = V(C), w = V(w), P = V(P)) : (_ = h, P = p, C = w = 0), (x && !~(a + "").indexOf("px") || v && !~(o + "").indexOf("px")) && (x = ze(f, "x", a, "px"), v = ze(f, "y", o, "px")), (m || d || g || b) && (x = V(x + m - (m * _ + d * w) + g), v = V(v + d - (m * C + d * P) + b)), (r || n) && (E = f.getBBox(), x = V(x + r / 100 * E.width), v = V(v + n / 100 * E.height)), E = "matrix(" + _ + "," + C + "," + w + "," + P + "," + x + "," + v + ")", f.setAttribute("transform", E), y && (f.style[$] = E);
+}, Ba = function(e, t, i, r, n) {
+  var a = 360, o = W(n), l = parseFloat(n) * (o && ~n.indexOf("rad") ? Ge : 1), u = l - r, c = r + u + "deg", h, p;
+  return o && (h = n.split("_")[1], h === "short" && (u %= a, u !== u % (a / 2) && (u += u < 0 ? a : -a)), h === "cw" && u < 0 ? u = (u + a * Ji) % a - ~~(u / a) * a : h === "ccw" && u > 0 && (u = (u - a * Ji) % a - ~~(u / a) * a)), e._pt = p = new ne(e._pt, t, i, r, u, wa), p.e = c, p.u = "deg", e._props.push(i), p;
+}, ar = function(e, t) {
   for (var i in t)
     e[i] = t[i];
   return e;
-}, Fa = function(e, t, i) {
-  var r = ir({}, i._gsap), n = "perspective,force3D,transformOrigin,svgOrigin", a = i.style, o, l, u, c, h, p, f, m;
-  r.svg ? (u = i.getAttribute("transform"), i.setAttribute("transform", ""), a[$] = t, o = wt(i, 1), Xe(i, $), i.setAttribute("transform", u)) : (u = getComputedStyle(i)[$], a[$] = t, o = wt(i, 1), a[$] = u);
-  for (l in Te)
-    u = r[l], c = o[l], u !== c && n.indexOf(l) < 0 && (f = Z(u), m = Z(c), h = f !== m ? Fe(i, l, u, m) : parseFloat(u), p = parseFloat(c), e._pt = new re(e._pt, o, l, h, p - h, fi), e._pt.u = m || 0, e._props.push(l));
-  ir(o, r);
+}, $a = function(e, t, i) {
+  var r = ar({}, i._gsap), n = "perspective,force3D,transformOrigin,svgOrigin", a = i.style, o, l, u, c, h, p, f, m;
+  r.svg ? (u = i.getAttribute("transform"), i.setAttribute("transform", ""), a[$] = t, o = Ct(i, 1), qe(i, $), i.setAttribute("transform", u)) : (u = getComputedStyle(i)[$], a[$] = t, o = Ct(i, 1), a[$] = u);
+  for (l in Me)
+    u = r[l], c = o[l], u !== c && n.indexOf(l) < 0 && (f = K(u), m = K(c), h = f !== m ? ze(i, l, u, m) : parseFloat(u), p = parseFloat(c), e._pt = new ne(e._pt, o, l, h, p - h, mi), e._pt.u = m || 0, e._props.push(l));
+  ar(o, r);
 };
-ie("padding,margin,Width,Radius", function(s, e) {
+re("padding,margin,Width,Radius", function(s, e) {
   var t = "Top", i = "Right", r = "Bottom", n = "Left", a = (e < 3 ? [t, i, r, n] : [t + n, t + i, r + i, r + n]).map(function(o) {
     return e < 2 ? s + o : "border" + o + s;
   });
-  Bt[e > 1 ? "border" + s : s] = function(o, l, u, c, h) {
+  $t[e > 1 ? "border" + s : s] = function(o, l, u, c, h) {
     var p, f;
     if (arguments.length < 4)
       return p = a.map(function(m) {
-        return Ae(o, m, u);
+        return Se(o, m, u);
       }), f = p.join(" "), f.split(p[0]).length === 5 ? p[0] : f;
     p = (c + "").split(" "), f = {}, a.forEach(function(m, d) {
       return f[m] = p[d] = p[d] || p[(d - 1) / 2 | 0];
     }), o.init(l, f, h);
   };
 });
-var fn = {
+var gn = {
   name: "css",
-  register: gi,
+  register: bi,
   targetTest: function(e) {
     return e.style && e.nodeType;
   },
   init: function(e, t, i, r, n) {
     var a = this._props, o = e.style, l = i.vars.startAt, u, c, h, p, f, m, d, g, b, y, x, v, _, C, w, P;
-    Ri || gi(), this.styles = this.styles || sn(e), P = this.styles.props, this.tween = i;
+    ki || bi(), this.styles = this.styles || cn(e), P = this.styles.props, this.tween = i;
     for (d in t)
-      if (d !== "autoRound" && (c = t[d], !(se[d] && qr(d, t, i, r, e, n)))) {
-        if (f = typeof c, m = Bt[d], f === "function" && (c = c.call(i, r, e, n), f = typeof c), f === "string" && ~c.indexOf("random(") && (c = xt(c)), m)
+      if (d !== "autoRound" && (c = t[d], !(le[d] && Kr(d, t, i, r, e, n)))) {
+        if (f = typeof c, m = $t[d], f === "function" && (c = c.call(i, r, e, n), f = typeof c), f === "string" && ~c.indexOf("random(") && (c = _t(c)), m)
           m(this, e, d, c, i) && (w = 1);
         else if (d.substr(0, 2) === "--")
-          u = (getComputedStyle(e).getPropertyValue(d) + "").trim(), c += "", ke.lastIndex = 0, ke.test(u) || (g = Z(u), b = Z(c)), b ? g !== b && (u = Fe(e, d, u, b) + b) : g && (c += g), this.add(o, "setProperty", u, c, r, n, 0, 0, d), a.push(d), P.push(d, 0, o[d]);
+          u = (getComputedStyle(e).getPropertyValue(d) + "").trim(), c += "", Oe.lastIndex = 0, Oe.test(u) || (g = K(u), b = K(c)), b ? g !== b && (u = ze(e, d, u, b) + b) : g && (c += g), this.add(o, "setProperty", u, c, r, n, 0, 0, d), a.push(d), P.push(d, 0, o[d]);
         else if (f !== "undefined") {
-          if (l && d in l ? (u = typeof l[d] == "function" ? l[d].call(i, r, e, n) : l[d], W(u) && ~u.indexOf("random(") && (u = xt(u)), Z(u + "") || u === "auto" || (u += ue.units[d] || Z(Ae(e, d)) || ""), (u + "").charAt(1) === "=" && (u = Ae(e, d))) : u = Ae(e, d), p = parseFloat(u), y = f === "string" && c.charAt(1) === "=" && c.substr(0, 2), y && (c = c.substr(2)), h = parseFloat(c), d in Ee && (d === "autoAlpha" && (p === 1 && Ae(e, "visibility") === "hidden" && h && (p = 0), P.push("visibility", 0, o.visibility), De(this, o, "visibility", p ? "inherit" : "hidden", h ? "inherit" : "hidden", !h)), d !== "scale" && d !== "transform" && (d = Ee[d], ~d.indexOf(",") && (d = d.split(",")[0]))), x = d in Te, x) {
-            if (this.styles.save(d), f === "string" && c.substring(0, 6) === "var(--" && (c = ye(e, c.substring(4, c.indexOf(")"))), h = parseFloat(c)), v || (_ = e._gsap, _.renderTransform && !t.parseTransform || wt(e, t.parseTransform), C = t.smoothOrigin !== !1 && _.smooth, v = this._pt = new re(this._pt, o, $, 0, 1, _.renderTransform, _, 0, -1), v.dep = 1), d === "scale")
-              this._pt = new re(this._pt, _, "scaleY", _.scaleY, (y ? tt(_.scaleY, y + h) : h) - _.scaleY || 0, fi), this._pt.u = 0, a.push("scaleY", d), d += "X";
+          if (l && d in l ? (u = typeof l[d] == "function" ? l[d].call(i, r, e, n) : l[d], W(u) && ~u.indexOf("random(") && (u = _t(u)), K(u + "") || u === "auto" || (u += he.units[d] || K(Se(e, d)) || ""), (u + "").charAt(1) === "=" && (u = Se(e, d))) : u = Se(e, d), p = parseFloat(u), y = f === "string" && c.charAt(1) === "=" && c.substr(0, 2), y && (c = c.substr(2)), h = parseFloat(c), d in we && (d === "autoAlpha" && (p === 1 && Se(e, "visibility") === "hidden" && h && (p = 0), P.push("visibility", 0, o.visibility), Ie(this, o, "visibility", p ? "inherit" : "hidden", h ? "inherit" : "hidden", !h)), d !== "scale" && d !== "transform" && (d = we[d], ~d.indexOf(",") && (d = d.split(",")[0]))), x = d in Me, x) {
+            if (this.styles.save(d), f === "string" && c.substring(0, 6) === "var(--" && (c = xe(e, c.substring(4, c.indexOf(")"))), h = parseFloat(c)), v || (_ = e._gsap, _.renderTransform && !t.parseTransform || Ct(e, t.parseTransform), C = t.smoothOrigin !== !1 && _.smooth, v = this._pt = new ne(this._pt, o, $, 0, 1, _.renderTransform, _, 0, -1), v.dep = 1), d === "scale")
+              this._pt = new ne(this._pt, _, "scaleY", _.scaleY, (y ? it(_.scaleY, y + h) : h) - _.scaleY || 0, mi), this._pt.u = 0, a.push("scaleY", d), d += "X";
             else if (d === "transformOrigin") {
-              P.push(ne, 0, o[ne]), c = Da(c), _.svg ? bi(e, c, 0, C, 0, this) : (b = parseFloat(c.split(" ")[2]) || 0, b !== _.zOrigin && De(this, _, "zOrigin", _.zOrigin, b), De(this, o, d, $t(u), $t(c)));
+              P.push(ae, 0, o[ae]), c = Fa(c), _.svg ? yi(e, c, 0, C, 0, this) : (b = parseFloat(c.split(" ")[2]) || 0, b !== _.zOrigin && Ie(this, _, "zOrigin", _.zOrigin, b), Ie(this, o, d, Gt(u), Gt(c)));
               continue;
             } else if (d === "svgOrigin") {
-              bi(e, c, 1, C, 0, this);
+              yi(e, c, 1, C, 0, this);
               continue;
-            } else if (d in hn) {
-              Oa(this, _, d, p, y ? tt(p, y + c) : c);
+            } else if (d in pn) {
+              Ba(this, _, d, p, y ? it(p, y + c) : c);
               continue;
             } else if (d === "smoothOrigin") {
-              De(this, _, "smooth", _.smooth, c);
+              Ie(this, _, "smooth", _.smooth, c);
               continue;
             } else if (d === "force3D") {
               _[d] = c;
               continue;
             } else if (d === "transform") {
-              Fa(this, c, e);
+              $a(this, c, e);
               continue;
             }
-          } else d in o || (d = ct(d) || d);
-          if (x || (h || h === 0) && (p || p === 0) && !ba.test(c) && d in o)
-            g = (u + "").substr((p + "").length), h || (h = 0), b = Z(c) || (d in ue.units ? ue.units[d] : g), g !== b && (p = Fe(e, d, u, b)), this._pt = new re(this._pt, x ? _ : o, d, p, (y ? tt(p, y + h) : h) - p, !x && (b === "px" || d === "zIndex") && t.autoRound !== !1 ? _a : fi), this._pt.u = b || 0, g !== b && b !== "%" && (this._pt.b = u, this._pt.r = xa);
+          } else d in o || (d = ut(d) || d);
+          if (x || (h || h === 0) && (p || p === 0) && !Ea.test(c) && d in o)
+            g = (u + "").substr((p + "").length), h || (h = 0), b = K(c) || (d in he.units ? he.units[d] : g), g !== b && (p = ze(e, d, u, b)), this._pt = new ne(this._pt, x ? _ : o, d, p, (y ? it(p, y + h) : h) - p, !x && (b === "px" || d === "zIndex") && t.autoRound !== !1 ? Pa : mi), this._pt.u = b || 0, g !== b && b !== "%" && (this._pt.b = u, this._pt.r = Ca);
           else if (d in o)
-            La.call(this, e, d, u, y ? y + c : c);
+            Oa.call(this, e, d, u, y ? y + c : c);
           else if (d in e)
             this.add(e, d, u || e[d], y ? y + c : c, r, n);
           else if (d !== "parseTransform") {
-            wi(d, c);
+            Ci(d, c);
             continue;
           }
           x || (d in o ? P.push(d, 0, o[d]) : typeof e[d] == "function" ? P.push(d, 2, e[d]()) : P.push(d, 1, u || e[d])), a.push(d);
         }
       }
-    w && tn(this);
+    w && nn(this);
   },
   render: function(e, t) {
-    if (t.tween._time || !ki())
+    if (t.tween._time || !Oi())
       for (var i = t._pt; i; )
         i.r(e, i.d), i = i._next;
     else
       t.styles.revert();
   },
-  get: Ae,
-  aliases: Ee,
+  get: Se,
+  aliases: we,
   getSetter: function(e, t, i) {
-    var r = Ee[t];
-    return r && r.indexOf(",") < 0 && (t = r), t in Te && t !== ne && (e._gsap.x || Ae(e, "x")) ? i && Xi === i ? t === "scale" ? Ca : wa : (Xi = i || {}) && (t === "scale" ? Pa : Aa) : e.style && !_i(e.style[t]) ? va : ~t.indexOf("-") ? Ea : Di(e, t);
+    var r = we[t];
+    return r && r.indexOf(",") < 0 && (t = r), t in Me && t !== ae && (e._gsap.x || Se(e, "x")) ? i && Ki === i ? t === "scale" ? Ma : Ta : (Ki = i || {}) && (t === "scale" ? La : Da) : e.style && !vi(e.style[t]) ? Aa : ~t.indexOf("-") ? Sa : Ii(e, t);
   },
   core: {
-    _removeProperty: Xe,
-    _getMatrix: Fi
+    _removeProperty: qe,
+    _getMatrix: zi
   }
 };
-ae.utils.checkPrefix = ct;
-ae.core.getStyleSaver = sn;
+oe.utils.checkPrefix = ut;
+oe.core.getStyleSaver = cn;
 (function(s, e, t, i) {
-  var r = ie(s + "," + e + "," + t, function(n) {
-    Te[n] = 1;
+  var r = re(s + "," + e + "," + t, function(n) {
+    Me[n] = 1;
   });
-  ie(e, function(n) {
-    ue.units[n] = "deg", hn[n] = 1;
-  }), Ee[r[13]] = s + "," + e, ie(i, function(n) {
+  re(e, function(n) {
+    he.units[n] = "deg", pn[n] = 1;
+  }), we[r[13]] = s + "," + e, re(i, function(n) {
     var a = n.split(":");
-    Ee[a[1]] = r[a[0]];
+    we[a[1]] = r[a[0]];
   });
 })("x,y,z,scale,scaleX,scaleY,xPercent,yPercent", "rotation,rotationX,rotationY,skewX,skewY", "transform,transformOrigin,svgOrigin,force3D,smoothOrigin,transformPerspective", "0:translateX,1:translateY,2:translateZ,8:rotate,8:rotationZ,8:rotateZ,9:rotateX,10:rotateY");
-ie("x,y,z,top,right,bottom,left,width,height,fontSize,padding,margin,perspective", function(s) {
-  ue.units[s] = "px";
+re("x,y,z,top,right,bottom,left,width,height,fontSize,padding,margin,perspective", function(s) {
+  he.units[s] = "px";
 });
-ae.registerPlugin(fn);
-var Y = ae.registerPlugin(fn) || ae;
+oe.registerPlugin(gn);
+var Y = oe.registerPlugin(gn) || oe;
 Y.core.Tween;
-class we {
+class Ce {
   constructor(e, t, i, r, n = "div") {
-    this.parent = e, this.object = t, this.property = i, this._disabled = !1, this._hidden = !1, this.initialValue = this.getValue(), this.domElement = document.createElement(n), this.domElement.classList.add("lil-controller"), this.domElement.classList.add(r), this.$name = document.createElement("div"), this.$name.classList.add("lil-name"), we.nextNameID = we.nextNameID || 0, this.$name.id = `lil-gui-name-${++we.nextNameID}`, this.$widget = document.createElement("div"), this.$widget.classList.add("lil-widget"), this.$disable = this.$widget, this.domElement.appendChild(this.$name), this.domElement.appendChild(this.$widget), this.domElement.addEventListener("keydown", (a) => a.stopPropagation()), this.domElement.addEventListener("keyup", (a) => a.stopPropagation()), this.parent.children.push(this), this.parent.controllers.push(this), this.parent.$children.appendChild(this.domElement), this._listenCallback = this._listenCallback.bind(this), this.name(i);
+    this.parent = e, this.object = t, this.property = i, this._disabled = !1, this._hidden = !1, this.initialValue = this.getValue(), this.domElement = document.createElement(n), this.domElement.classList.add("lil-controller"), this.domElement.classList.add(r), this.$name = document.createElement("div"), this.$name.classList.add("lil-name"), Ce.nextNameID = Ce.nextNameID || 0, this.$name.id = `lil-gui-name-${++Ce.nextNameID}`, this.$widget = document.createElement("div"), this.$widget.classList.add("lil-widget"), this.$disable = this.$widget, this.domElement.appendChild(this.$name), this.domElement.appendChild(this.$widget), this.domElement.addEventListener("keydown", (a) => a.stopPropagation()), this.domElement.addEventListener("keyup", (a) => a.stopPropagation()), this.parent.children.push(this), this.parent.controllers.push(this), this.parent.$children.appendChild(this.domElement), this._listenCallback = this._listenCallback.bind(this), this.name(i);
   }
   /**
    * Sets the name of the controller and its label in the GUI.
@@ -2226,7 +4132,7 @@ class we {
     this.listen(!1), this.parent.children.splice(this.parent.children.indexOf(this), 1), this.parent.controllers.splice(this.parent.controllers.indexOf(this), 1), this.parent.$children.removeChild(this.domElement);
   }
 }
-class za extends we {
+class Ga extends Ce {
   constructor(e, t, i) {
     super(e, t, i, "lil-boolean", "label"), this.$input = document.createElement("input"), this.$input.setAttribute("type", "checkbox"), this.$input.setAttribute("aria-labelledby", this.$name.id), this.$widget.appendChild(this.$input), this.$input.addEventListener("change", () => {
       this.setValue(this.$input.checked), this._callOnFinishChange();
@@ -2236,56 +4142,56 @@ class za extends we {
     return this.$input.checked = this.getValue(), this;
   }
 }
-function yi(s) {
+function xi(s) {
   let e, t;
   return (e = s.match(/(#|0x)?([a-f0-9]{6})/i)) ? t = e[2] : (e = s.match(/rgb\(\s*(\d*)\s*,\s*(\d*)\s*,\s*(\d*)\s*\)/)) ? t = parseInt(e[1]).toString(16).padStart(2, 0) + parseInt(e[2]).toString(16).padStart(2, 0) + parseInt(e[3]).toString(16).padStart(2, 0) : (e = s.match(/^#?([a-f0-9])([a-f0-9])([a-f0-9])$/i)) && (t = e[1] + e[1] + e[2] + e[2] + e[3] + e[3]), t ? "#" + t : !1;
 }
-const Ua = {
+const Va = {
   isPrimitive: !0,
   match: (s) => typeof s == "string",
-  fromHexString: yi,
-  toHexString: yi
-}, Ct = {
+  fromHexString: xi,
+  toHexString: xi
+}, Pt = {
   isPrimitive: !0,
   match: (s) => typeof s == "number",
   fromHexString: (s) => parseInt(s.substring(1), 16),
   toHexString: (s) => "#" + s.toString(16).padStart(6, 0)
-}, Na = {
+}, ja = {
   isPrimitive: !1,
   match: (s) => Array.isArray(s) || ArrayBuffer.isView(s),
   fromHexString(s, e, t = 1) {
-    const i = Ct.fromHexString(s);
+    const i = Pt.fromHexString(s);
     e[0] = (i >> 16 & 255) / 255 * t, e[1] = (i >> 8 & 255) / 255 * t, e[2] = (i & 255) / 255 * t;
   },
   toHexString([s, e, t], i = 1) {
     i = 255 / i;
     const r = s * i << 16 ^ e * i << 8 ^ t * i << 0;
-    return Ct.toHexString(r);
+    return Pt.toHexString(r);
   }
-}, Ba = {
+}, Ha = {
   isPrimitive: !1,
   match: (s) => Object(s) === s,
   fromHexString(s, e, t = 1) {
-    const i = Ct.fromHexString(s);
+    const i = Pt.fromHexString(s);
     e.r = (i >> 16 & 255) / 255 * t, e.g = (i >> 8 & 255) / 255 * t, e.b = (i & 255) / 255 * t;
   },
   toHexString({ r: s, g: e, b: t }, i = 1) {
     i = 255 / i;
     const r = s * i << 16 ^ e * i << 8 ^ t * i << 0;
-    return Ct.toHexString(r);
+    return Pt.toHexString(r);
   }
-}, $a = [Ua, Ct, Na, Ba];
-function Ga(s) {
-  return $a.find((e) => e.match(s));
+}, Ya = [Va, Pt, ja, Ha];
+function Wa(s) {
+  return Ya.find((e) => e.match(s));
 }
-class Va extends we {
+class Xa extends Ce {
   constructor(e, t, i, r) {
-    super(e, t, i, "lil-color"), this.$input = document.createElement("input"), this.$input.setAttribute("type", "color"), this.$input.setAttribute("tabindex", -1), this.$input.setAttribute("aria-labelledby", this.$name.id), this.$text = document.createElement("input"), this.$text.setAttribute("type", "text"), this.$text.setAttribute("spellcheck", "false"), this.$text.setAttribute("aria-labelledby", this.$name.id), this.$display = document.createElement("div"), this.$display.classList.add("lil-display"), this.$display.appendChild(this.$input), this.$widget.appendChild(this.$display), this.$widget.appendChild(this.$text), this._format = Ga(this.initialValue), this._rgbScale = r, this._initialValueHexString = this.save(), this._textFocused = !1, this.$input.addEventListener("input", () => {
+    super(e, t, i, "lil-color"), this.$input = document.createElement("input"), this.$input.setAttribute("type", "color"), this.$input.setAttribute("tabindex", -1), this.$input.setAttribute("aria-labelledby", this.$name.id), this.$text = document.createElement("input"), this.$text.setAttribute("type", "text"), this.$text.setAttribute("spellcheck", "false"), this.$text.setAttribute("aria-labelledby", this.$name.id), this.$display = document.createElement("div"), this.$display.classList.add("lil-display"), this.$display.appendChild(this.$input), this.$widget.appendChild(this.$display), this.$widget.appendChild(this.$text), this._format = Wa(this.initialValue), this._rgbScale = r, this._initialValueHexString = this.save(), this._textFocused = !1, this.$input.addEventListener("input", () => {
       this._setValueFromHexString(this.$input.value);
     }), this.$input.addEventListener("blur", () => {
       this._callOnFinishChange();
     }), this.$text.addEventListener("input", () => {
-      const n = yi(this.$text.value);
+      const n = xi(this.$text.value);
       n && this._setValueFromHexString(n);
     }), this.$text.addEventListener("focus", () => {
       this._textFocused = !0, this.$text.select();
@@ -2313,7 +4219,7 @@ class Va extends we {
     return this.$input.value = this._format.toHexString(this.getValue(), this._rgbScale), this._textFocused || (this.$text.value = this.$input.value.substring(1)), this.$display.style.backgroundColor = this.$input.value, this;
   }
 }
-class Qt extends we {
+class ti extends Ce {
   constructor(e, t, i) {
     super(e, t, i, "lil-function"), this.$button = document.createElement("button"), this.$button.appendChild(this.$name), this.$widget.appendChild(this.$button), this.$button.addEventListener("click", (r) => {
       r.preventDefault(), this.getValue().call(this.object), this._callOnChange();
@@ -2321,7 +4227,7 @@ class Qt extends we {
     }, { passive: !0 }), this.$disable = this.$button;
   }
 }
-class ja extends we {
+class qa extends Ce {
   constructor(e, t, i, r, n, a) {
     super(e, t, i, "lil-number"), this._initInput(), this.min(r), this.max(n);
     const o = a !== void 0;
@@ -2456,7 +4362,7 @@ class ja extends we {
     return this._max !== void 0;
   }
 }
-class Ha extends we {
+class Za extends Ce {
   constructor(e, t, i, r) {
     super(e, t, i, "lil-option"), this.$select = document.createElement("select"), this.$select.setAttribute("aria-labelledby", this.$name.id), this.$display = document.createElement("div"), this.$display.classList.add("lil-display"), this.$select.addEventListener("change", () => {
       this.setValue(this._values[this.$select.selectedIndex]), this._callOnFinishChange();
@@ -2477,7 +4383,7 @@ class Ha extends we {
     return this.$select.selectedIndex = t, this.$display.textContent = t === -1 ? e : this._names[t], this;
   }
 }
-class Ya extends we {
+class Ka extends Ce {
   constructor(e, t, i) {
     super(e, t, i, "lil-string"), this.$input = document.createElement("input"), this.$input.setAttribute("type", "text"), this.$input.setAttribute("spellcheck", "false"), this.$input.setAttribute("aria-labelledby", this.$name.id), this.$input.addEventListener("input", () => {
       this.setValue(this.$input.value);
@@ -2491,7 +4397,7 @@ class Ya extends we {
     return this.$input.value = this.getValue(), this;
   }
 }
-var Wa = `.lil-gui {
+var Ja = `.lil-gui {
   font-family: var(--font-family);
   font-size: var(--font-size);
   line-height: 1;
@@ -2913,14 +4819,14 @@ var Wa = `.lil-gui {
   font-family: "lil-gui";
   src: url("data:application/font-woff2;charset=utf-8;base64,d09GMgABAAAAAALkAAsAAAAABtQAAAKVAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHFQGYACDMgqBBIEbATYCJAMUCwwABCAFhAoHgQQbHAbIDiUFEYVARAAAYQTVWNmz9MxhEgodq49wYRUFKE8GWNiUBxI2LBRaVnc51U83Gmhs0Q7JXWMiz5eteLwrKwuxHO8VFxUX9UpZBs6pa5ABRwHA+t3UxUnH20EvVknRerzQgX6xC/GH6ZUvTcAjAv122dF28OTqCXrPuyaDER30YBA1xnkVutDDo4oCi71Ca7rrV9xS8dZHbPHefsuwIyCpmT7j+MnjAH5X3984UZoFFuJ0yiZ4XEJFxjagEBeqs+e1iyK8Xf/nOuwF+vVK0ur765+vf7txotUi0m3N0m/84RGSrBCNrh8Ee5GjODjF4gnWP+dJrH/Lk9k4oT6d+gr6g/wssA2j64JJGP6cmx554vUZnpZfn6ZfX2bMwPPrlANsB86/DiHjhl0OP+c87+gaJo/gY084s3HoYL/ZkWHTRfBXvvoHnnkHvngKun4KBE/ede7tvq3/vQOxDXB1/fdNz6XbPdcr0Vhpojj9dG+owuSKFsslCi1tgEjirjXdwMiov2EioadxmqTHUCIwo8NgQaeIasAi0fTYSPTbSmwbMOFduyh9wvBrESGY0MtgRjtgQR8Q1bRPohn2UoCRZf9wyYANMXFeJTysqAe0I4mrherOekFdKMrYvJjLvOIUM9SuwYB5DVZUwwVjJJOaUnZCmcEkIZZrKqNvRGRMvmFZsmhP4VMKCSXBhSqUBxgMS7h0cZvEd71AWkEhGWaeMFcNnpqyJkyXgYL7PQ1MoSq0wDAkRtJIijkZSmqYTiSImfLiSWXIZwhRh3Rug2X0kk1Dgj+Iu43u5p98ghopcpSo0Uyc8SnjlYX59WUeaMoDqmVD2TOWD9a4pCRAzf2ECgwGcrHjPOWY9bNxq/OL3I/QjwEAAAA=") format("woff2");
 }`;
-function Xa(s) {
+function Qa(s) {
   const e = document.createElement("style");
   e.innerHTML = s;
   const t = document.querySelector("head link[rel=stylesheet], head style");
   t ? document.head.insertBefore(e, t) : document.head.appendChild(e);
 }
-let rr = !1;
-class zi {
+let or = !1;
+class Ui {
   /**
    * Creates a panel that holds controllers.
    * @example
@@ -2969,7 +4875,7 @@ class zi {
       this.parent.children.push(this), this.parent.folders.push(this), this.parent.$children.appendChild(this.domElement);
       return;
     }
-    this.domElement.classList.add("lil-root"), l && this.domElement.classList.add("lil-allow-touch-styles"), !rr && o && (Xa(Wa), rr = !0), i ? i.appendChild(this.domElement) : t && (this.domElement.classList.add("lil-auto-place", "autoPlace"), document.body.appendChild(this.domElement)), r && this.domElement.style.setProperty("--width", r + "px"), this._closeFolders = a;
+    this.domElement.classList.add("lil-root"), l && this.domElement.classList.add("lil-allow-touch-styles"), !or && o && (Qa(Ja), or = !0), i ? i.appendChild(this.domElement) : t && (this.domElement.classList.add("lil-auto-place", "autoPlace"), document.body.appendChild(this.domElement)), r && this.domElement.style.setProperty("--width", r + "px"), this._closeFolders = a;
   }
   /**
    * Adds a controller to the GUI, inferring controller type using the `typeof` operator.
@@ -2988,17 +4894,17 @@ class zi {
    */
   add(e, t, i, r, n) {
     if (Object(i) === i)
-      return new Ha(this, e, t, i);
+      return new Za(this, e, t, i);
     const a = e[t];
     switch (typeof a) {
       case "number":
-        return new ja(this, e, t, i, r, n);
+        return new qa(this, e, t, i, r, n);
       case "boolean":
-        return new za(this, e, t);
+        return new Ga(this, e, t);
       case "string":
-        return new Ya(this, e, t);
+        return new Ka(this, e, t);
       case "function":
-        return new Qt(this, e, t);
+        return new ti(this, e, t);
     }
     console.error(`gui.add failed
 	property:`, t, `
@@ -3025,7 +4931,7 @@ class zi {
    * @returns {Controller}
    */
   addColor(e, t, i = 1) {
-    return new Va(this, e, t, i);
+    return new Xa(this, e, t, i);
   }
   /**
    * Adds a folder to the GUI, which is just another GUI. This method returns
@@ -3040,7 +4946,7 @@ class zi {
    * @returns {GUI}
    */
   addFolder(e) {
-    const t = new zi({ parent: this, title: e });
+    const t = new Ui({ parent: this, title: e });
     return this.root._closeFolders && t.close(), t;
   }
   /**
@@ -3051,7 +4957,7 @@ class zi {
    */
   load(e, t = !0) {
     return e.controllers && this.controllers.forEach((i) => {
-      i instanceof Qt || i._name in e.controllers && i.load(e.controllers[i._name]);
+      i instanceof ti || i._name in e.controllers && i.load(e.controllers[i._name]);
     }), t && e.folders && this.folders.forEach((i) => {
       i._title in e.folders && i.load(e.folders[i._title]);
     }), this;
@@ -3082,7 +4988,7 @@ class zi {
       folders: {}
     };
     return this.controllers.forEach((i) => {
-      if (!(i instanceof Qt)) {
+      if (!(i instanceof ti)) {
         if (i._name in t.controllers)
           throw new Error(`Cannot save GUI with duplicate property "${i._name}"`);
         t.controllers[i._name] = i.save();
@@ -3252,423 +5158,7 @@ class zi {
     }), e;
   }
 }
-const Qe = [
-  // Major economies and populous nations
-  { id: "156", code: "CN", name: "China", population: 1412, gdpPerCapita: 21476, co2Emissions: 8, lifeExpectancy: 78.2, humanDevIndex: 0.768, internetUsers: 73, renewableEnergy: 15, urbanPopulation: 64.7, healthExpenditure: 5.4, educationExpenditure: 3.6, forestArea: 23.3, accessElectricity: 100 },
-  { id: "356", code: "IN", name: "India", population: 1408, gdpPerCapita: 8379, co2Emissions: 1.9, lifeExpectancy: 70.8, humanDevIndex: 0.633, internetUsers: 47, renewableEnergy: 38, urbanPopulation: 35.9, healthExpenditure: 3, educationExpenditure: 4.5, forestArea: 24.3, accessElectricity: 99.6 },
-  { id: "840", code: "US", name: "United States", population: 332, gdpPerCapita: 76399, co2Emissions: 14.4, lifeExpectancy: 77.5, humanDevIndex: 0.921, internetUsers: 92, renewableEnergy: 13, urbanPopulation: 83.1, healthExpenditure: 18.3, educationExpenditure: 6.1, forestArea: 33.9, accessElectricity: 100 },
-  { id: "360", code: "ID", name: "Indonesia", population: 276, gdpPerCapita: 14535, co2Emissions: 2.3, lifeExpectancy: 71.9, humanDevIndex: 0.705, internetUsers: 62, renewableEnergy: 12, urbanPopulation: 57.9, healthExpenditure: 2.9, educationExpenditure: 3.5, forestArea: 49.1, accessElectricity: 99 },
-  { id: "586", code: "PK", name: "Pakistan", population: 225, gdpPerCapita: 6470, co2Emissions: 1, lifeExpectancy: 67.3, humanDevIndex: 0.544, internetUsers: 21, renewableEnergy: 34, urbanPopulation: 37.4, healthExpenditure: 2.8, educationExpenditure: 2.3, forestArea: 1.9, accessElectricity: 95 },
-  { id: "076", code: "BR", name: "Brazil", population: 215, gdpPerCapita: 16154, co2Emissions: 2.2, lifeExpectancy: 76, humanDevIndex: 0.754, internetUsers: 81, renewableEnergy: 47, urbanPopulation: 87.6, healthExpenditure: 10.3, educationExpenditure: 6.3, forestArea: 59.4, accessElectricity: 100 },
-  { id: "566", code: "NG", name: "Nigeria", population: 219, gdpPerCapita: 5860, co2Emissions: 0.6, lifeExpectancy: 53.9, humanDevIndex: 0.535, internetUsers: 36, renewableEnergy: 86, urbanPopulation: 53, healthExpenditure: 3, educationExpenditure: 0.5, forestArea: 7.2, accessElectricity: 59.5 },
-  { id: "050", code: "BD", name: "Bangladesh", population: 167, gdpPerCapita: 7066, co2Emissions: 0.6, lifeExpectancy: 73.2, humanDevIndex: 0.661, internetUsers: 39, renewableEnergy: 3, urbanPopulation: 39.4, healthExpenditure: 2.3, educationExpenditure: 1.8, forestArea: 11.2, accessElectricity: 99.4 },
-  { id: "643", code: "RU", name: "Russia", population: 144, gdpPerCapita: 30820, co2Emissions: 11.4, lifeExpectancy: 72.8, humanDevIndex: 0.822, internetUsers: 85, renewableEnergy: 7, urbanPopulation: 75.1, healthExpenditure: 5.6, educationExpenditure: 3.7, forestArea: 49.8, accessElectricity: 100 },
-  { id: "484", code: "MX", name: "Mexico", population: 130, gdpPerCapita: 20824, co2Emissions: 3.5, lifeExpectancy: 75.1, humanDevIndex: 0.758, internetUsers: 72, renewableEnergy: 9, urbanPopulation: 81, healthExpenditure: 5.4, educationExpenditure: 4.3, forestArea: 33.6, accessElectricity: 100 },
-  { id: "392", code: "JP", name: "Japan", population: 125, gdpPerCapita: 45546, co2Emissions: 8.5, lifeExpectancy: 84.6, humanDevIndex: 0.925, internetUsers: 93, renewableEnergy: 12, urbanPopulation: 91.9, healthExpenditure: 11, educationExpenditure: 3.4, forestArea: 68.4, accessElectricity: 100 },
-  { id: "231", code: "ET", name: "Ethiopia", population: 121, gdpPerCapita: 2771, co2Emissions: 0.2, lifeExpectancy: 66.6, humanDevIndex: 0.498, internetUsers: 17, renewableEnergy: 93, urbanPopulation: 22.2, healthExpenditure: 3.5, educationExpenditure: 4.5, forestArea: 12.5, accessElectricity: 51.1 },
-  { id: "608", code: "PH", name: "Philippines", population: 115, gdpPerCapita: 9746, co2Emissions: 1.3, lifeExpectancy: 72.1, humanDevIndex: 0.699, internetUsers: 53, renewableEnergy: 29, urbanPopulation: 47.7, healthExpenditure: 5.1, educationExpenditure: 3.6, forestArea: 27, accessElectricity: 97.2 },
-  { id: "818", code: "EG", name: "Egypt", population: 106, gdpPerCapita: 14927, co2Emissions: 2.4, lifeExpectancy: 72, humanDevIndex: 0.731, internetUsers: 72, renewableEnergy: 10, urbanPopulation: 42.8, healthExpenditure: 4.6, educationExpenditure: 4, forestArea: 0.1, accessElectricity: 100 },
-  { id: "704", code: "VN", name: "Vietnam", population: 99, gdpPerCapita: 12756, co2Emissions: 3.5, lifeExpectancy: 75.8, humanDevIndex: 0.703, internetUsers: 70, renewableEnergy: 21, urbanPopulation: 38.1, healthExpenditure: 4.7, educationExpenditure: 4.2, forestArea: 47.6, accessElectricity: 100 },
-  // Europe
-  { id: "276", code: "DE", name: "Germany", population: 84, gdpPerCapita: 58780, co2Emissions: 8.1, lifeExpectancy: 81.4, humanDevIndex: 0.942, internetUsers: 93, renewableEnergy: 20, urbanPopulation: 77.6, healthExpenditure: 12.8, educationExpenditure: 4.9, forestArea: 32.7, accessElectricity: 100 },
-  { id: "792", code: "TR", name: "Turkey", population: 85, gdpPerCapita: 36879, co2Emissions: 4.8, lifeExpectancy: 78.6, humanDevIndex: 0.838, internetUsers: 83, renewableEnergy: 17, urbanPopulation: 76.6, healthExpenditure: 4.3, educationExpenditure: 3.1, forestArea: 28.6, accessElectricity: 100 },
-  { id: "364", code: "IR", name: "Iran", population: 87, gdpPerCapita: 16261, co2Emissions: 8.3, lifeExpectancy: 76.7, humanDevIndex: 0.774, internetUsers: 78, renewableEnergy: 6, urbanPopulation: 76.3, healthExpenditure: 5.2, educationExpenditure: 3.6, forestArea: 6.6, accessElectricity: 100 },
-  { id: "764", code: "TH", name: "Thailand", population: 70, gdpPerCapita: 19169, co2Emissions: 3.8, lifeExpectancy: 79.3, humanDevIndex: 0.8, internetUsers: 78, renewableEnergy: 15, urbanPopulation: 52.2, healthExpenditure: 3.8, educationExpenditure: 2.9, forestArea: 38.8, accessElectricity: 100 },
-  { id: "826", code: "GB", name: "United Kingdom", population: 68, gdpPerCapita: 49675, co2Emissions: 4.7, lifeExpectancy: 81.8, humanDevIndex: 0.929, internetUsers: 97, renewableEnergy: 15, urbanPopulation: 84.2, healthExpenditure: 12, educationExpenditure: 5.5, forestArea: 13.2, accessElectricity: 100 },
-  { id: "250", code: "FR", name: "France", population: 68, gdpPerCapita: 50728, co2Emissions: 4.3, lifeExpectancy: 82.7, humanDevIndex: 0.903, internetUsers: 91, renewableEnergy: 12, urbanPopulation: 81.5, healthExpenditure: 12.2, educationExpenditure: 5.5, forestArea: 31.4, accessElectricity: 100 },
-  { id: "380", code: "IT", name: "Italy", population: 59, gdpPerCapita: 45936, co2Emissions: 5.3, lifeExpectancy: 83.5, humanDevIndex: 0.895, internetUsers: 86, renewableEnergy: 20, urbanPopulation: 71.3, healthExpenditure: 8.7, educationExpenditure: 4.3, forestArea: 32.1, accessElectricity: 100 },
-  { id: "710", code: "ZA", name: "South Africa", population: 60, gdpPerCapita: 15e3, co2Emissions: 6.7, lifeExpectancy: 65.3, humanDevIndex: 0.713, internetUsers: 70, renewableEnergy: 6, urbanPopulation: 68, healthExpenditure: 8.1, educationExpenditure: 6.6, forestArea: 7.6, accessElectricity: 85 },
-  { id: "834", code: "TZ", name: "Tanzania", population: 63, gdpPerCapita: 2990, co2Emissions: 0.2, lifeExpectancy: 66.2, humanDevIndex: 0.549, internetUsers: 25, renewableEnergy: 85, urbanPopulation: 37, healthExpenditure: 3.8, educationExpenditure: 3.4, forestArea: 48.1, accessElectricity: 42.7 },
-  { id: "404", code: "KE", name: "Kenya", population: 55, gdpPerCapita: 5494, co2Emissions: 0.4, lifeExpectancy: 67, humanDevIndex: 0.575, internetUsers: 29, renewableEnergy: 75, urbanPopulation: 28.5, healthExpenditure: 4.3, educationExpenditure: 5.1, forestArea: 7.8, accessElectricity: 75 },
-  { id: "410", code: "KR", name: "South Korea", population: 52, gdpPerCapita: 50071, co2Emissions: 11.5, lifeExpectancy: 83.7, humanDevIndex: 0.925, internetUsers: 97, renewableEnergy: 4, urbanPopulation: 81.4, healthExpenditure: 8.4, educationExpenditure: 5.1, forestArea: 63.4, accessElectricity: 100 },
-  { id: "170", code: "CO", name: "Colombia", population: 52, gdpPerCapita: 17063, co2Emissions: 1.8, lifeExpectancy: 77.3, humanDevIndex: 0.752, internetUsers: 73, renewableEnergy: 27, urbanPopulation: 81.7, healthExpenditure: 7.7, educationExpenditure: 4.5, forestArea: 52.7, accessElectricity: 100 },
-  { id: "724", code: "ES", name: "Spain", population: 47, gdpPerCapita: 42190, co2Emissions: 5, lifeExpectancy: 83.6, humanDevIndex: 0.905, internetUsers: 94, renewableEnergy: 21, urbanPopulation: 81.1, healthExpenditure: 10.7, educationExpenditure: 4.8, forestArea: 37.4, accessElectricity: 100 },
-  { id: "032", code: "AR", name: "Argentina", population: 46, gdpPerCapita: 24678, co2Emissions: 3.8, lifeExpectancy: 77.1, humanDevIndex: 0.842, internetUsers: 87, renewableEnergy: 13, urbanPopulation: 92.2, healthExpenditure: 10, educationExpenditure: 5, forestArea: 10.5, accessElectricity: 100 },
-  { id: "800", code: "UG", name: "Uganda", population: 48, gdpPerCapita: 2566, co2Emissions: 0.1, lifeExpectancy: 64.4, humanDevIndex: 0.525, internetUsers: 18, renewableEnergy: 89, urbanPopulation: 25.6, healthExpenditure: 3.8, educationExpenditure: 2.7, forestArea: 9.7, accessElectricity: 46 },
-  { id: "012", code: "DZ", name: "Algeria", population: 45, gdpPerCapita: 12667, co2Emissions: 3.7, lifeExpectancy: 77.1, humanDevIndex: 0.745, internetUsers: 71, renewableEnergy: 1, urbanPopulation: 74.3, healthExpenditure: 5.3, educationExpenditure: 5.6, forestArea: 0.8, accessElectricity: 100 },
-  { id: "804", code: "UA", name: "Ukraine", population: 41, gdpPerCapita: 14220, co2Emissions: 4.5, lifeExpectancy: 72.1, humanDevIndex: 0.773, internetUsers: 75, renewableEnergy: 8, urbanPopulation: 69.6, healthExpenditure: 7, educationExpenditure: 5.4, forestArea: 16.7, accessElectricity: 100 },
-  { id: "368", code: "IQ", name: "Iraq", population: 43, gdpPerCapita: 10474, co2Emissions: 4, lifeExpectancy: 71.1, humanDevIndex: 0.686, internetUsers: 75, renewableEnergy: 3, urbanPopulation: 71.1, healthExpenditure: 4.6, educationExpenditure: 4.7, forestArea: 1.9, accessElectricity: 100 },
-  { id: "616", code: "PL", name: "Poland", population: 38, gdpPerCapita: 40343, co2Emissions: 8, lifeExpectancy: 78.7, humanDevIndex: 0.876, internetUsers: 87, renewableEnergy: 17, urbanPopulation: 60, healthExpenditure: 6.5, educationExpenditure: 4.6, forestArea: 30.9, accessElectricity: 100 },
-  { id: "124", code: "CA", name: "Canada", population: 39, gdpPerCapita: 54966, co2Emissions: 14.3, lifeExpectancy: 82.4, humanDevIndex: 0.936, internetUsers: 93, renewableEnergy: 18, urbanPopulation: 81.8, healthExpenditure: 12.8, educationExpenditure: 5.3, forestArea: 38.7, accessElectricity: 100 },
-  { id: "504", code: "MA", name: "Morocco", population: 37, gdpPerCapita: 9339, co2Emissions: 1.9, lifeExpectancy: 77, humanDevIndex: 0.683, internetUsers: 84, renewableEnergy: 13, urbanPopulation: 64.6, healthExpenditure: 5.3, educationExpenditure: 6.8, forestArea: 12.8, accessElectricity: 100 },
-  { id: "682", code: "SA", name: "Saudi Arabia", population: 36, gdpPerCapita: 56817, co2Emissions: 15.3, lifeExpectancy: 76.9, humanDevIndex: 0.875, internetUsers: 98, renewableEnergy: 0, urbanPopulation: 84.7, healthExpenditure: 6.4, educationExpenditure: 5.1, forestArea: 0.5, accessElectricity: 100 },
-  { id: "604", code: "PE", name: "Peru", population: 34, gdpPerCapita: 14225, co2Emissions: 1.6, lifeExpectancy: 77.4, humanDevIndex: 0.762, internetUsers: 71, renewableEnergy: 25, urbanPopulation: 78.6, healthExpenditure: 5.2, educationExpenditure: 4, forestArea: 57.3, accessElectricity: 97 },
-  { id: "036", code: "AU", name: "Australia", population: 26, gdpPerCapita: 59934, co2Emissions: 15, lifeExpectancy: 84, humanDevIndex: 0.951, internetUsers: 96, renewableEnergy: 12, urbanPopulation: 86.4, healthExpenditure: 10.7, educationExpenditure: 6.1, forestArea: 17.4, accessElectricity: 100 },
-  { id: "458", code: "MY", name: "Malaysia", population: 34, gdpPerCapita: 33550, co2Emissions: 7.6, lifeExpectancy: 76.9, humanDevIndex: 0.803, internetUsers: 90, renewableEnergy: 8, urbanPopulation: 78, healthExpenditure: 3.8, educationExpenditure: 3.9, forestArea: 57.7, accessElectricity: 100 },
-  { id: "288", code: "GH", name: "Ghana", population: 33, gdpPerCapita: 6754, co2Emissions: 0.6, lifeExpectancy: 64.9, humanDevIndex: 0.632, internetUsers: 53, renewableEnergy: 42, urbanPopulation: 58, healthExpenditure: 3.4, educationExpenditure: 4, forestArea: 34.5, accessElectricity: 85.9 },
-  { id: "524", code: "NP", name: "Nepal", population: 30, gdpPerCapita: 4199, co2Emissions: 0.5, lifeExpectancy: 71.7, humanDevIndex: 0.602, internetUsers: 48, renewableEnergy: 86, urbanPopulation: 21, healthExpenditure: 4.4, educationExpenditure: 4.2, forestArea: 25.4, accessElectricity: 90 },
-  { id: "862", code: "VE", name: "Venezuela", population: 29, gdpPerCapita: 7045, co2Emissions: 3.1, lifeExpectancy: 72.1, humanDevIndex: 0.691, internetUsers: 72, renewableEnergy: 68, urbanPopulation: 88.3, healthExpenditure: 3.9, educationExpenditure: 6.9, forestArea: 52.1, accessElectricity: 99.9 },
-  { id: "450", code: "MG", name: "Madagascar", population: 29, gdpPerCapita: 1724, co2Emissions: 0.2, lifeExpectancy: 67, humanDevIndex: 0.501, internetUsers: 10, renewableEnergy: 68, urbanPopulation: 39.5, healthExpenditure: 3.9, educationExpenditure: 2.9, forestArea: 21.4, accessElectricity: 34 },
-  { id: "120", code: "CM", name: "Cameroon", population: 28, gdpPerCapita: 3977, co2Emissions: 0.4, lifeExpectancy: 60.3, humanDevIndex: 0.576, internetUsers: 34, renewableEnergy: 74, urbanPopulation: 58.4, healthExpenditure: 3.3, educationExpenditure: 3.2, forestArea: 45.6, accessElectricity: 65 },
-  // Nordic & small high-HDI
-  { id: "528", code: "NL", name: "Netherlands", population: 18, gdpPerCapita: 64654, co2Emissions: 8.1, lifeExpectancy: 82.3, humanDevIndex: 0.941, internetUsers: 98, renewableEnergy: 13, urbanPopulation: 92.5, healthExpenditure: 11.2, educationExpenditure: 5.3, forestArea: 11.2, accessElectricity: 100 },
-  { id: "152", code: "CL", name: "Chile", population: 19, gdpPerCapita: 28526, co2Emissions: 4.3, lifeExpectancy: 80.7, humanDevIndex: 0.855, internetUsers: 88, renewableEnergy: 27, urbanPopulation: 87.9, healthExpenditure: 9.3, educationExpenditure: 5.4, forestArea: 24.4, accessElectricity: 100 },
-  { id: "752", code: "SE", name: "Sweden", population: 10, gdpPerCapita: 60239, co2Emissions: 3.5, lifeExpectancy: 83.2, humanDevIndex: 0.947, internetUsers: 96, renewableEnergy: 56, urbanPopulation: 88.2, healthExpenditure: 11.4, educationExpenditure: 7.6, forestArea: 68.9, accessElectricity: 100 },
-  { id: "578", code: "NO", name: "Norway", population: 5, gdpPerCapita: 82236, co2Emissions: 7.5, lifeExpectancy: 83.2, humanDevIndex: 0.961, internetUsers: 98, renewableEnergy: 72, urbanPopulation: 83.4, healthExpenditure: 11.4, educationExpenditure: 7.9, forestArea: 33.2, accessElectricity: 100 },
-  { id: "702", code: "SG", name: "Singapore", population: 6, gdpPerCapita: 116527, co2Emissions: 8.9, lifeExpectancy: 84.1, humanDevIndex: 0.939, internetUsers: 96, renewableEnergy: 2, urbanPopulation: 100, healthExpenditure: 6.1, educationExpenditure: 2.9, forestArea: 22.5, accessElectricity: 100 },
-  { id: "554", code: "NZ", name: "New Zealand", population: 5, gdpPerCapita: 48249, co2Emissions: 6.8, lifeExpectancy: 82.5, humanDevIndex: 0.937, internetUsers: 95, renewableEnergy: 40, urbanPopulation: 86.7, healthExpenditure: 9.7, educationExpenditure: 6.3, forestArea: 38.6, accessElectricity: 100 },
-  { id: "372", code: "IE", name: "Ireland", population: 5, gdpPerCapita: 106998, co2Emissions: 7.3, lifeExpectancy: 82.8, humanDevIndex: 0.945, internetUsers: 94, renewableEnergy: 14, urbanPopulation: 64.2, healthExpenditure: 7.1, educationExpenditure: 3.5, forestArea: 11, accessElectricity: 100 },
-  { id: "376", code: "IL", name: "Israel", population: 9, gdpPerCapita: 52170, co2Emissions: 6.9, lifeExpectancy: 83.5, humanDevIndex: 0.919, internetUsers: 90, renewableEnergy: 6, urbanPopulation: 92.8, healthExpenditure: 7.5, educationExpenditure: 7.1, forestArea: 7.6, accessElectricity: 100 },
-  { id: "784", code: "AE", name: "United Arab Emirates", population: 10, gdpPerCapita: 77272, co2Emissions: 20.7, lifeExpectancy: 78.7, humanDevIndex: 0.911, internetUsers: 100, renewableEnergy: 1, urbanPopulation: 87.4, healthExpenditure: 5, educationExpenditure: 3.9, forestArea: 4.5, accessElectricity: 100 },
-  { id: "756", code: "CH", name: "Switzerland", population: 9, gdpPerCapita: 81867, co2Emissions: 4, lifeExpectancy: 84, humanDevIndex: 0.962, internetUsers: 96, renewableEnergy: 28, urbanPopulation: 74, healthExpenditure: 11.3, educationExpenditure: 5, forestArea: 31.9, accessElectricity: 100 },
-  { id: "040", code: "AT", name: "Austria", population: 9, gdpPerCapita: 58013, co2Emissions: 6.8, lifeExpectancy: 82, humanDevIndex: 0.916, internetUsers: 93, renewableEnergy: 36, urbanPopulation: 59, healthExpenditure: 10.4, educationExpenditure: 5.4, forestArea: 47.3, accessElectricity: 100 },
-  { id: "620", code: "PT", name: "Portugal", population: 10, gdpPerCapita: 38147, co2Emissions: 4, lifeExpectancy: 82.6, humanDevIndex: 0.866, internetUsers: 85, renewableEnergy: 34, urbanPopulation: 66.8, healthExpenditure: 10.6, educationExpenditure: 5, forestArea: 36.1, accessElectricity: 100 },
-  { id: "300", code: "GR", name: "Greece", population: 10, gdpPerCapita: 33393, co2Emissions: 5.3, lifeExpectancy: 81.4, humanDevIndex: 0.887, internetUsers: 79, renewableEnergy: 22, urbanPopulation: 80.1, healthExpenditure: 7.8, educationExpenditure: 4.4, forestArea: 32.5, accessElectricity: 100 },
-  { id: "203", code: "CZ", name: "Czech Republic", population: 11, gdpPerCapita: 45499, co2Emissions: 9.3, lifeExpectancy: 79.4, humanDevIndex: 0.889, internetUsers: 88, renewableEnergy: 17, urbanPopulation: 74.1, healthExpenditure: 9.2, educationExpenditure: 4.4, forestArea: 34.7, accessElectricity: 100 },
-  { id: "056", code: "BE", name: "Belgium", population: 12, gdpPerCapita: 55521, co2Emissions: 8, lifeExpectancy: 82.2, humanDevIndex: 0.937, internetUsers: 94, renewableEnergy: 13, urbanPopulation: 98.1, healthExpenditure: 11.1, educationExpenditure: 6.4, forestArea: 22.8, accessElectricity: 100 },
-  { id: "348", code: "HU", name: "Hungary", population: 10, gdpPerCapita: 37935, co2Emissions: 4.6, lifeExpectancy: 77, humanDevIndex: 0.846, internetUsers: 89, renewableEnergy: 14, urbanPopulation: 72.3, healthExpenditure: 6.4, educationExpenditure: 4.6, forestArea: 22.9, accessElectricity: 100 },
-  { id: "246", code: "FI", name: "Finland", population: 6, gdpPerCapita: 53654, co2Emissions: 6.5, lifeExpectancy: 82.2, humanDevIndex: 0.94, internetUsers: 96, renewableEnergy: 44, urbanPopulation: 85.5, healthExpenditure: 9.6, educationExpenditure: 6.3, forestArea: 73.7, accessElectricity: 100 },
-  { id: "208", code: "DK", name: "Denmark", population: 6, gdpPerCapita: 67803, co2Emissions: 4.4, lifeExpectancy: 81.6, humanDevIndex: 0.948, internetUsers: 98, renewableEnergy: 40, urbanPopulation: 88.2, healthExpenditure: 10.5, educationExpenditure: 6.9, forestArea: 14.7, accessElectricity: 100 },
-  { id: "352", code: "IS", name: "Iceland", population: 0.4, gdpPerCapita: 68727, co2Emissions: 9.7, lifeExpectancy: 83.1, humanDevIndex: 0.959, internetUsers: 99, renewableEnergy: 85, urbanPopulation: 93.9, healthExpenditure: 8.9, educationExpenditure: 7.7, forestArea: 0.5, accessElectricity: 100 },
-  // Africa
-  { id: "180", code: "CD", name: "DR Congo", population: 99, gdpPerCapita: 1099, co2Emissions: 0.04, lifeExpectancy: 60.7, humanDevIndex: 0.479, internetUsers: 9, renewableEnergy: 97, urbanPopulation: 46.2, healthExpenditure: 3.3, educationExpenditure: 1.5, forestArea: 67.3, accessElectricity: 19.1 },
-  { id: "729", code: "SD", name: "Sudan", population: 46, gdpPerCapita: 4232, co2Emissions: 0.5, lifeExpectancy: 66.1, humanDevIndex: 0.508, internetUsers: 31, renewableEnergy: 62, urbanPopulation: 35.6, healthExpenditure: 4.5, educationExpenditure: 2.2, forestArea: 9.7, accessElectricity: 55.5 },
-  { id: "024", code: "AO", name: "Angola", population: 35, gdpPerCapita: 6938, co2Emissions: 0.8, lifeExpectancy: 62, humanDevIndex: 0.586, internetUsers: 36, renewableEnergy: 55, urbanPopulation: 68.1, healthExpenditure: 2.6, educationExpenditure: 2.4, forestArea: 46.3, accessElectricity: 46 },
-  { id: "508", code: "MZ", name: "Mozambique", population: 33, gdpPerCapita: 1346, co2Emissions: 0.2, lifeExpectancy: 60.9, humanDevIndex: 0.456, internetUsers: 10, renewableEnergy: 79, urbanPopulation: 38, healthExpenditure: 7.5, educationExpenditure: 5.5, forestArea: 48.2, accessElectricity: 31 },
-  { id: "384", code: "CI", name: "Ivory Coast", population: 28, gdpPerCapita: 5972, co2Emissions: 0.4, lifeExpectancy: 59.3, humanDevIndex: 0.55, internetUsers: 45, renewableEnergy: 68, urbanPopulation: 52.7, healthExpenditure: 3.3, educationExpenditure: 3.4, forestArea: 9.3, accessElectricity: 70 },
-  { id: "562", code: "NE", name: "Niger", population: 26, gdpPerCapita: 1318, co2Emissions: 0.1, lifeExpectancy: 63, humanDevIndex: 0.4, internetUsers: 5, renewableEnergy: 80, urbanPopulation: 16.8, healthExpenditure: 5.2, educationExpenditure: 3.5, forestArea: 0.9, accessElectricity: 19.3 },
-  { id: "854", code: "BF", name: "Burkina Faso", population: 22, gdpPerCapita: 2445, co2Emissions: 0.2, lifeExpectancy: 62.7, humanDevIndex: 0.449, internetUsers: 18, renewableEnergy: 79, urbanPopulation: 31.5, healthExpenditure: 5.6, educationExpenditure: 5.4, forestArea: 19.3, accessElectricity: 19 },
-  { id: "466", code: "ML", name: "Mali", population: 22, gdpPerCapita: 2462, co2Emissions: 0.2, lifeExpectancy: 59.3, humanDevIndex: 0.428, internetUsers: 27, renewableEnergy: 76, urbanPopulation: 44.6, healthExpenditure: 3.8, educationExpenditure: 3.8, forestArea: 3.9, accessElectricity: 53 },
-  { id: "686", code: "SN", name: "Senegal", population: 17, gdpPerCapita: 3942, co2Emissions: 0.7, lifeExpectancy: 68.6, humanDevIndex: 0.511, internetUsers: 58, renewableEnergy: 47, urbanPopulation: 48.6, healthExpenditure: 3.5, educationExpenditure: 5.5, forestArea: 42.5, accessElectricity: 70.4 },
-  { id: "894", code: "ZM", name: "Zambia", population: 20, gdpPerCapita: 3574, co2Emissions: 0.4, lifeExpectancy: 65, humanDevIndex: 0.565, internetUsers: 16, renewableEnergy: 88, urbanPopulation: 45.2, healthExpenditure: 4.9, educationExpenditure: 4.6, forestArea: 59.8, accessElectricity: 43 },
-  { id: "716", code: "ZW", name: "Zimbabwe", population: 16, gdpPerCapita: 2622, co2Emissions: 0.8, lifeExpectancy: 61.5, humanDevIndex: 0.593, internetUsers: 35, renewableEnergy: 78, urbanPopulation: 32.2, healthExpenditure: 3.4, educationExpenditure: 5, forestArea: 36.4, accessElectricity: 49 },
-  { id: "646", code: "RW", name: "Rwanda", population: 14, gdpPerCapita: 2359, co2Emissions: 0.1, lifeExpectancy: 69.6, humanDevIndex: 0.534, internetUsers: 30, renewableEnergy: 84, urbanPopulation: 17.6, healthExpenditure: 7.5, educationExpenditure: 3.1, forestArea: 28.8, accessElectricity: 48 },
-  // Asia
-  { id: "004", code: "AF", name: "Afghanistan", population: 41, gdpPerCapita: 2065, co2Emissions: 0.2, lifeExpectancy: 62, humanDevIndex: 0.478, internetUsers: 18, renewableEnergy: 45, urbanPopulation: 26.3, healthExpenditure: 18.2, educationExpenditure: 4.1, forestArea: 1.9, accessElectricity: 97.7 },
-  { id: "104", code: "MM", name: "Myanmar", population: 55, gdpPerCapita: 5699, co2Emissions: 0.6, lifeExpectancy: 67.8, humanDevIndex: 0.585, internetUsers: 44, renewableEnergy: 51, urbanPopulation: 31.4, healthExpenditure: 4.8, educationExpenditure: 2, forestArea: 42.2, accessElectricity: 70 },
-  { id: "408", code: "KP", name: "North Korea", population: 26, gdpPerCapita: 1800, co2Emissions: 2, lifeExpectancy: 72.6, humanDevIndex: 0.733, internetUsers: 0, renewableEnergy: 12, urbanPopulation: 63, healthExpenditure: 6, educationExpenditure: 4, forestArea: 41, accessElectricity: 26 },
-  { id: "496", code: "MN", name: "Mongolia", population: 3.4, gdpPerCapita: 12896, co2Emissions: 14, lifeExpectancy: 70.9, humanDevIndex: 0.739, internetUsers: 84, renewableEnergy: 7, urbanPopulation: 68.8, healthExpenditure: 4, educationExpenditure: 4.7, forestArea: 7.1, accessElectricity: 100 },
-  { id: "144", code: "LK", name: "Sri Lanka", population: 22, gdpPerCapita: 14509, co2Emissions: 1, lifeExpectancy: 77.4, humanDevIndex: 0.782, internetUsers: 47, renewableEnergy: 51, urbanPopulation: 18.9, healthExpenditure: 3.8, educationExpenditure: 2.1, forestArea: 29.4, accessElectricity: 100 },
-  { id: "398", code: "KZ", name: "Kazakhstan", population: 19, gdpPerCapita: 30500, co2Emissions: 13.2, lifeExpectancy: 74.4, humanDevIndex: 0.811, internetUsers: 91, renewableEnergy: 2, urbanPopulation: 57.8, healthExpenditure: 2.8, educationExpenditure: 2.9, forestArea: 1.2, accessElectricity: 100 },
-  { id: "860", code: "UZ", name: "Uzbekistan", population: 35, gdpPerCapita: 9127, co2Emissions: 3.5, lifeExpectancy: 73.8, humanDevIndex: 0.727, internetUsers: 71, renewableEnergy: 11, urbanPopulation: 50.4, healthExpenditure: 6.8, educationExpenditure: 5.3, forestArea: 7.7, accessElectricity: 100 },
-  // Latin America
-  { id: "192", code: "CU", name: "Cuba", population: 11, gdpPerCapita: 9478, co2Emissions: 2.3, lifeExpectancy: 79, humanDevIndex: 0.764, internetUsers: 71, renewableEnergy: 32, urbanPopulation: 77.2, healthExpenditure: 11.7, educationExpenditure: 12.8, forestArea: 33, accessElectricity: 100 },
-  { id: "218", code: "EC", name: "Ecuador", population: 18, gdpPerCapita: 12171, co2Emissions: 2.3, lifeExpectancy: 77.9, humanDevIndex: 0.74, internetUsers: 70, renewableEnergy: 31, urbanPopulation: 64.2, healthExpenditure: 8.3, educationExpenditure: 4.4, forestArea: 50.1, accessElectricity: 100 },
-  { id: "320", code: "GT", name: "Guatemala", population: 18, gdpPerCapita: 9547, co2Emissions: 1, lifeExpectancy: 74.3, humanDevIndex: 0.627, internetUsers: 51, renewableEnergy: 62, urbanPopulation: 52.4, healthExpenditure: 5.8, educationExpenditure: 3.4, forestArea: 33, accessElectricity: 98 },
-  { id: "068", code: "BO", name: "Bolivia", population: 12, gdpPerCapita: 9484, co2Emissions: 1.8, lifeExpectancy: 72.1, humanDevIndex: 0.692, internetUsers: 66, renewableEnergy: 24, urbanPopulation: 70.4, healthExpenditure: 6.9, educationExpenditure: 7.3, forestArea: 50.1, accessElectricity: 99.3 },
-  { id: "340", code: "HN", name: "Honduras", population: 10, gdpPerCapita: 6289, co2Emissions: 1, lifeExpectancy: 75.3, humanDevIndex: 0.621, internetUsers: 48, renewableEnergy: 61, urbanPopulation: 59, healthExpenditure: 7.9, educationExpenditure: 6.1, forestArea: 38.1, accessElectricity: 94 },
-  { id: "600", code: "PY", name: "Paraguay", population: 7, gdpPerCapita: 15030, co2Emissions: 1.1, lifeExpectancy: 74.3, humanDevIndex: 0.717, internetUsers: 77, renewableEnergy: 78, urbanPopulation: 62.5, healthExpenditure: 7.6, educationExpenditure: 3.4, forestArea: 38.6, accessElectricity: 100 },
-  { id: "858", code: "UY", name: "Uruguay", population: 3.5, gdpPerCapita: 25041, co2Emissions: 2, lifeExpectancy: 78.4, humanDevIndex: 0.83, internetUsers: 87, renewableEnergy: 55, urbanPopulation: 95.6, healthExpenditure: 9.3, educationExpenditure: 5, forestArea: 10.5, accessElectricity: 100 },
-  { id: "188", code: "CR", name: "Costa Rica", population: 5, gdpPerCapita: 23101, co2Emissions: 1.5, lifeExpectancy: 80.8, humanDevIndex: 0.809, internetUsers: 81, renewableEnergy: 73, urbanPopulation: 81.4, healthExpenditure: 7.3, educationExpenditure: 6.7, forestArea: 59, accessElectricity: 100 },
-  { id: "591", code: "PA", name: "Panama", population: 4.4, gdpPerCapita: 35317, co2Emissions: 2.5, lifeExpectancy: 79.2, humanDevIndex: 0.805, internetUsers: 68, renewableEnergy: 35, urbanPopulation: 68.4, healthExpenditure: 7.3, educationExpenditure: 3.2, forestArea: 62.1, accessElectricity: 95 }
-], ei = [
-  {
-    id: "humanDevIndex",
-    name: "Human Development Index",
-    unit: "",
-    description: "UN composite index of life expectancy, education, and income",
-    colorScale: ["#fee5d9", "#fcae91", "#cb181d"],
-    domain: [0.4, 1],
-    accessor: (s) => s.humanDevIndex,
-    format: (s) => s.toFixed(3)
-  },
-  {
-    id: "gdpPerCapita",
-    name: "GDP per Capita (PPP)",
-    unit: "$",
-    description: "Purchasing power parity adjusted GDP per person",
-    colorScale: ["#edf8e9", "#74c476", "#006d2c"],
-    domain: [1e3, 8e4],
-    accessor: (s) => s.gdpPerCapita,
-    format: (s) => `$${(s / 1e3).toFixed(1)}k`
-  },
-  {
-    id: "co2Emissions",
-    name: "CO₂ Emissions",
-    unit: "t/capita",
-    description: "Carbon dioxide emissions per capita",
-    colorScale: ["#f7fbff", "#6baed6", "#08306b"],
-    domain: [0, 20],
-    accessor: (s) => s.co2Emissions,
-    format: (s) => `${s.toFixed(1)}t`
-  },
-  {
-    id: "lifeExpectancy",
-    name: "Life Expectancy",
-    unit: "years",
-    description: "Average life expectancy at birth",
-    colorScale: ["#feedde", "#fdbe85", "#d94701"],
-    domain: [55, 85],
-    accessor: (s) => s.lifeExpectancy,
-    format: (s) => `${s.toFixed(1)} yrs`
-  },
-  {
-    id: "renewableEnergy",
-    name: "Renewable Energy",
-    unit: "%",
-    description: "Share of renewable energy in total energy consumption",
-    colorScale: ["#f7fcf5", "#74c476", "#00441b"],
-    domain: [0, 100],
-    accessor: (s) => s.renewableEnergy,
-    format: (s) => `${s.toFixed(0)}%`
-  },
-  {
-    id: "internetUsers",
-    name: "Internet Penetration",
-    unit: "%",
-    description: "Percentage of population using the internet",
-    colorScale: ["#f2f0f7", "#9e9ac8", "#54278f"],
-    domain: [0, 100],
-    accessor: (s) => s.internetUsers,
-    format: (s) => `${s.toFixed(0)}%`
-  },
-  {
-    id: "urbanPopulation",
-    name: "Urbanization",
-    unit: "%",
-    description: "Percentage of population living in urban areas",
-    colorScale: ["#fff5eb", "#fd8d3c", "#7f2704"],
-    domain: [15, 100],
-    accessor: (s) => s.urbanPopulation,
-    format: (s) => `${s.toFixed(0)}%`
-  },
-  {
-    id: "healthExpenditure",
-    name: "Health Spending",
-    unit: "% GDP",
-    description: "Total health expenditure as percentage of GDP",
-    colorScale: ["#fff5f0", "#fb6a4a", "#99000d"],
-    domain: [2, 18],
-    accessor: (s) => s.healthExpenditure,
-    format: (s) => `${s.toFixed(1)}%`
-  },
-  {
-    id: "forestArea",
-    name: "Forest Coverage",
-    unit: "%",
-    description: "Forest area as percentage of total land area",
-    colorScale: ["#f7fcf5", "#41ab5d", "#00441b"],
-    domain: [0, 75],
-    accessor: (s) => s.forestArea,
-    format: (s) => `${s.toFixed(0)}%`
-  },
-  {
-    id: "accessElectricity",
-    name: "Electricity Access",
-    unit: "%",
-    description: "Percentage of population with access to electricity",
-    colorScale: ["#ffffd4", "#fed98e", "#cc4c02"],
-    domain: [15, 100],
-    accessor: (s) => s.accessElectricity,
-    format: (s) => `${s.toFixed(0)}%`
-  }
-];
-function qa(s, e) {
-  const [t, i] = s.domain;
-  return Math.max(0, Math.min(1, (e - t) / (i - t)));
-}
-const Za = {
-  // North America
-  US: "840",
-  USA: "840",
-  "UNITED STATES": "840",
-  AMERICA: "840",
-  CA: "124",
-  CAN: "124",
-  CANADA: "124",
-  MX: "484",
-  MEX: "484",
-  MEXICO: "484",
-  // Europe
-  DE: "276",
-  DEU: "276",
-  GERMANY: "276",
-  DEUTSCHLAND: "276",
-  FR: "250",
-  FRA: "250",
-  FRANCE: "250",
-  GB: "826",
-  GBR: "826",
-  UK: "826",
-  "UNITED KINGDOM": "826",
-  BRITAIN: "826",
-  ENGLAND: "826",
-  IT: "380",
-  ITA: "380",
-  ITALY: "380",
-  ES: "724",
-  ESP: "724",
-  SPAIN: "724",
-  PT: "620",
-  PRT: "620",
-  PORTUGAL: "620",
-  NL: "528",
-  NLD: "528",
-  NETHERLANDS: "528",
-  HOLLAND: "528",
-  BE: "056",
-  BEL: "056",
-  BELGIUM: "056",
-  AT: "040",
-  AUT: "040",
-  AUSTRIA: "040",
-  CH: "756",
-  CHE: "756",
-  SWITZERLAND: "756",
-  PL: "616",
-  POL: "616",
-  POLAND: "616",
-  SE: "752",
-  SWE: "752",
-  SWEDEN: "752",
-  NO: "578",
-  NOR: "578",
-  NORWAY: "578",
-  DK: "208",
-  DNK: "208",
-  DENMARK: "208",
-  FI: "246",
-  FIN: "246",
-  FINLAND: "246",
-  IE: "372",
-  IRL: "372",
-  IRELAND: "372",
-  GR: "300",
-  GRC: "300",
-  GREECE: "300",
-  CZ: "203",
-  CZE: "203",
-  "CZECH REPUBLIC": "203",
-  CZECHIA: "203",
-  RO: "642",
-  ROU: "642",
-  ROMANIA: "642",
-  HU: "348",
-  HUN: "348",
-  HUNGARY: "348",
-  UA: "804",
-  UKR: "804",
-  UKRAINE: "804",
-  RU: "643",
-  RUS: "643",
-  RUSSIA: "643",
-  "RUSSIAN FEDERATION": "643",
-  // Asia
-  CN: "156",
-  CHN: "156",
-  CHINA: "156",
-  JP: "392",
-  JPN: "392",
-  JAPAN: "392",
-  KR: "410",
-  KOR: "410",
-  "SOUTH KOREA": "410",
-  KOREA: "410",
-  IN: "356",
-  IND: "356",
-  INDIA: "356",
-  ID: "360",
-  IDN: "360",
-  INDONESIA: "360",
-  TH: "764",
-  THA: "764",
-  THAILAND: "764",
-  VN: "704",
-  VNM: "704",
-  VIETNAM: "704",
-  PH: "608",
-  PHL: "608",
-  PHILIPPINES: "608",
-  MY: "458",
-  MYS: "458",
-  MALAYSIA: "458",
-  SG: "702",
-  SGP: "702",
-  SINGAPORE: "702",
-  PK: "586",
-  PAK: "586",
-  PAKISTAN: "586",
-  BD: "050",
-  BGD: "050",
-  BANGLADESH: "050",
-  TR: "792",
-  TUR: "792",
-  TURKEY: "792",
-  TURKIYE: "792",
-  SA: "682",
-  SAU: "682",
-  "SAUDI ARABIA": "682",
-  AE: "784",
-  ARE: "784",
-  UAE: "784",
-  "UNITED ARAB EMIRATES": "784",
-  IL: "376",
-  ISR: "376",
-  ISRAEL: "376",
-  IR: "364",
-  IRN: "364",
-  IRAN: "364",
-  IQ: "368",
-  IRQ: "368",
-  IRAQ: "368",
-  // Oceania
-  AU: "036",
-  AUS: "036",
-  AUSTRALIA: "036",
-  NZ: "554",
-  NZL: "554",
-  "NEW ZEALAND": "554",
-  // South America
-  BR: "076",
-  BRA: "076",
-  BRAZIL: "076",
-  AR: "032",
-  ARG: "032",
-  ARGENTINA: "032",
-  CL: "152",
-  CHL: "152",
-  CHILE: "152",
-  CO: "170",
-  COL: "170",
-  COLOMBIA: "170",
-  PE: "604",
-  PER: "604",
-  PERU: "604",
-  VE: "862",
-  VEN: "862",
-  VENEZUELA: "862",
-  // Africa
-  ZA: "710",
-  ZAF: "710",
-  "SOUTH AFRICA": "710",
-  EG: "818",
-  EGY: "818",
-  EGYPT: "818",
-  NG: "566",
-  NGA: "566",
-  NIGERIA: "566",
-  KE: "404",
-  KEN: "404",
-  KENYA: "404",
-  ET: "231",
-  ETH: "231",
-  ETHIOPIA: "231",
-  MA: "504",
-  MAR: "504",
-  MOROCCO: "504",
-  DZ: "012",
-  DZA: "012",
-  ALGERIA: "012",
-  TN: "788",
-  TUN: "788",
-  TUNISIA: "788",
-  GH: "288",
-  GHA: "288",
-  GHANA: "288"
-};
-function nr(s) {
-  const e = s.toUpperCase().trim();
-  return /^\d{1,3}$/.test(s) ? s.padStart(3, "0") : Za[e] || s;
-}
-function Ka(s) {
-  const e = {};
-  return s instanceof Map ? s.forEach((t, i) => {
-    e[nr(i)] = t;
-  }) : Object.entries(s).forEach(([t, i]) => {
-    e[nr(t)] = i;
-  }), e;
-}
-const St = 4096, Tt = 2048, Ja = `
+const Tt = 4096, Mt = 2048, eo = `
   self.onmessage = async (e) => {
     const { url, objectName, idProperty, topojsonUrl } = e.data;
     
@@ -3732,7 +5222,7 @@ const St = 4096, Tt = 2048, Ja = `
     }
   };
 `;
-class et {
+class tt {
   canvas;
   ctx;
   countries = [];
@@ -3749,13 +5239,13 @@ class et {
   // Static cache to share loaded topology data across instances
   static cache = /* @__PURE__ */ new Map();
   constructor(e, t, i) {
-    this.canvas = document.createElement("canvas"), this.canvas.width = St, this.canvas.height = Tt, this.ctx = this.canvas.getContext("2d", { willReadFrequently: !0 }), this.onProgress = t, this.onTextureUpdate = i, this.topologyConfig = {
+    this.canvas = document.createElement("canvas"), this.canvas.width = Tt, this.canvas.height = Mt, this.ctx = this.canvas.getContext("2d", { willReadFrequently: !0 }), this.onProgress = t, this.onTextureUpdate = i, this.topologyConfig = {
       url: e?.url ?? "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json",
       objectName: e?.objectName || "countries",
       disableNormalization: e?.disableNormalization || !1,
       idProperty: e?.idProperty,
       labelProperty: e?.labelProperty
-    }, this.statsMap = /* @__PURE__ */ new Map(), Qe.forEach((r) => {
+    }, this.statsMap = /* @__PURE__ */ new Map(), Je.forEach((r) => {
       this.statsMap.set(r.id, r);
     }), this.loadCountries();
   }
@@ -3765,7 +5255,7 @@ class et {
       this.loaded = !0, this.onProgress?.(1);
       return;
     }
-    if (this.onProgress?.(0.1), !et.cache.has(e)) {
+    if (this.onProgress?.(0.1), !tt.cache.has(e)) {
       const t = (async () => {
         try {
           let i;
@@ -3789,12 +5279,12 @@ class et {
           throw console.error("Failed to load map boundaries:", i), i;
         }
       })();
-      et.cache.set(e, t);
+      tt.cache.set(e, t);
     }
     try {
-      this.countries = await et.cache.get(e), this.loaded = !0, this.updateFeatureLabels(), this.onProgress?.(1);
+      this.countries = await tt.cache.get(e), this.loaded = !0, this.updateFeatureLabels(), this.onProgress?.(1);
     } catch (t) {
-      et.cache.delete(e), console.error("Error loading cached topology:", t), this.loaded = !0;
+      tt.cache.delete(e), console.error("Error loading cached topology:", t), this.loaded = !0;
     }
   }
   /**
@@ -3802,7 +5292,7 @@ class et {
    */
   loadInWorker(e, t, i) {
     return new Promise((r, n) => {
-      const a = new Blob([Ja], { type: "application/javascript" }), o = URL.createObjectURL(a), l = new Worker(o), u = setTimeout(() => {
+      const a = new Blob([eo], { type: "application/javascript" }), o = URL.createObjectURL(a), l = new Worker(o), u = setTimeout(() => {
         l.terminate(), URL.revokeObjectURL(o), n(new Error(`Worker timed out after 15s loading ${t}`));
       }, 15e3);
       l.onmessage = (p) => {
@@ -3830,9 +5320,7 @@ class et {
     const e = Date.now();
     for (; !this.loaded; ) {
       if (Date.now() - e > 2e4) {
-        console.error(
-          "ChoroplethRenderer.waitForLoad timed out after 20s. Forcing continuation."
-        ), this.loaded = !0;
+        console.error("ChoroplethRenderer.waitForLoad timed out after 20s. Forcing continuation."), this.loaded = !0;
         break;
       }
       await new Promise((t) => setTimeout(t, 100));
@@ -3879,9 +5367,7 @@ class et {
         lat: t[1],
         lon: t[0]
       };
-    }).filter(
-      (e) => e !== null && e.id !== "" && e.name !== ""
-    );
+    }).filter((e) => e !== null && e.id !== "" && e.name !== "");
   }
   /**
    * Get labels for all custom features (with centroids)
@@ -3917,7 +5403,7 @@ class et {
   renderTexture(e) {
     this.currentRenderId++;
     const t = this.currentRenderId;
-    if (this.ctx.fillStyle = "rgba(10, 20, 30, 0.9)", this.ctx.fillRect(0, 0, St, Tt), this.onTextureUpdate?.(), !this.loaded)
+    if (this.ctx.fillStyle = "rgba(10, 20, 30, 0.9)", this.ctx.fillRect(0, 0, Tt, Mt), this.onTextureUpdate?.(), !this.loaded)
       return this.canvas;
     const i = this.countries.length < 1500;
     this.ctx.lineWidth = 0.5, this.ctx.strokeStyle = "rgba(0, 0, 0, 0.3)";
@@ -3930,7 +5416,7 @@ class et {
         const c = this.countries[u], h = this.statsMap.get(c.id);
         let p = "#2a2a2a";
         if (h) {
-          const f = e.accessor(h), m = qa(e, f);
+          const f = e.accessor(h), m = Cn(e, f);
           p = this.interpolateColor(e.colorScale, m);
         }
         this.drawFeature(c, p, i);
@@ -3969,7 +5455,7 @@ class et {
     });
   }
   projectPoint(e, t) {
-    const i = (e + 180) / 360 * St, r = (90 - t) / 180 * Tt;
+    const i = (e + 180) / 360 * Tt, r = (90 - t) / 180 * Mt;
     return [i, r];
   }
   interpolateColor(e, t) {
@@ -3994,9 +5480,9 @@ class et {
   renderCustomTexture(e, t, i) {
     this.currentRenderId++;
     const r = this.currentRenderId;
-    if (this.ctx.fillStyle = "rgba(10, 20, 30, 0.9)", this.ctx.fillRect(0, 0, St, Tt), this.onTextureUpdate?.(), !this.loaded)
+    if (this.ctx.fillStyle = "rgba(10, 20, 30, 0.9)", this.ctx.fillRect(0, 0, Tt, Mt), this.onTextureUpdate?.(), !this.loaded)
       return this.canvas;
-    const n = this.topologyConfig?.disableNormalization ? e instanceof Map ? Object.fromEntries(e) : e : Ka(e), a = this.countries.length < 1500;
+    const n = this.topologyConfig?.disableNormalization ? e instanceof Map ? Object.fromEntries(e) : e : An(e), a = this.countries.length < 1500;
     this.ctx.lineWidth = 0.5, this.ctx.strokeStyle = "rgba(0, 0, 0, 0.3)";
     const o = 500, l = this.countries.length;
     let u = 0;
@@ -4041,9 +5527,7 @@ class et {
       t = this.featureLabels.find((n) => n.id === r);
     }
     if (t) return t.name;
-    const i = this.countries.find(
-      (r) => r.id === e || r.properties?.id === e
-    );
+    const i = this.countries.find((r) => r.id === e || r.properties?.id === e);
     if (i)
       return i.properties.name || i.properties.NAME || i.properties.Name || i.id;
   }
@@ -4073,7 +5557,7 @@ class et {
     return [p, d, f, g];
   }
 }
-const Qa = {
+const to = {
   // Major economies
   CN: [35, 105],
   IN: [22, 78],
@@ -4172,7 +5656,7 @@ const Qa = {
   UY: [-33, -56],
   CR: [10, -84],
   PA: [9, -80]
-}, eo = /* @__PURE__ */ new Set([
+}, io = /* @__PURE__ */ new Set([
   "CN",
   "IN",
   "US",
@@ -4203,7 +5687,7 @@ const Qa = {
   "PK",
   "BD",
   "VN"
-]), to = /* @__PURE__ */ new Set(["CN", "IN", "US", "BR", "RU", "AU", "CA"]), io = /* @__PURE__ */ new Set(["RU", "CA", "US", "CN", "BR", "AU"]), ro = /* @__PURE__ */ new Set([
+]), ro = /* @__PURE__ */ new Set(["CN", "IN", "US", "BR", "RU", "AU", "CA"]), no = /* @__PURE__ */ new Set(["RU", "CA", "US", "CN", "BR", "AU"]), ao = /* @__PURE__ */ new Set([
   "IN",
   "AR",
   "KZ",
@@ -4234,7 +5718,7 @@ const Qa = {
   "TR",
   "CL",
   "MM"
-]), no = /* @__PURE__ */ new Set([
+]), oo = /* @__PURE__ */ new Set([
   "AF",
   "UA",
   "MG",
@@ -4276,7 +5760,7 @@ const Qa = {
   "IQ",
   "BD"
 ]);
-class ao {
+class so {
   labelRenderer;
   labels = [];
   labelGroup;
@@ -4287,7 +5771,7 @@ class ao {
   camera = null;
   dataIds = /* @__PURE__ */ new Set();
   constructor(e, t) {
-    this.sphereRadius = t, this.labelRenderer = new En();
+    this.sphereRadius = t, this.labelRenderer = new wn();
     const i = e.clientWidth || 800, r = e.clientHeight || 600;
     this.labelRenderer.setSize(i, r), this.labelRenderer.domElement.style.position = "absolute", this.labelRenderer.domElement.style.top = "0", this.labelRenderer.domElement.style.left = "0", this.labelRenderer.domElement.style.pointerEvents = "none", this.labelRenderer.domElement.style.zIndex = "5", e.appendChild(this.labelRenderer.domElement), this.labelGroup = new S.Group(), this.injectStyles(), this.createLabels();
   }
@@ -4379,15 +5863,15 @@ class ao {
     `, document.head.appendChild(e);
   }
   getSizeCategory(e) {
-    return io.has(e) ? "large" : ro.has(e) ? "medium" : no.has(e) ? "small" : "tiny";
+    return no.has(e) ? "large" : ao.has(e) ? "medium" : oo.has(e) ? "small" : "tiny";
   }
   createLabels() {
-    Qe.forEach((e) => {
-      const t = Qa[e.code];
+    Je.forEach((e) => {
+      const t = to[e.code];
       if (!t) return;
       const [i, r] = t, n = this.getSizeCategory(e.code), a = document.createElement("div");
       a.className = `country-label hidden size-${n}`, a.textContent = e.name;
-      const o = new Ni(a), l = {
+      const o = new Bi(a), l = {
         element: a,
         object: o,
         country: e,
@@ -4411,7 +5895,7 @@ class ao {
       })) return;
       const l = t.size || "small", u = document.createElement("div");
       u.className = `country-label hidden size-${l} custom-label`, u.textContent = t.name;
-      const c = new Ni(u), h = {
+      const c = new Bi(u), h = {
         id: t.id,
         code: t.id,
         name: t.name
@@ -4430,13 +5914,9 @@ class ao {
    * Clear all custom labels (keeps country labels)
    */
   clearCustomLabels() {
-    this.labels.filter(
-      (t) => t.element.classList.contains("custom-label")
-    ).forEach((t) => {
+    this.labels.filter((t) => t.element.classList.contains("custom-label")).forEach((t) => {
       this.labelGroup.remove(t.object), t.element.remove(), this.dataIds.delete(t.country.code);
-    }), this.labels = this.labels.filter(
-      (t) => !t.element.classList.contains("custom-label")
-    );
+    }), this.labels = this.labels.filter((t) => !t.element.classList.contains("custom-label"));
   }
   localPos = new S.Vector3();
   worldPos = new S.Vector3();
@@ -4510,10 +5990,10 @@ class ao {
           r = !1;
           break;
         case "minimal":
-          r = to.has(i);
+          r = ro.has(i);
           break;
         case "major":
-          r = eo.has(i);
+          r = io.has(i);
           break;
         case "all":
         case "capitals":
@@ -4607,10 +6087,10 @@ class ao {
     }), this.labels = [], this.labelRenderer.domElement.remove();
   }
 }
-let ar = !1;
-function oo() {
-  if (ar) return;
-  ar = !0;
+let sr = !1;
+function lo() {
+  if (sr) return;
+  sr = !0;
   const s = document.createElement("style");
   s.setAttribute("data-gralobe-datagrid", "true"), s.textContent = `
     .gralobe-datagrid-overlay {
@@ -4731,12 +6211,12 @@ function oo() {
     }
   `, document.head.appendChild(s);
 }
-class so {
+class co {
   element;
   parentContainer;
   visible = !1;
   constructor(e) {
-    oo(), this.parentContainer = e, this.element = document.createElement("div"), this.element.className = "gralobe-datagrid-overlay", this.element.innerHTML = `
+    lo(), this.parentContainer = e, this.element = document.createElement("div"), this.element.className = "gralobe-datagrid-overlay", this.element.innerHTML = `
       <div class="gralobe-datagrid-modal">
         <div class="gralobe-datagrid-header">
           <h3 class="gralobe-datagrid-title">Data Explorer</h3>
@@ -4782,8 +6262,8 @@ class so {
     this.element.remove();
   }
 }
-var lo = { trailer: 59 };
-function mn(s = 256) {
+var uo = { trailer: 59 };
+function bn(s = 256) {
   let e = 0, t = new Uint8Array(s);
   return { get buffer() {
     return t.buffer;
@@ -4810,8 +6290,8 @@ function mn(s = 256) {
     t = new Uint8Array(r), e > 0 && t.set(o.subarray(0, e), 0);
   }
 }
-var ti = 12, or = 5003, co = [0, 1, 3, 7, 15, 31, 63, 127, 255, 511, 1023, 2047, 4095, 8191, 16383, 32767, 65535];
-function uo(s, e, t, i, r = mn(512), n = new Uint8Array(256), a = new Int32Array(or), o = new Int32Array(or)) {
+var ii = 12, lr = 5003, ho = [0, 1, 3, 7, 15, 31, 63, 127, 255, 511, 1023, 2047, 4095, 8191, 16383, 32767, 65535];
+function po(s, e, t, i, r = bn(512), n = new Uint8Array(256), a = new Int32Array(lr), o = new Int32Array(lr)) {
   let l = a.length, u = Math.max(2, i);
   n.fill(0), o.fill(0), a.fill(-1);
   let c = 0, h = 0, p = u + 1, f = p, m = !1, d = f, g = (1 << d) - 1, b = 1 << p - 1, y = b + 1, x = b + 2, v = 0, _ = t[0], C = 0;
@@ -4820,7 +6300,7 @@ function uo(s, e, t, i, r = mn(512), n = new Uint8Array(256), a = new Int32Array
   let w = t.length;
   for (let E = 1; E < w; E++)
     e: {
-      let T = t[E], L = (T << ti) + _, M = T << C ^ _;
+      let T = t[E], L = (T << ii) + _, M = T << C ^ _;
       if (a[M] === L) {
         _ = o[M];
         break e;
@@ -4830,34 +6310,34 @@ function uo(s, e, t, i, r = mn(512), n = new Uint8Array(256), a = new Int32Array
         _ = o[M];
         break e;
       }
-      P(_), _ = T, x < 1 << ti ? (o[M] = x++, a[M] = L) : (a.fill(-1), x = b + 2, m = !0, P(b));
+      P(_), _ = T, x < 1 << ii ? (o[M] = x++, a[M] = L) : (a.fill(-1), x = b + 2, m = !0, P(b));
     }
   return P(_), P(y), r.writeByte(0), r.bytesView();
   function P(E) {
-    for (c &= co[h], h > 0 ? c |= E << h : c = E, h += d; h >= 8; ) n[v++] = c & 255, v >= 254 && (r.writeByte(v), r.writeBytesView(n, 0, v), v = 0), c >>= 8, h -= 8;
-    if ((x > g || m) && (m ? (d = f, g = (1 << d) - 1, m = !1) : (++d, g = d === ti ? 1 << d : (1 << d) - 1)), E == y) {
+    for (c &= ho[h], h > 0 ? c |= E << h : c = E, h += d; h >= 8; ) n[v++] = c & 255, v >= 254 && (r.writeByte(v), r.writeBytesView(n, 0, v), v = 0), c >>= 8, h -= 8;
+    if ((x > g || m) && (m ? (d = f, g = (1 << d) - 1, m = !1) : (++d, g = d === ii ? 1 << d : (1 << d) - 1)), E == y) {
       for (; h > 0; ) n[v++] = c & 255, v >= 254 && (r.writeByte(v), r.writeBytesView(n, 0, v), v = 0), c >>= 8, h -= 8;
       v > 0 && (r.writeByte(v), r.writeBytesView(n, 0, v), v = 0);
     }
   }
 }
-var ho = uo;
-function gn(s, e, t) {
+var fo = po;
+function yn(s, e, t) {
   return s << 8 & 63488 | e << 2 & 992 | t >> 3;
 }
-function bn(s, e, t, i) {
+function xn(s, e, t, i) {
   return s >> 4 | e & 240 | (t & 240) << 4 | (i & 240) << 8;
 }
-function yn(s, e, t) {
+function _n(s, e, t) {
   return s >> 4 << 8 | e & 240 | t >> 4;
 }
-function Mt(s, e, t) {
+function Lt(s, e, t) {
   return s < e ? e : s > t ? t : s;
 }
-function Rt(s) {
+function kt(s) {
   return s * s;
 }
-function sr(s, e, t) {
+function cr(s, e, t) {
   var i = 0, r = 1e100;
   let n = s[e], a = n.cnt;
   n.ac;
@@ -4866,35 +6346,35 @@ function sr(s, e, t) {
     let p = s[c], f = p.cnt, m = a * f / (a + f);
     if (!(m >= r)) {
       var h = 0;
-      h += m * Rt(p.rc - o), !(h >= r) && (h += m * Rt(p.gc - l), !(h >= r) && (h += m * Rt(p.bc - u), !(h >= r) && (r = h, i = c)));
+      h += m * kt(p.rc - o), !(h >= r) && (h += m * kt(p.gc - l), !(h >= r) && (h += m * kt(p.bc - u), !(h >= r) && (r = h, i = c)));
     }
   }
   n.err = r, n.nn = i;
 }
-function ii() {
+function ri() {
   return { ac: 0, rc: 0, gc: 0, bc: 0, cnt: 0, nn: 0, fw: 0, bk: 0, tm: 0, mtm: 0, err: 0 };
 }
-function po(s, e) {
+function mo(s, e) {
   let t = e === "rgb444" ? 4096 : 65536, i = new Array(t), r = s.length;
   if (e === "rgba4444") for (let n = 0; n < r; ++n) {
-    let a = s[n], o = a >> 24 & 255, l = a >> 16 & 255, u = a >> 8 & 255, c = a & 255, h = bn(c, u, l, o), p = h in i ? i[h] : i[h] = ii();
+    let a = s[n], o = a >> 24 & 255, l = a >> 16 & 255, u = a >> 8 & 255, c = a & 255, h = xn(c, u, l, o), p = h in i ? i[h] : i[h] = ri();
     p.rc += c, p.gc += u, p.bc += l, p.ac += o, p.cnt++;
   }
   else if (e === "rgb444") for (let n = 0; n < r; ++n) {
-    let a = s[n], o = a >> 16 & 255, l = a >> 8 & 255, u = a & 255, c = yn(u, l, o), h = c in i ? i[c] : i[c] = ii();
+    let a = s[n], o = a >> 16 & 255, l = a >> 8 & 255, u = a & 255, c = _n(u, l, o), h = c in i ? i[c] : i[c] = ri();
     h.rc += u, h.gc += l, h.bc += o, h.cnt++;
   }
   else for (let n = 0; n < r; ++n) {
-    let a = s[n], o = a >> 16 & 255, l = a >> 8 & 255, u = a & 255, c = gn(u, l, o), h = c in i ? i[c] : i[c] = ii();
+    let a = s[n], o = a >> 16 & 255, l = a >> 8 & 255, u = a & 255, c = yn(u, l, o), h = c in i ? i[c] : i[c] = ri();
     h.rc += u, h.gc += l, h.bc += o, h.cnt++;
   }
   return i;
 }
-function fo(s, e, t = {}) {
+function go(s, e, t = {}) {
   let { format: i = "rgb565", clearAlpha: r = !0, clearAlphaColor: n = 0, clearAlphaThreshold: a = 0, oneBitAlpha: o = !1 } = t;
   if (!s || !s.buffer) throw new Error("quantize() expected RGBA Uint8Array data");
   if (!(s instanceof Uint8Array) && !(s instanceof Uint8ClampedArray)) throw new Error("quantize() expected RGBA Uint8Array data");
-  let l = new Uint32Array(s.buffer), u = t.useSqrt !== !1, c = i === "rgba4444", h = po(l, i), p = h.length, f = p - 1, m = new Uint32Array(p + 1);
+  let l = new Uint32Array(s.buffer), u = t.useSqrt !== !1, c = i === "rgba4444", h = mo(l, i), p = h.length, f = p - 1, m = new Uint32Array(p + 1);
   for (var d = 0, g = 0; g < p; ++g) {
     let R = h[g];
     if (R != null) {
@@ -4902,12 +6382,12 @@ function fo(s, e, t = {}) {
       c && (R.ac *= b), R.rc *= b, R.gc *= b, R.bc *= b, h[d++] = R;
     }
   }
-  Rt(e) / d < 0.022 && (u = !1);
+  kt(e) / d < 0.022 && (u = !1);
   for (var g = 0; g < d - 1; ++g) h[g].fw = g + 1, h[g + 1].bk = g, u && (h[g].cnt = Math.sqrt(h[g].cnt));
   u && (h[g].cnt = Math.sqrt(h[g].cnt));
   var y, x, v;
   for (g = 0; g < d; ++g) {
-    sr(h, g);
+    cr(h, g);
     var _ = h[g].err;
     for (x = ++m[0]; x > 1 && (v = x >> 1, !(h[y = m[v]].err <= _)); x = v) m[x] = y;
     m[x] = g;
@@ -4917,7 +6397,7 @@ function fo(s, e, t = {}) {
     for (var w; ; ) {
       var P = m[1];
       if (w = h[P], w.tm >= w.mtm && h[w.nn].mtm <= w.tm) break;
-      w.mtm == f ? P = m[1] = m[m[0]--] : (sr(h, P), w.tm = g);
+      w.mtm == f ? P = m[1] = m[m[0]--] : (cr(h, P), w.tm = g);
       var _ = h[P].err;
       for (x = 1; (v = x + x) <= m[0] && (v < m[0] && h[m[v]].err > h[m[v + 1]].err && v++, !(_ <= h[y = m[v]].err)); x = v) m[x] = y;
       m[x] = P;
@@ -4928,73 +6408,73 @@ function fo(s, e, t = {}) {
   let M = [];
   var D = 0;
   for (g = 0; ; ++D) {
-    let R = Mt(Math.round(h[g].rc), 0, 255), U = Mt(Math.round(h[g].gc), 0, 255), k = Mt(Math.round(h[g].bc), 0, 255), O = 255;
-    c && (O = Mt(Math.round(h[g].ac), 0, 255), o && (O = O <= (typeof o == "number" ? o : 127) ? 0 : 255), r && O <= a && (R = U = k = n, O = 0));
-    let q = c ? [R, U, k, O] : [R, U, k];
-    if (mo(M, q) || M.push(q), (g = h[g].fw) == 0) break;
+    let R = Lt(Math.round(h[g].rc), 0, 255), U = Lt(Math.round(h[g].gc), 0, 255), k = Lt(Math.round(h[g].bc), 0, 255), O = 255;
+    c && (O = Lt(Math.round(h[g].ac), 0, 255), o && (O = O <= (typeof o == "number" ? o : 127) ? 0 : 255), r && O <= a && (R = U = k = n, O = 0));
+    let Z = c ? [R, U, k, O] : [R, U, k];
+    if (bo(M, Z) || M.push(Z), (g = h[g].fw) == 0) break;
   }
   return M;
 }
-function mo(s, e) {
+function bo(s, e) {
   for (let t = 0; t < s.length; t++) {
     let i = s[t], r = i[0] === e[0] && i[1] === e[1] && i[2] === e[2], n = i.length >= 4 && e.length >= 4 ? i[3] === e[3] : !0;
     if (r && n) return !0;
   }
   return !1;
 }
-function go(s, e, t = "rgb565") {
+function yo(s, e, t = "rgb565") {
   if (!s || !s.buffer) throw new Error("quantize() expected RGBA Uint8Array data");
   if (!(s instanceof Uint8Array) && !(s instanceof Uint8ClampedArray)) throw new Error("quantize() expected RGBA Uint8Array data");
   if (e.length > 256) throw new Error("applyPalette() only works with 256 colors or less");
   let i = new Uint32Array(s.buffer), r = i.length, n = t === "rgb444" ? 4096 : 65536, a = new Uint8Array(r), o = new Array(n);
   if (t === "rgba4444") for (let l = 0; l < r; l++) {
-    let u = i[l], c = u >> 24 & 255, h = u >> 16 & 255, p = u >> 8 & 255, f = u & 255, m = bn(f, p, h, c), d = m in o ? o[m] : o[m] = bo(f, p, h, c, e);
+    let u = i[l], c = u >> 24 & 255, h = u >> 16 & 255, p = u >> 8 & 255, f = u & 255, m = xn(f, p, h, c), d = m in o ? o[m] : o[m] = xo(f, p, h, c, e);
     a[l] = d;
   }
   else {
-    let l = t === "rgb444" ? yn : gn;
+    let l = t === "rgb444" ? _n : yn;
     for (let u = 0; u < r; u++) {
-      let c = i[u], h = c >> 16 & 255, p = c >> 8 & 255, f = c & 255, m = l(f, p, h), d = m in o ? o[m] : o[m] = yo(f, p, h, e);
+      let c = i[u], h = c >> 16 & 255, p = c >> 8 & 255, f = c & 255, m = l(f, p, h), d = m in o ? o[m] : o[m] = _o(f, p, h, e);
       a[u] = d;
     }
   }
   return a;
 }
-function bo(s, e, t, i, r) {
+function xo(s, e, t, i, r) {
   let n = 0, a = 1e100;
   for (let o = 0; o < r.length; o++) {
-    let l = r[o], u = l[3], c = Ve(u - i);
+    let l = r[o], u = l[3], c = je(u - i);
     if (c > a) continue;
     let h = l[0];
-    if (c += Ve(h - s), c > a) continue;
+    if (c += je(h - s), c > a) continue;
     let p = l[1];
-    if (c += Ve(p - e), c > a) continue;
+    if (c += je(p - e), c > a) continue;
     let f = l[2];
-    c += Ve(f - t), !(c > a) && (a = c, n = o);
+    c += je(f - t), !(c > a) && (a = c, n = o);
   }
   return n;
 }
-function yo(s, e, t, i) {
+function _o(s, e, t, i) {
   let r = 0, n = 1e100;
   for (let a = 0; a < i.length; a++) {
-    let o = i[a], l = o[0], u = Ve(l - s);
+    let o = i[a], l = o[0], u = je(l - s);
     if (u > n) continue;
     let c = o[1];
-    if (u += Ve(c - e), u > n) continue;
+    if (u += je(c - e), u > n) continue;
     let h = o[2];
-    u += Ve(h - t), !(u > n) && (n = u, r = a);
+    u += je(h - t), !(u > n) && (n = u, r = a);
   }
   return r;
 }
-function Ve(s) {
+function je(s) {
   return s * s;
 }
-function xo(s = {}) {
-  let { initialCapacity: e = 4096, auto: t = !0 } = s, i = mn(e), r = 5003, n = new Uint8Array(256), a = new Int32Array(r), o = new Int32Array(r), l = !1;
+function vo(s = {}) {
+  let { initialCapacity: e = 4096, auto: t = !0 } = s, i = bn(e), r = 5003, n = new Uint8Array(256), a = new Int32Array(r), o = new Int32Array(r), l = !1;
   return { reset() {
     i.reset(), l = !1;
   }, finish() {
-    i.writeByte(lo.trailer);
+    i.writeByte(uo.trailer);
   }, bytes() {
     return i.bytes();
   }, bytesView() {
@@ -5007,55 +6487,55 @@ function xo(s = {}) {
     let { transparent: m = !1, transparentIndex: d = 0, delay: g = 0, palette: b = null, repeat: y = 0, colorDepth: x = 8, dispose: v = -1 } = f, _ = !1;
     if (t ? l || (_ = !0, u(), l = !0) : _ = !!f.first, h = Math.max(0, Math.floor(h)), p = Math.max(0, Math.floor(p)), _) {
       if (!b) throw new Error("First frame must include a { palette } option");
-      vo(i, h, p, b, x), lr(i, b), y >= 0 && Eo(i, y);
+      wo(i, h, p, b, x), ur(i, b), y >= 0 && Co(i, y);
     }
     let C = Math.round(g / 10);
-    _o(i, v, C, m, d);
+    Eo(i, v, C, m, d);
     let w = !!b && !_;
-    wo(i, h, p, w ? b : null), w && lr(i, b), Co(i, c, h, p, x, n, a, o);
+    Po(i, h, p, w ? b : null), w && ur(i, b), Ao(i, c, h, p, x, n, a, o);
   } };
   function u() {
-    xn(i, "GIF89a");
+    vn(i, "GIF89a");
   }
 }
-function _o(s, e, t, i, r) {
+function Eo(s, e, t, i, r) {
   s.writeByte(33), s.writeByte(249), s.writeByte(4), r < 0 && (r = 0, i = !1);
   var n, a;
-  i ? (n = 1, a = 2) : (n = 0, a = 0), e >= 0 && (a = e & 7), a <<= 2, s.writeByte(0 | a | 0 | n), Ie(s, t), s.writeByte(r || 0), s.writeByte(0);
+  i ? (n = 1, a = 2) : (n = 0, a = 0), e >= 0 && (a = e & 7), a <<= 2, s.writeByte(0 | a | 0 | n), Re(s, t), s.writeByte(r || 0), s.writeByte(0);
 }
-function vo(s, e, t, i, r = 8) {
-  let n = 1, a = 0, o = Ui(i.length) - 1, l = n << 7 | r - 1 << 4 | a << 3 | o;
-  Ie(s, e), Ie(s, t), s.writeBytes([l, 0, 0]);
+function wo(s, e, t, i, r = 8) {
+  let n = 1, a = 0, o = Ni(i.length) - 1, l = n << 7 | r - 1 << 4 | a << 3 | o;
+  Re(s, e), Re(s, t), s.writeBytes([l, 0, 0]);
 }
-function Eo(s, e) {
-  s.writeByte(33), s.writeByte(255), s.writeByte(11), xn(s, "NETSCAPE2.0"), s.writeByte(3), s.writeByte(1), Ie(s, e), s.writeByte(0);
+function Co(s, e) {
+  s.writeByte(33), s.writeByte(255), s.writeByte(11), vn(s, "NETSCAPE2.0"), s.writeByte(3), s.writeByte(1), Re(s, e), s.writeByte(0);
 }
-function lr(s, e) {
-  let t = 1 << Ui(e.length);
+function ur(s, e) {
+  let t = 1 << Ni(e.length);
   for (let i = 0; i < t; i++) {
     let r = [0, 0, 0];
     i < e.length && (r = e[i]), s.writeByte(r[0]), s.writeByte(r[1]), s.writeByte(r[2]);
   }
 }
-function wo(s, e, t, i) {
-  if (s.writeByte(44), Ie(s, 0), Ie(s, 0), Ie(s, e), Ie(s, t), i) {
-    let r = 0, n = 0, a = Ui(i.length) - 1;
+function Po(s, e, t, i) {
+  if (s.writeByte(44), Re(s, 0), Re(s, 0), Re(s, e), Re(s, t), i) {
+    let r = 0, n = 0, a = Ni(i.length) - 1;
     s.writeByte(128 | r | n | 0 | a);
   } else s.writeByte(0);
 }
-function Co(s, e, t, i, r = 8, n, a, o) {
-  ho(t, i, e, r, s, n, a, o);
+function Ao(s, e, t, i, r = 8, n, a, o) {
+  fo(t, i, e, r, s, n, a, o);
 }
-function Ie(s, e) {
+function Re(s, e) {
   s.writeByte(e & 255), s.writeByte(e >> 8 & 255);
 }
-function xn(s, e) {
+function vn(s, e) {
   for (var t = 0; t < e.length; t++) s.writeByte(e.charCodeAt(t));
 }
-function Ui(s) {
+function Ni(s) {
   return Math.max(Math.ceil(Math.log2(s)), 1);
 }
-class Po {
+class So {
   renderer;
   scene;
   camera;
@@ -5093,7 +6573,11 @@ class Po {
   drawCountryLabelsOnCanvas(e, t, i, r) {
     if (this.countryLabels)
       try {
-        this.countryLabels.getVisibleLabelsForCanvas(r || this.camera, t, i).forEach((a) => {
+        this.countryLabels.getVisibleLabelsForCanvas(
+          r || this.camera,
+          t,
+          i
+        ).forEach((a) => {
           e.save(), e.globalAlpha = a.opacity, e.font = "bold 12px Arial, sans-serif", e.textAlign = "center", e.textBaseline = "middle", e.strokeStyle = "rgba(0, 0, 0, 0.8)", e.lineWidth = 3, e.strokeText(a.text, a.x, a.y), e.fillStyle = "#ffffff", e.fillText(a.text, a.x, a.y), e.restore();
         });
       } catch (n) {
@@ -5172,7 +6656,11 @@ class Po {
         return;
       }
       const i = this.renderer.domElement;
-      this.compositeCanvas.width = i.width, this.compositeCanvas.height = i.height, this.compositeCtx.drawImage(i, 0, 0), this.drawOverlaysOnCanvas(this.compositeCtx, this.compositeCanvas.width, this.compositeCanvas.height);
+      this.compositeCanvas.width = i.width, this.compositeCanvas.height = i.height, this.compositeCtx.drawImage(i, 0, 0), this.drawOverlaysOnCanvas(
+        this.compositeCtx,
+        this.compositeCanvas.width,
+        this.compositeCanvas.height
+      );
       const r = this.compositeCanvas.captureStream(60), n = [
         { mime: "video/mp4;codecs=avc1", ext: "mp4" },
         { mime: "video/mp4", ext: "mp4" },
@@ -5254,9 +6742,9 @@ class Po {
     const { fps: t = 20, filename: i } = e, r = Math.round(1e3 / t);
     console.log(`Generating GIF with ${this.frames.length} frames at ${t} fps...`);
     try {
-      const n = this.frames[0], a = n.width, o = n.height, l = fo(n.data, 256), u = xo();
+      const n = this.frames[0], a = n.width, o = n.height, l = go(n.data, 256), u = vo();
       for (let m = 0; m < this.frames.length; m++) {
-        const d = this.frames[m], g = go(d.data, l);
+        const d = this.frames[m], g = yo(d.data, l);
         u.writeFrame(g, a, o, {
           palette: m === 0 ? l : void 0,
           // Only first frame needs palette
@@ -5267,7 +6755,9 @@ class Po {
       }
       u.finish();
       const c = u.bytes(), h = new Blob([c], { type: "image/gif" }), p = URL.createObjectURL(h), f = i || `globe-${Date.now()}.gif`;
-      this.downloadFile(p, f), setTimeout(() => URL.revokeObjectURL(p), 1e3), console.log(`GIF saved: ${f} (${this.frames.length} frames, ${(h.size / 1024).toFixed(1)}KB)`);
+      this.downloadFile(p, f), setTimeout(() => URL.revokeObjectURL(p), 1e3), console.log(
+        `GIF saved: ${f} (${this.frames.length} frames, ${(h.size / 1024).toFixed(1)}KB)`
+      );
     } catch (n) {
       console.error("Failed to generate GIF:", n);
     }
@@ -5290,28 +6780,10 @@ class Po {
     i.href = e, i.download = t, i.style.display = "none", document.body.appendChild(i), i.click(), document.body.removeChild(i);
   }
 }
-const cr = {
-  "%": (s) => `${s.toFixed(1)}%`,
-  $: (s) => `$${s.toLocaleString()}`,
-  years: (s) => `${s.toFixed(1)} yrs`,
-  "% GDP": (s) => `${s.toFixed(1)}%`,
-  "% of GDP": (s) => `${s.toFixed(1)}%`,
-  index: (s) => s.toFixed(3),
-  "": (s) => s.toFixed(3)
-}, Ao = ["per capita", "per 100", "per 1000"];
-function _n(s) {
-  return cr[s] ? cr[s] : Ao.some((e) => s.includes(e)) ? (e) => `${e.toFixed(1)}` : (e) => {
-    const t = Number.isInteger(e) ? e.toLocaleString() : e.toFixed(1);
-    return s ? `${t} ${s}` : t;
-  };
-}
-function jo(s, e, t) {
-  return (t ?? _n(e))(s);
-}
-let ur = !1;
-function So() {
-  if (ur) return;
-  ur = !0;
+let hr = !1;
+function To() {
+  if (hr) return;
+  hr = !0;
   const s = document.createElement("style");
   s.setAttribute("data-gralobe-legend", "true"), s.textContent = `
     .gralobe-legend {
@@ -5447,13 +6919,13 @@ function So() {
     }
   `, document.head.appendChild(s);
 }
-class To {
+class Mo {
   element;
   parentContainer;
   visible = !1;
   resizeObserver = null;
   constructor(e) {
-    So(), this.parentContainer = e, getComputedStyle(e).position === "static" && (e.style.position = "relative"), this.element = document.createElement("div"), this.element.className = "gralobe-legend", this.element.setAttribute("data-testid", "globe-legend"), this.element.innerHTML = `
+    To(), this.parentContainer = e, getComputedStyle(e).position === "static" && (e.style.position = "relative"), this.element = document.createElement("div"), this.element.className = "gralobe-legend", this.element.setAttribute("data-testid", "globe-legend"), this.element.innerHTML = `
       <div class="gralobe-legend-title" data-testid="legend-title"></div>
       <div class="gralobe-legend-gradient"></div>
       <div class="gralobe-legend-labels">
@@ -5472,21 +6944,11 @@ class To {
     this.element.classList.remove("size-xs", "size-sm", "size-md", "size-lg"), this.element.classList.add(`size-${i}`);
   }
   show(e) {
-    const t = this.element.querySelector(
-      ".gralobe-legend-title"
-    ), i = this.element.querySelector(
-      ".gralobe-legend-gradient"
-    ), r = this.element.querySelector(
-      ".gralobe-legend-min"
-    ), n = this.element.querySelector(
-      ".gralobe-legend-max"
-    ), a = this.element.querySelector(
-      ".gralobe-legend-description"
-    );
+    const t = this.element.querySelector(".gralobe-legend-title"), i = this.element.querySelector(".gralobe-legend-gradient"), r = this.element.querySelector(".gralobe-legend-min"), n = this.element.querySelector(".gralobe-legend-max"), a = this.element.querySelector(".gralobe-legend-description");
     t.textContent = e.name, a.textContent = e.description;
     const [o, l, u] = e.colorScale;
     i.style.background = `linear-gradient(to right, ${o}, ${l}, ${u})`;
-    const c = e.format ?? _n(e.unit);
+    const c = e.format ?? gr(e.unit);
     r.textContent = c(e.domain[0]), n.textContent = c(e.domain[1]), this.element.classList.add("visible"), this.visible = !0;
   }
   hide() {
@@ -5502,7 +6964,7 @@ class To {
     this.resizeObserver?.disconnect(), this.element.remove();
   }
 }
-const Q = 50, Mo = `
+const ee = 50, Lo = `
 uniform float uMorph;
 uniform float uTime;
 uniform float uParchment;
@@ -5522,7 +6984,7 @@ varying float vDiscard;
 varying float vExtrudeAmount;
 
 const float PI = 3.14159265359;
-const float RADIUS = ${Q.toFixed(1)};
+const float RADIUS = ${ee.toFixed(1)};
 
 // Hash functions for procedural variation
 float hash(vec2 p) {
@@ -5750,7 +7212,7 @@ void main() {
 
     gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
 }
-`, Lo = `
+`, Do = `
 uniform sampler2D uTexture;
 uniform sampler2D uDataTexture;
 uniform sampler2D uCloudTexture;
@@ -5962,13 +7424,13 @@ void main() {
 
     gl_FragColor = vec4(color, 1.0);
 }
-`, Do = `
+`, Io = `
 varying vec3 vNormal;
 varying vec3 vPosition;
 uniform float uMorph;
 
 const float PI = 3.14159265359;
-const float RADIUS = ${Q.toFixed(1)};
+const float RADIUS = ${ee.toFixed(1)};
 
 void main() {
     vNormal = normalize(normalMatrix * normal);
@@ -5997,7 +7459,7 @@ void main() {
     vPosition = pos;
     gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
 }
-`, Io = `
+`, Ro = `
 varying vec3 vNormal;
 varying vec3 vPosition;
 uniform float uOpacity;
@@ -6013,7 +7475,7 @@ void main() {
 
     gl_FragColor = vec4(color, intensity * 0.6 * uOpacity);
 }
-`, Ro = `
+`, ko = `
 attribute float aSize;
 attribute float aPhase;
 uniform float uTime;
@@ -6030,7 +7492,7 @@ void main() {
     gl_PointSize = aSize * (300.0 / -mvPosition.z) * twinkle;
     gl_Position = projectionMatrix * mvPosition;
 }
-`, ko = `
+`, Oo = `
 uniform float uOpacity;
 varying float vOpacity;
 
@@ -6041,24 +7503,20 @@ void main() {
 
     gl_FragColor = vec4(1.0, 1.0, 1.0, alpha * vOpacity * 0.9 * uOpacity);
 }
-`, hr = Math.PI / 180;
-function Oo(s, e, t = Q) {
-  const i = (90 - s) * hr, r = (e + 180) * hr;
+`, dr = Math.PI / 180;
+function Fo(s, e, t = ee) {
+  const i = (90 - s) * dr, r = (e + 180) * dr;
   return new S.Vector3(
     -t * Math.sin(i) * Math.cos(r),
     t * Math.cos(i),
     t * Math.sin(i) * Math.sin(r)
   );
 }
-function Fo(s, e) {
-  const t = 2 * Math.PI * Q, i = Math.PI * Q;
-  return new S.Vector3(
-    e / 180 * (t / 2),
-    s / 90 * (i / 2),
-    0
-  );
+function zo(s, e) {
+  const t = 2 * Math.PI * ee, i = Math.PI * ee;
+  return new S.Vector3(e / 180 * (t / 2), s / 90 * (i / 2), 0);
 }
-const zo = {
+const Uo = {
   style: "spike",
   color: "#0ea5e9",
   // Cyan/teal
@@ -6066,7 +7524,7 @@ const zo = {
   pulseAnimation: !0,
   opacity: 0.9
 };
-class Uo {
+class No {
   group;
   markers = [];
   config;
@@ -6078,7 +7536,7 @@ class Uo {
   markerMaterial;
   glowMaterial;
   constructor(e = {}) {
-    this.group = new S.Group(), this.config = { ...zo, ...e }, this.markerMaterial = new S.MeshBasicMaterial({
+    this.group = new S.Group(), this.config = { ...Uo, ...e }, this.markerMaterial = new S.MeshBasicMaterial({
       color: new S.Color(this.config.color),
       transparent: !0,
       opacity: this.config.opacity
@@ -6203,7 +7661,7 @@ class Uo {
    */
   updatePositions() {
     for (let e = 0; e < this.markerMeshes.length; e++) {
-      const t = this.markerMeshes[e], i = t.userData.marker, r = t.userData.height, n = Oo(i.lat, i.lng, Q), a = Fo(i.lat, i.lng), o = this.morph * this.morph * (3 - 2 * this.morph);
+      const t = this.markerMeshes[e], i = t.userData.marker, r = t.userData.height, n = Fo(i.lat, i.lng, ee), a = zo(i.lat, i.lng), o = this.morph * this.morph * (3 - 2 * this.morph);
       if (t.position.lerpVectors(a, n, o), o > 0.01) {
         if (t.lookAt(t.position.clone().multiplyScalar(2)), this.config.style === "spike" || this.config.style === "pin") {
           t.rotateX(Math.PI / 2);
@@ -6235,10 +7693,10 @@ class Uo {
     this.markerMeshes = [], this.glowMeshes = [];
   }
 }
-let dr = !1;
-function No() {
-  if (dr) return;
-  dr = !0;
+let pr = !1;
+function Bo() {
+  if (pr) return;
+  pr = !0;
   const s = document.createElement("style");
   s.setAttribute("data-gralobe-toolbar", "true"), s.textContent = `
     .gralobe-toolbar {
@@ -6308,7 +7766,7 @@ function No() {
     }
   `, document.head.appendChild(s);
 }
-class gt {
+class bt {
   element;
   parentContainer;
   projectionBtn;
@@ -6332,7 +7790,7 @@ class gt {
     </svg>
   `;
   constructor(e, t) {
-    No(), this.parentContainer = e, this.element = document.createElement("div"), this.element.className = "gralobe-toolbar";
+    Bo(), this.parentContainer = e, this.element = document.createElement("div"), this.element.className = "gralobe-toolbar";
     const i = document.createElement("button");
     i.className = "gralobe-toolbar-btn", i.title = "View Raw Data", i.innerHTML = `
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -6345,7 +7803,7 @@ class gt {
       </svg>
     `, i.onclick = (n) => {
       n.stopPropagation(), t.onShowData();
-    }, this.projectionBtn = document.createElement("button"), this.projectionBtn.className = "gralobe-toolbar-btn", this.projectionBtn.title = "Toggle Projection (G)", this.projectionBtn.setAttribute("data-shortcut", "G"), this.projectionBtn.innerHTML = gt.MAP_ICON, this.projectionBtn.onclick = (n) => {
+    }, this.projectionBtn = document.createElement("button"), this.projectionBtn.className = "gralobe-toolbar-btn", this.projectionBtn.title = "Toggle Projection (G)", this.projectionBtn.setAttribute("data-shortcut", "G"), this.projectionBtn.innerHTML = bt.MAP_ICON, this.projectionBtn.onclick = (n) => {
       n.stopPropagation(), t.onToggleProjection();
     }, this.fsBtn = document.createElement("button"), this.fsBtn.className = "gralobe-toolbar-btn", this.fsBtn.title = "Toggle Fullscreen (F)", this.fsBtn.setAttribute("data-shortcut", "F"), this.fsBtn.innerHTML = `
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -6360,7 +7818,7 @@ class gt {
    * @param isGlobe - true if currently in globe view, false if flat
    */
   updateProjectionIcon(e) {
-    this.isGlobeView = e, e ? (this.projectionBtn.innerHTML = gt.MAP_ICON, this.projectionBtn.title = `View as Flat Map${this.shortcutsEnabled ? " (G)" : ""}`) : (this.projectionBtn.innerHTML = gt.GLOBE_ICON, this.projectionBtn.title = `View as Globe${this.shortcutsEnabled ? " (G)" : ""}`);
+    this.isGlobeView = e, e ? (this.projectionBtn.innerHTML = bt.MAP_ICON, this.projectionBtn.title = `View as Flat Map${this.shortcutsEnabled ? " (G)" : ""}`) : (this.projectionBtn.innerHTML = bt.GLOBE_ICON, this.projectionBtn.title = `View as Globe${this.shortcutsEnabled ? " (G)" : ""}`);
   }
   /**
    * Enable or disable shortcut indicators
@@ -6372,7 +7830,7 @@ class gt {
     this.element.remove();
   }
 }
-const kt = {
+const Ot = {
   lifeExpectancy: {
     id: "lifeExpectancy",
     name: "Life Expectancy",
@@ -6482,9 +7940,9 @@ const kt = {
     format: (s) => `${s.toFixed(1)}%`
   }
 };
-kt.lifeExpectancy;
-const Bo = "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_10m_urban_areas.geojson";
-class $o {
+Ot.lifeExpectancy;
+const $o = "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_10m_urban_areas.geojson";
+class X {
   static urbanFeatures = null;
   static isLoading = !1;
   static loadPromise = null;
@@ -6492,18 +7950,18 @@ class $o {
    * Load the base urban areas topology
    */
   static async loadBaseTopology() {
-    return this.urbanFeatures ? this.urbanFeatures : this.loadPromise ? this.loadPromise : (this.isLoading = !0, this.loadPromise = (async () => {
+    return X.urbanFeatures ? X.urbanFeatures : (X.loadPromise || (X.isLoading = !0, X.loadPromise = (async () => {
       try {
-        const e = await fetch(Bo);
+        const e = await fetch($o);
         if (!e.ok) throw new Error("Failed to load urban areas");
         const t = await e.json();
-        return this.urbanFeatures = t.features, this.urbanFeatures || [];
+        return X.urbanFeatures = t.features, X.urbanFeatures || [];
       } catch (e) {
         return console.error("UrbanMapper load error:", e), [];
       } finally {
-        this.isLoading = !1;
+        X.isLoading = !1;
       }
-    })(), this.loadPromise);
+    })()), X.loadPromise);
   }
   /**
    * Generate a synthetic circular polygon (approximate) for a point
@@ -6540,12 +7998,12 @@ class $o {
       "forceSynthetic:",
       i
     );
-    const r = i ? [] : await this.loadBaseTopology(), n = [], a = {}, o = /* @__PURE__ */ new Set();
+    const r = i ? [] : await X.loadBaseTopology(), n = [], a = {}, o = /* @__PURE__ */ new Set();
     for (const l of e) {
       let u = null;
       if (!i) {
         for (const c of r)
-          if (this.isPointInFeature(l, c)) {
+          if (X.isPointInFeature(l, c)) {
             u = c;
             break;
           }
@@ -6554,11 +8012,7 @@ class $o {
         const c = u.properties.name_conve || u.properties.name || `ua_${Math.random()}`, h = o.has(c) ? null : JSON.parse(JSON.stringify(u));
         h && (h.id = c, l.name ? h.properties.name = l.name : h.properties.name || (h.properties.name = c), n.push(h), o.add(c)), a[c] = (a[c] || 0) + l.value;
       } else {
-        const c = this.generateSyntheticBoundary(
-          l.lat,
-          l.lon,
-          t
-        );
+        const c = X.generateSyntheticBoundary(l.lat, l.lon, t);
         l.id && (c.id = l.id), l.name && (c.properties.name = l.name), n.push(c), a[c.id] = l.value;
       }
     }
@@ -6573,10 +8027,10 @@ class $o {
     if (!n) return !1;
     const a = n.coordinates;
     if (n.type === "Polygon")
-      return this.pointInPolygon([r, i], a);
+      return X.pointInPolygon([r, i], a);
     if (n.type === "MultiPolygon") {
       for (const o of a)
-        if (this.pointInPolygon([r, i], o)) return !0;
+        if (X.pointInPolygon([r, i], o)) return !0;
     }
     return !1;
   }
@@ -6591,14 +8045,14 @@ class $o {
     return n;
   }
 }
-const pr = {
+const fr = {
   satellite: "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_atmos_2048.jpg",
   natural: "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_day_4096.jpg",
   dark: "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_lights_2048.png",
   light: "https://raw.githubusercontent.com/turban/webgl-earth/master/images/2_no_clouds_4k.jpg",
   night: "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_lights_2048.png",
   topographic: "https://eoimages.gsfc.nasa.gov/images/imagerecords/74000/74117/world.topo.200407.3x5400x2700.jpg"
-}, fr = {
+}, mr = {
   texture: "satellite",
   labels: "data",
   statistic: "lifeExpectancy",
@@ -6678,9 +8132,9 @@ class Ho {
     } else
       this.container = e;
     this.container.classList.add("gralobe-viz-container"), this.config = {
-      ...fr,
+      ...mr,
       ...t,
-      effects: { ...fr.effects, ...t.effects || {} }
+      effects: { ...mr.effects, ...t.effects || {} }
     }, console.log("GlobeViz v5 initialized", this.config.effects), this.ready = new Promise((i, r) => {
       this.resolveReady = i, this.rejectReady = r;
     }), this.init();
@@ -6688,11 +8142,7 @@ class Ho {
   async init() {
     try {
       const e = this.config.width || this.container.clientWidth || 800, t = this.config.height || this.container.clientHeight || 600;
-      this.scene = new S.Scene(), this.scene.background = new S.Color(2066), this.camera = new S.PerspectiveCamera(50, e / t, 0.1, 1e3), this.camera.position.set(
-        0,
-        0,
-        this.config.initialView === "flat" ? 350 : 150
-      ), this.renderer = new S.WebGLRenderer({ antialias: !0 }), this.renderer.setSize(e, t), this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)), this.container.appendChild(this.renderer.domElement), this.controls = new vn(this.camera, this.renderer.domElement), this.controls.enableDamping = !0, this.controls.minDistance = 2, this.controls.maxDistance = 400, this.choropleth = new et(
+      this.scene = new S.Scene(), this.scene.background = new S.Color(2066), this.camera = new S.PerspectiveCamera(50, e / t, 0.1, 1e3), this.camera.position.set(0, 0, this.config.initialView === "flat" ? 350 : 150), this.renderer = new S.WebGLRenderer({ antialias: !0 }), this.renderer.setSize(e, t), this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)), this.container.appendChild(this.renderer.domElement), this.controls = new En(this.camera, this.renderer.domElement), this.controls.enableDamping = !0, this.controls.minDistance = 2, this.controls.maxDistance = 400, this.choropleth = new tt(
         this.config.topology,
         (r, n) => {
           this.config.onLoadProgress?.(r, n);
@@ -6703,21 +8153,18 @@ class Ho {
             duration: 1
           }));
         }
-      ), this.config.showLegend && (this.legend = new To(this.container)), await this.createGlobe(), this.createStars(), this.config.effects.atmosphere && this.createAtmosphere(), this.countryLabels = new ao(this.container, Q), this.scene.add(this.countryLabels.getGroup()), this.globe && this.countryLabels.setGlobe(this.globe), this.countryLabels.setCamera(this.camera), this.countryLabels.setStyle(this.config.labels), this.exporter = new Po(this.renderer, this.scene, this.camera), this.legend && this.exporter.setLegendElement(this.legend.getElement()), this.countryLabels && this.exporter.setCountryLabels(this.countryLabels), (this.config.showControls || this.config.showDebug) && this.createGUI(), this.setupInteraction(), await this.choropleth.waitForLoad();
+      ), this.config.showLegend && (this.legend = new Mo(this.container)), await this.createGlobe(), this.createStars(), this.config.effects.atmosphere && this.createAtmosphere(), this.countryLabels = new so(this.container, ee), this.scene.add(this.countryLabels.getGroup()), this.globe && this.countryLabels.setGlobe(this.globe), this.countryLabels.setCamera(this.camera), this.countryLabels.setStyle(this.config.labels), this.exporter = new So(this.renderer, this.scene, this.camera), this.legend && this.exporter.setLegendElement(this.legend.getElement()), this.countryLabels && this.exporter.setCountryLabels(this.countryLabels), (this.config.showControls || this.config.showDebug) && this.createGUI(), this.setupInteraction(), await this.choropleth.waitForLoad();
       const i = this.choropleth.getFeatureLabels();
-      i.length > 0 && this.addCustomLabels(i), this.setStatistic(this.config.statistic), this.morph = this.config.initialView === "globe" ? 1 : 0, this.material && (this.material.uniforms.uMorph.value = this.morph), this.countryLabels?.setMorph(this.morph), window.addEventListener("resize", this.handleResize), document.addEventListener(
-        "fullscreenchange",
-        this.handleFullscreenChange
-      ), this.renderer.domElement.tabIndex = 0, this.renderer.domElement.style.outline = "none", this.renderer.domElement.addEventListener("mousedown", () => {
+      i.length > 0 && this.addCustomLabels(i), this.setStatistic(this.config.statistic), this.morph = this.config.initialView === "globe" ? 1 : 0, this.material && (this.material.uniforms.uMorph.value = this.morph), this.countryLabels?.setMorph(this.morph), window.addEventListener("resize", this.handleResize), document.addEventListener("fullscreenchange", this.handleFullscreenChange), this.renderer.domElement.tabIndex = 0, this.renderer.domElement.style.outline = "none", this.renderer.domElement.addEventListener("mousedown", () => {
         this.renderer.domElement.focus();
-      }), this.renderer.domElement.addEventListener("keydown", this.handleKeydown), this.animate(), (this.config.showToolbar || this.config.showControls) && (this.toolbar = new gt(this.container, {
+      }), this.renderer.domElement.addEventListener("keydown", this.handleKeydown), this.animate(), (this.config.showToolbar || this.config.showControls) && (this.toolbar = new bt(this.container, {
         onShowData: () => {
           const n = (this.currentStatistic ? this.getStatisticMetadata(this.currentStatistic) : null)?.definition.name || "Current Data";
           this.dataGrid?.show(n, this.getCurrentData());
         },
         onToggleFullscreen: () => this.toggleFullscreen(),
         onToggleProjection: () => this.toggleProjection()
-      }), this.dataGrid = new so(this.container), this.toolbar.updateProjectionIcon(this.config.initialView === "globe"), this.toolbar.setShortcutsEnabled(!!this.config.enableShortcuts)), this.resolveReady();
+      }), this.dataGrid = new co(this.container), this.toolbar.updateProjectionIcon(this.config.initialView === "globe"), this.toolbar.setShortcutsEnabled(!!this.config.enableShortcuts)), this.resolveReady();
     } catch (e) {
       console.error("GlobeViz init failed:", e), this.rejectReady(e);
     }
@@ -6727,27 +8174,22 @@ class Ho {
     this.isDestroyed || document.activeElement === this.renderer.domElement && this.config.enableShortcuts && ((e.key === "g" || e.key === "G") && this.toggleProjection(), (e.key === "f" || e.key === "F") && this.toggleFullscreen());
   };
   async createGlobe() {
-    const e = this.textureLoader.loadAsync(
-      pr[this.config.texture]
-    ), t = new Promise(
-      (a, o) => setTimeout(
-        () => o(new Error("Texture load timed out after 10s")),
-        1e4
-      )
+    const e = this.textureLoader.loadAsync(fr[this.config.texture]), t = new Promise(
+      (a, o) => setTimeout(() => o(new Error("Texture load timed out after 10s")), 1e4)
     ), i = await Promise.race([e, t]);
     if (this.isDestroyed || !this.renderer) return;
     i.anisotropy = this.renderer.capabilities.getMaxAnisotropy(), i.minFilter = S.LinearMipmapLinearFilter, i.magFilter = S.LinearFilter;
     const r = document.createElement("canvas");
     r.width = 2048, r.height = 1024, this.dataTexture = new S.CanvasTexture(r);
     const n = new S.PlaneGeometry(
-      Math.PI * 2 * Q,
-      Math.PI * Q,
+      Math.PI * 2 * ee,
+      Math.PI * ee,
       256,
       128
     );
     this.material = new S.ShaderMaterial({
-      vertexShader: Mo,
-      fragmentShader: Lo,
+      vertexShader: Lo,
+      fragmentShader: Do,
       uniforms: {
         // Core uniforms
         uMorph: { value: 0 },
@@ -6794,13 +8236,13 @@ class Ho {
   }
   createAtmosphere() {
     const e = new S.PlaneGeometry(
-      Math.PI * 2 * Q * 1.15,
-      Math.PI * Q * 1.15,
+      Math.PI * 2 * ee * 1.15,
+      Math.PI * ee * 1.15,
       128,
       64
     ), t = new S.ShaderMaterial({
-      vertexShader: Do,
-      fragmentShader: Io,
+      vertexShader: Io,
+      fragmentShader: Ro,
       uniforms: {
         uMorph: { value: 0 },
         uOpacity: { value: 1 }
@@ -6820,8 +8262,8 @@ class Ho {
     }
     t.setAttribute("position", new S.BufferAttribute(i, 3)), t.setAttribute("aSize", new S.BufferAttribute(r, 1)), t.setAttribute("aPhase", new S.BufferAttribute(n, 1));
     const a = new S.ShaderMaterial({
-      vertexShader: Ro,
-      fragmentShader: ko,
+      vertexShader: ko,
+      fragmentShader: Oo,
       uniforms: {
         uTime: { value: 0 },
         uTwinkle: { value: this.config.effects.starTwinkle ? 1 : 0 },
@@ -6835,9 +8277,7 @@ class Ho {
   }
   createGUI() {
     getComputedStyle(this.container).position === "static" && (this.container.style.position = "relative"), console.warn("Creating GUI v6 (Two-Stage Navigation)");
-    let t = document.querySelector(
-      "style#gralobe-gui-style"
-    );
+    let t = document.querySelector("style#gralobe-gui-style");
     t || (t = document.createElement("style"), t.id = "gralobe-gui-style", document.head.appendChild(t)), t.textContent = `
         /* Root container helper */
         .gralobe-viz-container {
@@ -7108,22 +8548,22 @@ class Ho {
     n.onclick = (A) => {
       A.stopPropagation(), f(!o);
     }, f(!1);
-    const m = (A, xe) => {
-      const J = document.createElement("button");
-      J.className = "gralobe-category-btn", J.innerText = xe, J.onclick = (fe) => {
-        fe.stopPropagation(), p(A);
-      }, a.appendChild(J), c[A] = J;
-      const oe = new zi({ container: this.container, title: "" });
-      this.categoryGUIs.push(oe), oe.domElement.classList.add("root");
-      const pe = oe.domElement.querySelector(".title");
-      if (pe)
-        pe.remove();
-      else if (oe.domElement.children.length > 0) {
-        const fe = oe.domElement.children[0];
-        fe.classList.contains("children") || fe.remove();
+    const m = (A, _e) => {
+      const Q = document.createElement("button");
+      Q.className = "gralobe-category-btn", Q.innerText = _e, Q.onclick = (me) => {
+        me.stopPropagation(), p(A);
+      }, a.appendChild(Q), c[A] = Q;
+      const se = new Ui({ container: this.container, title: "" });
+      this.categoryGUIs.push(se), se.domElement.classList.add("root");
+      const fe = se.domElement.querySelector(".title");
+      if (fe)
+        fe.remove();
+      else if (se.domElement.children.length > 0) {
+        const me = se.domElement.children[0];
+        me.classList.contains("children") || me.remove();
       }
-      return u[A] = oe, oe;
-    }, g = m("texture", "Texture").add(this.config, "texture", Object.keys(pr)).name("Theme").onChange((A) => this.setTexture(A));
+      return u[A] = se, se;
+    }, g = m("texture", "Texture").add(this.config, "texture", Object.keys(fr)).name("Theme").onChange((A) => this.setTexture(A));
     this.addTooltip(
       g,
       "<b>Visual Theme</b><br><br>Change the base texture of the globe. Options include satellite imagery, natural earth, dark mode (lights), and more."
@@ -7139,7 +8579,7 @@ class Ho {
       v,
       "<b>Projection Morph</b><br><br>Manually control the transition between Globe (1) and Flat Map (0)."
     );
-    const _ = m("stats", "Data"), C = typeof this.config.statistic == "string" ? this.config.statistic : this.config.statistic.definition.id, w = _.add({ stat: C }, "stat", Object.keys(kt)).name("Metric").onChange((A) => this.setStatistic(A));
+    const _ = m("stats", "Data"), C = typeof this.config.statistic == "string" ? this.config.statistic : this.config.statistic.definition.id, w = _.add({ stat: C }, "stat", Object.keys(Ot)).name("Metric").onChange((A) => this.setStatistic(A));
     this.addTooltip(
       w,
       "<b>Data Metric</b><br><br>Select the statistical dataset to visualize on the globe."
@@ -7152,10 +8592,7 @@ class Ho {
     this.addTooltip(
       L,
       "<b>Atmosphere Glow</b><br><br>Toggle the outer atmospheric glow effect."
-    ), this.addTooltip(
-      M,
-      "<b>Cloud Layer</b><br><br>Toggle the moving cloud layer."
-    ), T.add(E, "cloudSpeed", 0, 5).name("Cloud Speed").onChange((A) => {
+    ), this.addTooltip(M, "<b>Cloud Layer</b><br><br>Toggle the moving cloud layer."), T.add(E, "cloudSpeed", 0, 5).name("Cloud Speed").onChange((A) => {
       this.material && (this.material.uniforms.uCloudSpeed.value = A);
     }), T.add(E, "cloudOpacity", 0, 1).name("Cloud Opacity").onChange((A) => {
       this.material && (this.material.uniforms.uCloudOpacity.value = A);
@@ -7175,11 +8612,11 @@ class Ho {
       this.material && (this.material.uniforms.uGridOpacity.value = A);
     }), R.close();
     const U = (A) => {
-      A.forEach((xe) => {
-        const J = xe.open;
-        xe.open = function() {
-          return J.apply(this), A.forEach((oe) => {
-            oe !== this && oe.close();
+      A.forEach((_e) => {
+        const Q = _e.open;
+        _e.open = function() {
+          return Q.apply(this), A.forEach((se) => {
+            se !== this && se.close();
           }), this;
         };
       });
@@ -7195,23 +8632,20 @@ class Ho {
     }), k.add(E, "glowPulse").name("Glow Pulse").onChange((A) => {
       this.material && (this.material.uniforms.uGlowPulse.value = A ? 1 : 0);
     }), k.close(), U([T, D, R, k]);
-    const O = m("settings", "Settings"), q = O.add(this.config, "labels", ["none", "minimal", "all", "data"]).onChange((A) => this.setLabels(A));
+    const O = m("settings", "Settings"), Z = O.add(this.config, "labels", ["none", "minimal", "all", "data"]).onChange((A) => this.setLabels(A));
     this.addTooltip(
-      q,
+      Z,
       "<b>Label Visibility</b><br><br>Control which labels are shown.<br>• <b>none</b>: No labels<br>• <b>minimal</b>: Top 7 major countries<br>• <b>all</b>: All countries<br>• <b>data</b>: Only entities with active data"
     );
-    const Ue = O.add(this.config, "pointRadius", 50, 500).name("Point Radius").onChange(() => {
+    const Ne = O.add(this.config, "pointRadius", 50, 500).name("Point Radius").onChange(() => {
       this.urbanPoints ? this.setUrbanData(this.urbanPoints) : this.currentStatistic && this.setStatistic(this.currentStatistic);
     });
     this.addTooltip(
-      Ue,
+      Ne,
       "<b>Synthetic Geometry Radius</b><br><br>If our data consists of point locations (like cities) without defined 2D borders, we generate synthetic circular boundaries for them.<br><br>This control scales the size (in km) of these generated circles. Larger values make small cities more visible on the global map."
     ), O.add(this.config, "extrudeHeight", 0, 2).name("Extrude").onChange((A) => {
       this.material && (this.material.uniforms.uExtrudeRaw.value = A);
-    }), O.add(this.config, "autoRotate").name("Auto Rotate"), O.add(
-      { screenshot: () => this.screenshot({ width: 1920, height: 1080 }) },
-      "screenshot"
-    ).name("Screenshot"), O.add(this.config, "enableShortcuts").name("Keyboard Shortcuts").onChange((A) => {
+    }), O.add(this.config, "autoRotate").name("Auto Rotate"), O.add({ screenshot: () => this.screenshot({ width: 1920, height: 1080 }) }, "screenshot").name("Screenshot"), O.add(this.config, "enableShortcuts").name("Keyboard Shortcuts").onChange((A) => {
       this.toolbar?.setShortcutsEnabled(A);
     });
   }
@@ -7273,16 +8707,13 @@ class Ho {
     }), this.stars && Y.to(this.stars.material.uniforms.uOpacity, {
       value: 1,
       duration: 1
-    }), this.atmosphere && Y.to(
-      this.atmosphere.material.uniforms.uOpacity,
-      {
-        value: 1,
-        duration: 1
-      }
-    ), this.toolbar?.updateProjectionIcon(!0);
+    }), this.atmosphere && Y.to(this.atmosphere.material.uniforms.uOpacity, {
+      value: 1,
+      duration: 1
+    }), this.toolbar?.updateProjectionIcon(!0);
   }
   toFlat() {
-    const e = this.choropleth?.getBounds(), t = Math.PI * 2 * Q, i = Math.PI * Q;
+    const e = this.choropleth?.getBounds(), t = Math.PI * 2 * ee, i = Math.PI * ee;
     let r = 0, n = 0, a = t, o = i;
     if (e) {
       const [f, m, d, g] = e, b = f / 180 * (t / 2), y = d / 180 * (t / 2), x = m / 90 * (i / 2), v = g / 90 * (i / 2);
@@ -7336,13 +8767,10 @@ class Ho {
     }, this.stars && Y.to(this.stars.material.uniforms.uOpacity, {
       value: 0,
       duration: 1
-    }), this.atmosphere && Y.to(
-      this.atmosphere.material.uniforms.uOpacity,
-      {
-        value: 0,
-        duration: 1
-      }
-    ), this.toolbar?.updateProjectionIcon(!1);
+    }), this.atmosphere && Y.to(this.atmosphere.material.uniforms.uOpacity, {
+      value: 0,
+      duration: 1
+    }), this.toolbar?.updateProjectionIcon(!1);
   }
   /**
    * Setup mouse interactions (Click to Zoom, etc.)
@@ -7358,7 +8786,7 @@ class Ho {
       if (n && (/* @__PURE__ */ new Date()).getTime() - a > 200) return;
       const l = this.renderer.domElement.getBoundingClientRect();
       if (t.x = (o.clientX - l.left) / l.width * 2 - 1, t.y = -((o.clientY - l.top) / l.height) * 2 + 1, this.morph < 0.1 && (e.setFromCamera(t, this.camera), e.ray.intersectPlane(i, r), r)) {
-        const u = Math.PI * Q, c = Math.PI * Q / 2;
+        const u = Math.PI * ee, c = Math.PI * ee / 2;
         Math.abs(r.x) <= u && Math.abs(r.y) <= c && (Y.to(this.controls.target, {
           x: r.x,
           y: r.y,
@@ -7393,7 +8821,7 @@ class Ho {
     if (t) {
       if (this.currentValues = t.values instanceof Map ? Object.fromEntries(t.values) : t.values, this.countryLabels && this.currentValues) {
         const i = new Set(Object.keys(this.currentValues)), r = /* @__PURE__ */ new Set(), n = /* @__PURE__ */ new Set();
-        Qe.forEach((a) => {
+        Je.forEach((a) => {
           i.has(a.id) ? (r.add(a.code), n.add(a.id)) : i.has(a.code) && (r.add(a.code), n.add(a.code));
         }), i.forEach((a) => {
           n.has(a) || r.add(a);
@@ -7455,16 +8883,12 @@ class Ho {
     Object.assign(this.config.effects, e), this.material && (e.atmosphere !== void 0 && (e.atmosphere && !this.atmosphere ? this.createAtmosphere() : !e.atmosphere && this.atmosphere && (this.scene.remove(this.atmosphere), this.atmosphere.geometry.dispose(), this.atmosphere.material.dispose(), this.atmosphere = null)), e.clouds !== void 0 && (this.material.uniforms.uClouds.value = e.clouds ? 1 : 0), e.cloudSpeed !== void 0 && (this.material.uniforms.uCloudSpeed.value = e.cloudSpeed), e.cloudOpacity !== void 0 && (this.material.uniforms.uCloudOpacity.value = e.cloudOpacity), e.atmosphereIntensity !== void 0 && (this.material.uniforms.uAtmosphereIntensity.value = e.atmosphereIntensity), e.gridLines !== void 0 && (this.material.uniforms.uGridLines.value = e.gridLines ? 1 : 0), e.gridOpacity !== void 0 && (this.material.uniforms.uGridOpacity.value = e.gridOpacity), e.glowPulse !== void 0 && (this.material.uniforms.uGlowPulse.value = e.glowPulse ? 1 : 0), e.starTwinkle !== void 0 && this.stars && (this.stars.material.uniforms.uTwinkle.value = e.starTwinkle ? 1 : 0));
   }
   setMarkers(e, t) {
-    this.markerLayer ? t && this.markerLayer.setConfig(t) : (this.markerLayer = new Uo(t), this.scene.add(this.markerLayer.getGroup()), this.markerLayer.setMorph(this.morph)), this.markerLayer.setMarkers(e);
+    this.markerLayer ? t && this.markerLayer.setConfig(t) : (this.markerLayer = new No(t), this.scene.add(this.markerLayer.getGroup()), this.markerLayer.setMorph(this.morph)), this.markerLayer.setMarkers(e);
   }
   async setUrbanData(e) {
     if (!this.choropleth) return;
     this.urbanPoints = e;
-    const t = this.config.pointRadius || 140, i = await $o.mapPointsToTopology(
-      e,
-      t,
-      !0
-    );
+    const t = this.config.pointRadius || 140, i = await X.mapPointsToTopology(e, t, !0);
     this.choropleth.setFeatures(i.features), this.clearCustomLabels();
     const r = this.choropleth.getFeatureLabels();
     if (r.length > 0) {
@@ -7475,20 +8899,13 @@ class Ho {
       }));
       this.addCustomLabels(c);
     }
-    let n = [
-      "#ffffb2",
-      "#fd8d3c",
-      "#bd0026"
-    ];
+    let n = ["#ffffb2", "#fd8d3c", "#bd0026"];
     if (this.currentStatistic) {
       const c = this.getStatisticMetadata(this.currentStatistic);
       c && c.definition.colorScale && (n = c.definition.colorScale);
     }
     const a = Object.values(i.statistics), o = Math.max(...a, 1);
-    this.choropleth.renderCustomTexture(i.statistics, n, [
-      0,
-      o
-    ]), this.material && this.material.uniforms.uDataTexture.value && (this.material.uniforms.uDataTexture.value.needsUpdate = !0, this.material.uniforms.uDataOverlay.value = 1);
+    this.choropleth.renderCustomTexture(i.statistics, n, [0, o]), this.material && this.material.uniforms.uDataTexture.value && (this.material.uniforms.uDataTexture.value.needsUpdate = !0, this.material.uniforms.uDataOverlay.value = 1);
     const l = {};
     let u = !1;
     e.forEach((c) => {
@@ -7524,15 +8941,13 @@ class Ho {
         }
         return this.currentValues;
       }
-      const e = ei.find(
-        (t) => t.id === this.currentStatistic
-      );
+      const e = Yt.find((t) => t.id === this.currentStatistic);
       if (e) {
         const t = {}, i = this.choropleth?.getStatsMap();
         return i && i.size > 0 ? i.forEach((n, a) => {
           const o = e.accessor(n), l = n.name || a;
           o != null && (t[l] = o);
-        }) : Qe.forEach((n) => {
+        }) : Je.forEach((n) => {
           const a = e.accessor(n);
           a != null && (t[n.name || n.code] = a);
         }), t;
@@ -7541,10 +8956,7 @@ class Ho {
     return {};
   }
   destroy() {
-    this.isDestroyed = !0, this.animationId && cancelAnimationFrame(this.animationId), window.removeEventListener("resize", this.handleResize), window.removeEventListener("keydown", this.handleKeydown), document.removeEventListener(
-      "fullscreenchange",
-      this.handleFullscreenChange
-    ), this.categoryGUIs.forEach((e) => e.destroy()), this.categoryGUIs = [], this.legend?.dispose(), this.countryLabels?.dispose(), this.markerLayer?.dispose(), this.controls?.dispose(), this.toolbar?.dispose(), this.dataGrid?.dispose(), document.querySelectorAll(".lil-gui-tooltip").forEach((e) => e.remove()), this.globe?.geometry.dispose(), this.globe?.material?.dispose(), this.atmosphere?.geometry.dispose(), this.atmosphere?.material?.dispose(), this.stars?.geometry.dispose(), this.stars?.material?.dispose(), this.dataTexture?.dispose(), this.scene?.clear();
+    this.isDestroyed = !0, this.animationId && cancelAnimationFrame(this.animationId), window.removeEventListener("resize", this.handleResize), window.removeEventListener("keydown", this.handleKeydown), document.removeEventListener("fullscreenchange", this.handleFullscreenChange), this.categoryGUIs.forEach((e) => e.destroy()), this.categoryGUIs = [], this.legend?.dispose(), this.countryLabels?.dispose(), this.markerLayer?.dispose(), this.controls?.dispose(), this.toolbar?.dispose(), this.dataGrid?.dispose(), document.querySelectorAll(".lil-gui-tooltip").forEach((e) => e.remove()), this.globe?.geometry.dispose(), this.globe?.material?.dispose(), this.atmosphere?.geometry.dispose(), this.atmosphere?.material?.dispose(), this.stars?.geometry.dispose(), this.stars?.material?.dispose(), this.dataTexture?.dispose(), this.scene?.clear();
     try {
       this.renderer?.dispose(), this.renderer?.forceContextLoss(), this.renderer?.getContext()?.getExtension("WEBGL_lose_context")?.loseContext();
     } catch (e) {
@@ -7622,9 +9034,9 @@ class Ho {
     }, 500);
   }
   getStatisticMetadata(e) {
-    if (kt[e]) {
-      const i = kt[e], r = ei.find((a) => a.id === e), n = {};
-      return r && Qe.forEach((a) => {
+    if (Ot[e]) {
+      const i = Ot[e], r = Yt.find((a) => a.id === e), n = {};
+      return r && Je.forEach((a) => {
         const o = r.accessor(a);
         o != null && (n[a.id] = o);
       }), {
@@ -7632,10 +9044,10 @@ class Ho {
         values: n
       };
     }
-    const t = ei.find((i) => i.id === e);
+    const t = Yt.find((i) => i.id === e);
     if (t) {
       const i = {};
-      return Qe.forEach((r) => {
+      return Je.forEach((r) => {
         const n = t.accessor(r);
         n != null && (i[r.id] = n);
       }), {
@@ -7655,12 +9067,12 @@ class Ho {
   }
 }
 export {
-  kt as BUILT_IN_STATISTICS,
+  Ot as BUILT_IN_STATISTICS,
   Ho as GlobeViz,
-  Qe as WORLD_STATISTICS,
-  _n as createFormatter,
+  Je as WORLD_STATISTICS,
+  gr as createFormatter,
   jo as formatValue,
-  Ka as normalizeCountryValues,
-  nr as toNumericCode
+  An as normalizeCountryValues,
+  $i as toNumericCode
 };
 //# sourceMappingURL=gralobe.js.map
