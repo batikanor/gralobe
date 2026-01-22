@@ -60,7 +60,7 @@ const globe = new GlobeViz('#container', {
   texture: 'satellite',
 
   // Label style: 'none' | 'minimal' | 'major' | 'all' | 'data'
-  labels: 'all',
+  labels: 'data',
 
   // Initial statistic to display (built-in ID or custom StatisticData)
   statistic: 'lifeExpectancy',

@@ -778,13 +778,22 @@ export class GlobeViz implements GlobeVizAPI {
         }
         
         /* Hide internal titles - Ultra Aggressive & Global */
-        .lil-gui .title,
-        .gralobe-viz-container .lil-gui .title {
+        /* Note: We need titles for sub-folders (like Atmosphere, Lighting) to be clickable/accordion */
+        .gralobe-viz-container .lil-gui.root > .title {
             display: none !important;
-            height: 0 !important;
-            padding: 0 !important;
-            border: none !important;
-            overflow: hidden !important;
+        }
+        
+        /* But allow nested folders to show their title bars */
+        .gralobe-viz-container .lil-gui .lil-folder > .lil-title {
+            display: block !important;
+            height: 20px !important;
+            line-height: 20px !important;
+            padding-left: 4px !important;
+            font-weight: 600 !important;
+            background: rgba(255, 255, 255, 0.05) !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+            margin-bottom: 2px !important;
+            cursor: pointer !important;
         }
         
         /* Remove root padding/spacing and ensure no gaps */
