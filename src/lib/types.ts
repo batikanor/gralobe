@@ -301,6 +301,12 @@ export interface GlobeVizConfig {
   showDebug?: boolean;
 
   /**
+   * Enable keyboard shortcuts (G for toggle projection, F for fullscreen)
+   * @default true
+   */
+  enableShortcuts?: boolean;
+
+  /**
    * Show library toolbar (Fullscreen, Data Grid)
    * @default false
    */

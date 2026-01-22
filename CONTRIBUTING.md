@@ -10,6 +10,15 @@ As an AI agent or human contributor, your goal is not just to "make it work", bu
 - **Sustainability**: Write code that is easy to read, test, and maintain.
 - **Proactive Refactoring**: If you see messy code, fix it (safely).
 
+### 🤖 For AI Agents & Contributors
+
+If you are an AI agent or a human using AI tools:
+
+1.  **Do NOT hallucinate APIs or syntax.** Verify every change.
+2.  **Self-Correction**: If a tool call fails or a build fails, investigate the error log. Do not blindly retry.
+3.  **Visual Verification**: If you modify UI code, you MUST inspect the relevant files (view_file) or output to ensure you haven't introduced syntax errors (missing `}`, broken imports).
+4.  **Strict Mode**: Treat TypeScript errors as blockers. **Do not suppress them** with `// @ts-ignore` unless absolutely necessary and documented.
+
 ## 🧪 Testing Strategy
 
 We use **Playwright** for both Unit and End-to-End (E2E) testing.
@@ -68,8 +77,37 @@ When fixing a bug:
 
 ## Pull Request Process
 
-1. Ensure all tests pass.
-2. Update documentation if behavior changes.
+### 🛑 BEFORE YOU COMMIT: Strict Verification
+
+**You MUST perform the following checks locally.** Failing to do so wastes review time and breaks the build.
+
+1.  **Build the Project**: Run the build command to catch syntax errors (like missing braces or type mismatches).
+
+    ```bash
+    npm run build
+    ```
+
+    _If this fails, DO NOT COMMIT._
+
+2.  **Linting & Type Checking**: Ensure your IDE shows NO red squigglies.
+    - If you see a red underline, it is a compilation error. **Fix it.**
+    - Run the linter manually if needed:
+
+    ```bash
+    npm run lint  # If available, or rely on IDE feedback
+    ```
+
+3.  **Run All Tests**:
+    ```bash
+    npm test
+    ```
+
+### Submission Checklist
+
+1.  [ ] `npm run build` passes with NO errors.
+2.  [ ] All tests pass.
+3.  [ ] No console errors in the browser developer tools.
+4.  [ ] Documentation is updated.
 
 ## ❓ Common Issues & Troubleshooting
 

@@ -59,7 +59,7 @@ const globe = new GlobeViz('#container', {
   // Earth texture: 'satellite' | 'natural' | 'dark' | 'light' | 'night' | 'topographic'
   texture: 'satellite',
 
-  // Label style: 'none' | 'minimal' | 'major' | 'all'
+  // Label style: 'none' | 'minimal' | 'major' | 'all' | 'data'
   labels: 'all',
 
   // Initial statistic to display (built-in ID or custom StatisticData)
@@ -71,7 +71,7 @@ const globe = new GlobeViz('#container', {
   // Enable auto-rotation
   autoRotate: false,
 
-  // Show control panel (lil-gui)
+  // Show control panel (lil-gui) - Now a modular Category Bar in top-right
   showControls: true,
 
   // Show legend
@@ -143,7 +143,7 @@ globe.setStatistic('gdpPerCapita');
 
 ```typescript
 // Change label style
-globe.setLabels('major'); // 'none' | 'minimal' | 'major' | 'all'
+globe.setLabels('major'); // 'none' | 'minimal' | 'major' | 'all' | 'data'
 ```
 
 ### Texture
@@ -176,6 +176,17 @@ await globe.recordGif({ duration: 5, fps: 30 });
 
 // Record a video
 await globe.recordVideo({ duration: 10 });
+```
+
+### Urban Data (Points)
+
+Visualize city-level or point-based data with synthetic boundaries.
+
+```typescript
+globe.setUrbanData([
+  { lat: 40.7128, lon: -74.0060, value: 100, name: "New York" },
+  { lat: 35.6762, lon: 139.6503, value: 85, name: "Tokyo" },
+]);
 ```
 
 ### Other
