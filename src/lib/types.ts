@@ -16,7 +16,8 @@ export type TexturePreset =
   | "night" // Night lights view
   | "topographic" // Terrain/elevation
   | "day" // Day view
-  | "bathymetry"; // Ocean depth view
+  | "bathymetry" // Ocean depth view
+  | "osm"; // OpenStreetMap
 
 /**
  * Country data with a value for visualization.
