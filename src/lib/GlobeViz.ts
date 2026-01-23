@@ -53,8 +53,8 @@ const EARTH_TEXTURES: Record<TexturePreset, string> = {
   topographic:
     "https://raw.githubusercontent.com/batikanor/gralobe-assets/main/textures/world.topo.200407.3x5400x2700.jpg",
   day: "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_day_4096.jpg",
-  bathymetry: "https://eoimages.gsfc.nasa.gov/images/imagerecords/73000/73580/world.topo.bathy.200401.3x5400x2700.jpg",
-  osm: "https://tile.openstreetmap.org/{z}/{x}/{y}.png", // OpenStreetMap Tiles
+  bathymetry: "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_specular_2048.jpg",
+  osm: "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_normal_2048.jpg", // Temporary fallback
 };
 
 /**
