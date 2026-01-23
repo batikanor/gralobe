@@ -14,7 +14,9 @@ export type TexturePreset =
   | "dark" // Dark theme
   | "light" // Light/minimal theme
   | "night" // Night lights view
-  | "topographic"; // Terrain/elevation
+  | "topographic" // Terrain/elevation
+  | "day" // Day view
+  | "bathymetry"; // Ocean depth view
 
 /**
  * Country data with a value for visualization.

@@ -49,10 +49,11 @@ const EARTH_TEXTURES: Record<TexturePreset, string> = {
     "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_day_4096.jpg",
   dark: "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_lights_2048.png",
   light: "https://raw.githubusercontent.com/turban/webgl-earth/master/images/2_no_clouds_4k.jpg",
-  night:
-    "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_lights_2048.png",
+  night: "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_lights_2048.png",
   topographic:
-    "https://eoimages.gsfc.nasa.gov/images/imagerecords/74000/74117/world.topo.200407.3x5400x2700.jpg",
+    "https://raw.githubusercontent.com/batikanor/gralobe-assets/main/textures/world.topo.200407.3x5400x2700.jpg",
+  day: "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_day_4096.jpg",
+  bathymetry: "https://eoimages.gsfc.nasa.gov/images/imagerecords/73000/73580/world.topo.bathy.200401.3x5400x2700.jpg", // NEW
 };
 
 /**
@@ -1700,7 +1701,33 @@ export class GlobeViz implements GlobeVizAPI {
     this.countryLabels?.clearCustomLabels();
   }
 
-  async setTexture(preset: TexturePreset): Promise<void> {}
+  async setTexture(preset: TexturePreset): Promise<void> {
+    if (!this.renderer || !this.material) return;
+
+    this.config.texture = preset;
+
+    try {
+      const loadTexture = this.textureLoader.loadAsync(EARTH_TEXTURES[preset]);
+      const timeout = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("Texture load timed out after 10s")), 10000),
+      );
+
+      const newTex = await Promise.race([loadTexture, timeout]);
+
+      // Safety check if destroyed or component unmounted during load
+      if (this.isDestroyed || !this.material || !this.material.uniforms.uTexture) return;
+
+      newTex.anisotropy = this.renderer.capabilities.getMaxAnisotropy();
+      newTex.minFilter = THREE.LinearMipmapLinearFilter;
+      newTex.magFilter = THREE.LinearFilter;
+
+      // Update uniform
+      this.material.uniforms.uTexture.value = newTex;
+      this.material.needsUpdate = true;
+    } catch (err) {
+      console.error(`Failed to set texture ${preset}:`, err);
+    }
+  }
 
   setAutoRotate(enabled: boolean): void {
     this.config.autoRotate = enabled;
