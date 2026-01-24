@@ -21,12 +21,13 @@ If you are an AI agent or a human using AI tools:
 
 ## 🧪 Testing Strategy
 
-We use **Playwright** for both Unit and End-to-End (E2E) testing.
+We use **Vitest** for unit tests and **Playwright** for End-to-End (E2E) testing.
 
 ### 1. Unit Tests (Colocated)
 
 - **Location**: Next to the source file (e.g., `src/lib/formatters.ts` -> `src/lib/formatters.spec.ts`).
 - **Purpose**: Test individual functions, classes, and logic in isolation.
+- **Runner**: Vitest
 - **Naming**: `*.spec.ts`
 - **Goal**: High coverage of business logic and edge cases.
 
@@ -49,20 +50,31 @@ npm install
 ### Running Tests
 
 ```bash
-# Run all tests
+# Run unit tests (Vitest)
 npm test
 
-# Run only unit tests (fast)
-npx playwright test --grep "Unit"
+# Run E2E tests (Playwright)
+npm run test:e2e
 
-# Run with UI (good for debugging E2E)
+# Run Playwright with UI (good for debugging E2E)
 npm run test:ui
+
+# Run texture URL checks (opt-in, hits public CDNs)
+RUN_TEXTURE_TESTS=1 npm test
+
+## Texture URL Validation (Opt-In)
+
+Some texture presets are loaded from public CDNs. We include a **gated test** that verifies each URL is reachable and returns an image content-type.
+
+- **Why gated?** Some CI runners block outbound HTTP requests. To avoid flaky CI, the test only runs when explicitly enabled.
+- **How to run**: `RUN_TEXTURE_TESTS=1 npm test`
+- **When to run**: Anytime texture URLs change or you suspect CDN regressions.
 ```
 
 ## 📝 Code Style & Quality
 
 - **TypeScript**: Strict typing is required. Avoid `any`.
-- **Formatting**: Code should be formatted consistently (Prettier/ESLint).
+- **Formatting**: Code should be formatted consistently (Biome).
 - **Comments**: Explain _why_, not _what_. Add JSDoc to all public interfaces.
 - **Components**: Keep components small and focused. Refactor large files (like `GlobeViz.ts`) into smaller sub-modules when possible.
 

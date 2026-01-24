@@ -37,25 +37,12 @@ import type {
   TexturePreset,
   TopologyConfig,
 } from "./types";
+import { TEXTURE_PRESETS, TEXTURE_SOURCES, type TextureSource } from "./textures";
 import { UrbanMapper } from "./UrbanMapper";
 
 /**
- * Earth texture URLs
+ * Texture sources are defined in a dedicated module to keep URLs testable.
  */
-const EARTH_TEXTURES: Record<TexturePreset, string> = {
-  satellite:
-    "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_atmos_2048.jpg",
-  natural:
-    "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_day_4096.jpg",
-  dark: "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_lights_2048.png",
-  light: "https://raw.githubusercontent.com/turban/webgl-earth/master/images/2_no_clouds_4k.jpg",
-  night: "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_lights_2048.png",
-  topographic:
-    "https://raw.githubusercontent.com/batikanor/gralobe-assets/main/textures/world.topo.200407.3x5400x2700.jpg",
-  day: "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_day_4096.jpg",
-  bathymetry: "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_specular_2048.jpg",
-  osm: "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_normal_2048.jpg", // Temporary fallback
-};
 
 /**
  * Public API for controlling the globe
@@ -250,6 +237,7 @@ export class GlobeViz implements GlobeVizAPI {
     }
 
     this.container.classList.add("gralobe-viz-container");
+    this.textureLoader.setCrossOrigin("anonymous");
 
     // Merge config with defaults
     this.config = {
@@ -447,7 +435,9 @@ export class GlobeViz implements GlobeVizAPI {
   private async createGlobe(): Promise<void> {
     // Load base earth texture
     // Load base earth texture with timeout
-    const loadTexture = this.textureLoader.loadAsync(EARTH_TEXTURES[this.config.texture]);
+    const loadTexture = this.loadTextureSource(
+      TEXTURE_SOURCES[this.config.texture],
+    );
 
     const timeout = new Promise<never>((_, reject) =>
       setTimeout(() => reject(new Error("Texture load timed out after 10s")), 10000),
@@ -974,7 +964,7 @@ export class GlobeViz implements GlobeVizAPI {
     // 1. Theme
     const textureFolder = createCategory("texture", "Texture");
     const textureCtrl = textureFolder
-      .add(this.config, "texture", Object.keys(EARTH_TEXTURES))
+      .add(this.config, "texture", TEXTURE_PRESETS)
       .name("Theme")
       .onChange((v: any) => this.setTexture(v));
     this.addTooltip(
@@ -1707,46 +1697,8 @@ export class GlobeViz implements GlobeVizAPI {
 
     this.config.texture = preset;
 
-    // Handle OpenStreetMap (Tile-based)
-    if (preset === "osm") {
-      // For now, we can only map a static image or use a canvas to draw tiles.
-      // Implementing a full tile pyramid loader is complex.
-      // We will fallback to a static OSM world map image for this implementation
-      // or explain limitation if tiles are needed.
-      //
-      // However, the user asked for OSM. Let's use a static high-res OSM map for now
-      // as our shader expects a single texture uTexture.
-      // Using actual XYZ tiles requires a different sphere geometry or multi-texture shader.
-      //
-      // Using a high-res static OSM image:
-      const osmStaticUrl = "https://upload.wikimedia.org/wikipedia/commons/e/ec/World_map_blank_without_borders.svg"; // Placeholder
-      // Actually, let's use a known high-res raster if available, or just standard satellite
-      // The requirement "multiple variants of openstreetmap" suggests a tile loader.
-      // Given constraints of existing shader (uTexture), we swap the texture.
-      // Let's use a static "OSM-like" texture for now to fit the architecture.
-      //
-      // Better approach: Use a canvas texture and draw tiles onto it (simple tile pyramid at level 3 or 4)
-      // This is expensive.
-      //
-      // Alternative: Use a high-quality static world map that LOOKS like OSM.
-      // Let's use this one for "Street" view:
-      const streetMapUrl = "https://raw.githubusercontent.com/batikanor/gralobe-assets/main/textures/osm_world_8k.jpg"; // Hypothetical
-      // Since we don't have that, we'll use the 'light' theme as a proxy for "Street" or find a real one.
-      //
-      // REVISION: The prompt asked for "osm".
-      // Let's use standard satellite logic but point to a static OSM world map if possible.
-      // Since we don't have a tile engine in this class (it's a single Mesh with ShaderMaterial),
-      // we can't easily do dynamic XYZ tiles without refactoring the whole Globe mesh.
-      //
-      // I will implement a "Street" preset using a static high-res map that resembles OSM.
-      //
-      // Url: https://eoimages.gsfc.nasa.gov/images/imagerecords/57000/57752/land_shallow_topo_2048.jpg (Blue Marble)
-      //
-      // Let's assume standard behavior for now.
-    }
-
     try {
-      const loadTexture = this.textureLoader.loadAsync(EARTH_TEXTURES[preset]);
+      const loadTexture = this.loadTextureSource(TEXTURE_SOURCES[preset]);
       const timeout = new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error("Texture load timed out after 10s")), 10000),
       );
@@ -1766,6 +1718,66 @@ export class GlobeViz implements GlobeVizAPI {
     } catch (err) {
       console.error(`Failed to set texture ${preset}:`, err);
     }
+  }
+
+  private async loadTextureSource(source: TextureSource): Promise<THREE.Texture> {
+    if (source.type === "svg") {
+      return this.loadSvgTexture(source.url, source.width, source.height);
+    }
+
+    return this.textureLoader.loadAsync(source.url);
+  }
+
+  private async loadSvgTexture(
+    url: string,
+    width: number,
+    height: number,
+  ): Promise<THREE.Texture> {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch SVG texture (${response.status})`);
+    }
+
+    const svgText = await response.text();
+    const sizedSvg = this.resizeSvgTexture(svgText, width, height);
+    const svgBlob = new Blob([sizedSvg], { type: "image/svg+xml" });
+    const objectUrl = URL.createObjectURL(svgBlob);
+
+    try {
+      return await this.textureLoader.loadAsync(objectUrl);
+    } finally {
+      URL.revokeObjectURL(objectUrl);
+    }
+  }
+
+  private resizeSvgTexture(svgText: string, width: number, height: number): string {
+    let updatedSvg = svgText;
+
+    if (updatedSvg.includes("width=")) {
+      updatedSvg = updatedSvg.replace(/\bwidth="[^"]*"/i, `width="${width}"`);
+    } else {
+      updatedSvg = updatedSvg.replace("<svg", `<svg width=\"${width}\"`);
+    }
+
+    if (updatedSvg.includes("height=")) {
+      updatedSvg = updatedSvg.replace(/\bheight="[^"]*"/i, `height="${height}"`);
+    } else {
+      updatedSvg = updatedSvg.replace("<svg", `<svg height=\"${height}\"`);
+    }
+
+    if (updatedSvg.includes("preserveAspectRatio=")) {
+      updatedSvg = updatedSvg.replace(
+        /\bpreserveAspectRatio="[^"]*"/i,
+        'preserveAspectRatio="none"',
+      );
+    } else {
+      updatedSvg = updatedSvg.replace(
+        "<svg",
+        '<svg preserveAspectRatio="none"',
+      );
+    }
+
+    return updatedSvg;
   }
 
   setAutoRotate(enabled: boolean): void {

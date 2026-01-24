@@ -56,7 +56,7 @@ The default configuration displays:
 import { GlobeViz } from 'gralobe';
 
 const globe = new GlobeViz('#container', {
-  // Earth texture: 'satellite' | 'natural' | 'dark' | 'light' | 'night' | 'topographic'
+  // Earth texture: 'satellite' | 'natural' | 'dark' | 'light' | 'night' | 'topographic' | 'day' | 'bathymetry' | 'atlas'
   texture: 'satellite',
 
   // Label style: 'none' | 'minimal' | 'major' | 'all' | 'data'
@@ -152,6 +152,13 @@ globe.setLabels('major'); // 'none' | 'minimal' | 'major' | 'all' | 'data'
 // Change earth texture
 await globe.setTexture('night');
 ```
+
+Available texture presets:
+
+- `satellite`, `natural`, `day`
+- `dark`, `light`, `night`
+- `topographic`, `bathymetry`
+- `atlas` (political boundary map; pair with labels for names)
 
 ### Effects
 

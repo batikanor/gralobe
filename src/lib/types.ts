@@ -17,7 +17,7 @@ export type TexturePreset =
   | "topographic" // Terrain/elevation
   | "day" // Day view
   | "bathymetry" // Ocean depth view
-  | "osm"; // OpenStreetMap
+  | "atlas"; // Atlas-style political map
 
 /**
  * Country data with a value for visualization.
