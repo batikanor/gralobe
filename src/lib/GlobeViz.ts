@@ -215,6 +215,9 @@ export class GlobeViz implements GlobeVizAPI {
   private animationId: number | null = null;
   private isDestroyed = false;
   private urbanPoints: { lat: number; lon: number; value: number; id?: string }[] | null = null;
+  private resizeObserver: ResizeObserver | null = null;
+  private lastContainerWidth = 0;
+  private lastContainerHeight = 0;
 
   /** Promise that resolves when fully initialized */
   public ready: Promise<void>;
@@ -358,8 +361,23 @@ export class GlobeViz implements GlobeVizAPI {
       }
       this.countryLabels?.setMorph(this.morph);
 
-      // Handle resize
+      // Handle resize - use ResizeObserver for container-specific changes
       window.addEventListener("resize", this.handleResize);
+
+      // Use ResizeObserver to catch container-specific resize events (e.g., React layout changes)
+      this.resizeObserver = new ResizeObserver((entries) => {
+        if (this.isDestroyed) return;
+        for (const entry of entries) {
+          const { width, height } = entry.contentRect;
+          // Only trigger resize if dimensions actually changed
+          if (width !== this.lastContainerWidth || height !== this.lastContainerHeight) {
+            this.lastContainerWidth = width;
+            this.lastContainerHeight = height;
+            this.handleResize();
+          }
+        }
+      });
+      this.resizeObserver.observe(this.container);
 
       // Handle fullscreen changes
       document.addEventListener("fullscreenchange", this.handleFullscreenChange);
@@ -403,6 +421,12 @@ export class GlobeViz implements GlobeVizAPI {
         // Synch shortcut visibility
         this.toolbar.setShortcutsEnabled(!!this.config.enableShortcuts);
       }
+
+      // Ensure correct dimensions after all initialization is complete
+      // This fixes label positioning issues when container isn't fully laid out during construction
+      this.lastContainerWidth = this.container.clientWidth;
+      this.lastContainerHeight = this.container.clientHeight;
+      this.handleResize();
 
       // Signal that initialization is complete
       this.resolveReady();
@@ -2069,6 +2093,12 @@ export class GlobeViz implements GlobeVizAPI {
     window.removeEventListener("resize", this.handleResize);
     window.removeEventListener("keydown", this.handleKeydown);
     document.removeEventListener("fullscreenchange", this.handleFullscreenChange);
+
+    // Clean up ResizeObserver
+    if (this.resizeObserver) {
+      this.resizeObserver.disconnect();
+      this.resizeObserver = null;
+    }
 
     // Dispose helper components
     this.categoryGUIs.forEach((g) => g.destroy());

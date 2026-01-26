@@ -174,6 +174,9 @@ export declare class GlobeViz implements GlobeVizAPI {
     private animationId;
     private isDestroyed;
     private urbanPoints;
+    private resizeObserver;
+    private lastContainerWidth;
+    private lastContainerHeight;
     /** Promise that resolves when fully initialized */
     ready: Promise<void>;
     private resolveReady;

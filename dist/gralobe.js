@@ -8147,6 +8147,9 @@ class Yo {
   animationId = null;
   isDestroyed = !1;
   urbanPoints = null;
+  resizeObserver = null;
+  lastContainerWidth = 0;
+  lastContainerHeight = 0;
   /** Promise that resolves when fully initialized */
   ready;
   resolveReady;
@@ -8187,7 +8190,13 @@ class Yo {
         }
       ), this.config.showLegend && (this.legend = new Mo(this.container)), await this.createGlobe(), this.createStars(), this.config.effects.atmosphere && this.createAtmosphere(), this.countryLabels = new so(this.container, ee), this.scene.add(this.countryLabels.getGroup()), this.globe && this.countryLabels.setGlobe(this.globe), this.countryLabels.setCamera(this.camera), this.countryLabels.setStyle(this.config.labels), this.exporter = new Ao(this.renderer, this.scene, this.camera), this.legend && this.exporter.setLegendElement(this.legend.getElement()), this.countryLabels && this.exporter.setCountryLabels(this.countryLabels), (this.config.showControls || this.config.showDebug) && this.createGUI(), this.setupInteraction(), await this.choropleth.waitForLoad();
       const i = this.choropleth.getFeatureLabels();
-      i.length > 0 && this.addCustomLabels(i), this.setStatistic(this.config.statistic), this.morph = this.config.initialView === "globe" ? 1 : 0, this.material && (this.material.uniforms.uMorph.value = this.morph), this.countryLabels?.setMorph(this.morph), window.addEventListener("resize", this.handleResize), document.addEventListener("fullscreenchange", this.handleFullscreenChange), this.renderer.domElement.tabIndex = 0, this.renderer.domElement.style.outline = "none", this.renderer.domElement.addEventListener("mousedown", () => {
+      i.length > 0 && this.addCustomLabels(i), this.setStatistic(this.config.statistic), this.morph = this.config.initialView === "globe" ? 1 : 0, this.material && (this.material.uniforms.uMorph.value = this.morph), this.countryLabels?.setMorph(this.morph), window.addEventListener("resize", this.handleResize), this.resizeObserver = new ResizeObserver((r) => {
+        if (!this.isDestroyed)
+          for (const n of r) {
+            const { width: a, height: o } = n.contentRect;
+            (a !== this.lastContainerWidth || o !== this.lastContainerHeight) && (this.lastContainerWidth = a, this.lastContainerHeight = o, this.handleResize());
+          }
+      }), this.resizeObserver.observe(this.container), document.addEventListener("fullscreenchange", this.handleFullscreenChange), this.renderer.domElement.tabIndex = 0, this.renderer.domElement.style.outline = "none", this.renderer.domElement.addEventListener("mousedown", () => {
         this.renderer.domElement.focus();
       }), this.renderer.domElement.addEventListener("keydown", this.handleKeydown), this.animate(), (this.config.showToolbar || this.config.showControls) && (this.toolbar = new bt(this.container, {
         onShowData: () => {
@@ -8196,7 +8205,7 @@ class Yo {
         },
         onToggleFullscreen: () => this.toggleFullscreen(),
         onToggleProjection: () => this.toggleProjection()
-      }), this.dataGrid = new co(this.container), this.toolbar.updateProjectionIcon(this.config.initialView === "globe"), this.toolbar.setShortcutsEnabled(!!this.config.enableShortcuts)), this.resolveReady();
+      }), this.dataGrid = new co(this.container), this.toolbar.updateProjectionIcon(this.config.initialView === "globe"), this.toolbar.setShortcutsEnabled(!!this.config.enableShortcuts)), this.lastContainerWidth = this.container.clientWidth, this.lastContainerHeight = this.container.clientHeight, this.handleResize(), this.resolveReady();
     } catch (e) {
       console.error("GlobeViz init failed:", e), this.rejectReady(e);
     }
@@ -9026,7 +9035,7 @@ class Yo {
     return {};
   }
   destroy() {
-    this.isDestroyed = !0, this.animationId && cancelAnimationFrame(this.animationId), window.removeEventListener("resize", this.handleResize), window.removeEventListener("keydown", this.handleKeydown), document.removeEventListener("fullscreenchange", this.handleFullscreenChange), this.categoryGUIs.forEach((e) => e.destroy()), this.categoryGUIs = [], this.legend?.dispose(), this.countryLabels?.dispose(), this.markerLayer?.dispose(), this.controls?.dispose(), this.toolbar?.dispose(), this.dataGrid?.dispose(), document.querySelectorAll(".lil-gui-tooltip").forEach((e) => e.remove()), this.globe?.geometry.dispose(), this.globe?.material?.dispose(), this.atmosphere?.geometry.dispose(), this.atmosphere?.material?.dispose(), this.stars?.geometry.dispose(), this.stars?.material?.dispose(), this.dataTexture?.dispose(), this.scene?.clear();
+    this.isDestroyed = !0, this.animationId && cancelAnimationFrame(this.animationId), window.removeEventListener("resize", this.handleResize), window.removeEventListener("keydown", this.handleKeydown), document.removeEventListener("fullscreenchange", this.handleFullscreenChange), this.resizeObserver && (this.resizeObserver.disconnect(), this.resizeObserver = null), this.categoryGUIs.forEach((e) => e.destroy()), this.categoryGUIs = [], this.legend?.dispose(), this.countryLabels?.dispose(), this.markerLayer?.dispose(), this.controls?.dispose(), this.toolbar?.dispose(), this.dataGrid?.dispose(), document.querySelectorAll(".lil-gui-tooltip").forEach((e) => e.remove()), this.globe?.geometry.dispose(), this.globe?.material?.dispose(), this.atmosphere?.geometry.dispose(), this.atmosphere?.material?.dispose(), this.stars?.geometry.dispose(), this.stars?.material?.dispose(), this.dataTexture?.dispose(), this.scene?.clear();
     try {
       this.renderer?.dispose(), this.renderer?.forceContextLoss(), this.renderer?.getContext()?.getExtension("WEBGL_lose_context")?.loseContext();
     } catch (e) {
