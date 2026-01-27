@@ -734,6 +734,13 @@ export class ChoroplethRenderer {
     return undefined;
   }
 
+  /**
+   * Get all loaded features (for hover detection)
+   */
+  getFeatures(): CountryFeature[] {
+    return this.countries;
+  }
+
   getBounds(): [number, number, number, number] | null {
     if (this.countries.length === 0) return null;
 

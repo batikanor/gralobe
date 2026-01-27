@@ -177,6 +177,10 @@ export declare class GlobeViz implements GlobeVizAPI {
     private resizeObserver;
     private lastContainerWidth;
     private lastContainerHeight;
+    private hoverTooltip;
+    private currentHoveredFeature;
+    private lastHoverTime;
+    private readonly HOVER_THROTTLE_MS;
     /** Promise that resolves when fully initialized */
     ready: Promise<void>;
     private resolveReady;
@@ -199,9 +203,37 @@ export declare class GlobeViz implements GlobeVizAPI {
     toGlobe(): void;
     toFlat(): void;
     /**
-     * Setup mouse interactions (Click to Zoom, etc.)
+     * Setup mouse interactions (Click to Zoom, Hover, etc.)
      */
     private setupInteraction;
+    /**
+     * Create the hover tooltip element
+     */
+    private createHoverTooltip;
+    /**
+     * Handle hover interactions with throttling for performance
+     */
+    private handleHover;
+    /**
+     * Find feature at given lat/lon using point-in-polygon test
+     */
+    private findFeatureAtLatLon;
+    /**
+     * Check if a point is inside a feature geometry
+     */
+    private isPointInFeature;
+    /**
+     * Ray casting algorithm for point-in-polygon test
+     */
+    private isPointInPolygon;
+    /**
+     * Show hover tooltip at mouse position
+     */
+    private showHoverTooltip;
+    /**
+     * Hide hover tooltip
+     */
+    private hideHoverTooltip;
     setMorph(value: number): void;
     getMorph(): number;
     setStatistic(idOrData: string | StatisticData): void;
@@ -229,6 +261,11 @@ export declare class GlobeViz implements GlobeVizAPI {
     recordGif(options?: ExportOptions): Promise<void>;
     recordVideo(options?: ExportOptions): Promise<void>;
     setEffects(effects: Partial<EffectsConfig>): void;
+    /**
+     * Update hover configuration
+     * @param hover - Partial hover configuration to merge
+     */
+    setHover(hover: Partial<HoverConfig>): void;
     setMarkers(data: MarkerData[], config?: MarkerConfig): void;
     setUrbanData(points: {
         lat: number;
@@ -281,6 +318,8 @@ export declare interface GlobeVizAPI {
     recordVideo(options?: ExportOptions): Promise<void>;
     /** Update effects configuration */
     setEffects(effects: Partial<EffectsConfig>): void;
+    /** Update hover configuration */
+    setHover(hover: Partial<HoverConfig>): void;
     /** Set marker data for city-level visualization */
     setMarkers(data: MarkerData[], config?: MarkerConfig): void;
     /** Set urban city data for visualization */
@@ -430,6 +469,48 @@ export declare interface GlobeVizConfig {
      * Callback for loading progress (0-1)
      */
     onLoadProgress?: (progress: number, status?: string) => void;
+    /**
+     * Callback when hovering over a feature
+     */
+    onHover?: (featureId: string | null, featureName: string | null, value?: number) => void;
+    /**
+     * Hover information configuration
+     */
+    hover?: HoverConfig;
+}
+
+/**
+ * Configuration for hover information display
+ */
+export declare interface HoverConfig {
+    /**
+     * Enable hover information tooltip
+     * @default true
+     */
+    enabled?: boolean;
+    /**
+     * Minimum zoom level (camera distance) for hover to activate.
+     * Value between 0 and 1, where 0 means always show and 1 means only when very close.
+     * Maps to camera distance: 0 = 400 (far), 1 = 50 (close)
+     * @default 0 (always show)
+     */
+    minZoom?: number;
+    /**
+     * Show the feature value in the tooltip (if available)
+     * @default true
+     */
+    showValue?: boolean;
+    /**
+     * Custom tooltip style
+     */
+    style?: {
+        /** Background color */
+        background?: string;
+        /** Text color */
+        color?: string;
+        /** Border color */
+        borderColor?: string;
+    };
 }
 
 /**

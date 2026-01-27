@@ -30,6 +30,7 @@ import type {
   EffectsConfig,
   ExportOptions,
   GlobeVizConfig,
+  HoverConfig,
   LabelStyle,
   MarkerConfig,
   MarkerData,
@@ -74,6 +75,8 @@ export interface GlobeVizAPI {
   recordVideo(options?: ExportOptions): Promise<void>;
   /** Update effects configuration */
   setEffects(effects: Partial<EffectsConfig>): void;
+  /** Update hover configuration */
+  setHover(hover: Partial<HoverConfig>): void;
   /** Set marker data for city-level visualization */
   setMarkers(data: MarkerData[], config?: MarkerConfig): void;
   /** Set urban city data for visualization */
@@ -105,7 +108,7 @@ export interface GlobeVizAPI {
 const DEFAULT_CONFIG: Required<
   Omit<
     GlobeVizConfig,
-    "data" | "onCountryClick" | "onViewChange" | "onLoadProgress" | "width" | "height" | "topology"
+    "data" | "onCountryClick" | "onViewChange" | "onLoadProgress" | "onHover" | "width" | "height" | "topology"
   >
 > = {
   texture: "satellite",
@@ -134,6 +137,11 @@ const DEFAULT_CONFIG: Required<
     thermalMode: false,
     blueprintMode: false,
     glowPulse: false,
+  },
+  hover: {
+    enabled: true,
+    minZoom: 0,
+    showValue: true,
   },
   extrudeHeight: false,
   pointRadius: 140,
@@ -173,12 +181,14 @@ export class GlobeViz implements GlobeVizAPI {
       | "height"
       | "topology"
       | "onLoadProgress"
+      | "onHover"
     >
   > & {
     data?: CountryData[];
     onCountryClick?: GlobeVizConfig["onCountryClick"];
     onViewChange?: GlobeVizConfig["onViewChange"];
     onLoadProgress?: GlobeVizConfig["onLoadProgress"];
+    onHover?: GlobeVizConfig["onHover"];
     width?: number;
     height?: number;
     topology?: TopologyConfig;
@@ -219,6 +229,12 @@ export class GlobeViz implements GlobeVizAPI {
   private lastContainerWidth = 0;
   private lastContainerHeight = 0;
 
+  // Hover state
+  private hoverTooltip: HTMLDivElement | null = null;
+  private currentHoveredFeature: string | null = null;
+  private lastHoverTime = 0;
+  private readonly HOVER_THROTTLE_MS = 16; // ~60fps
+
   /** Promise that resolves when fully initialized */
   public ready: Promise<void>;
   private resolveReady!: () => void;
@@ -247,6 +263,7 @@ export class GlobeViz implements GlobeVizAPI {
       ...DEFAULT_CONFIG,
       ...config,
       effects: { ...DEFAULT_CONFIG.effects, ...(config.effects || {}) },
+      hover: { ...DEFAULT_CONFIG.hover, ...(config.hover || {}) },
     };
 
     console.log("GlobeViz v5 initialized", this.config.effects);
@@ -1212,6 +1229,37 @@ export class GlobeViz implements GlobeVizAPI {
       .onChange((v: boolean) => {
         this.toolbar?.setShortcutsEnabled(v);
       });
+
+    // 6. Hover Settings
+    const hoverGUI = createCategory("hover", "Hover Info");
+
+    const hoverEnabledCtrl = hoverGUI
+      .add(this.config.hover!, "enabled")
+      .name("Enable Hover");
+
+    this.addTooltip(
+      hoverEnabledCtrl,
+      "<b>Hover Information</b><br><br>Show a tooltip with feature information when hovering over countries or regions.",
+    );
+
+    const hoverMinZoomCtrl = hoverGUI
+      .add(this.config.hover!, "minZoom", 0, 1)
+      .name("Min Zoom Level")
+      .step(0.1);
+
+    this.addTooltip(
+      hoverMinZoomCtrl,
+      "<b>Minimum Zoom Level</b><br><br>Only show hover information when zoomed in past this level.<br>• <b>0</b>: Always show<br>• <b>1</b>: Only when very close",
+    );
+
+    const hoverShowValueCtrl = hoverGUI
+      .add(this.config.hover!, "showValue")
+      .name("Show Value");
+
+    this.addTooltip(
+      hoverShowValueCtrl,
+      "<b>Show Value</b><br><br>Display the data value in the hover tooltip (if available for the current statistic).",
+    );
   }
 
   private handleResize = (): void => {
@@ -1520,7 +1568,7 @@ export class GlobeViz implements GlobeVizAPI {
   }
 
   /**
-   * Setup mouse interactions (Click to Zoom, etc.)
+   * Setup mouse interactions (Click to Zoom, Hover, etc.)
    */
   private setupInteraction(): void {
     const raycaster = new THREE.Raycaster();
@@ -1531,14 +1579,28 @@ export class GlobeViz implements GlobeVizAPI {
     let isDragging = false;
     let mouseDownPos = new Date().getTime();
 
+    // Create hover tooltip
+    this.createHoverTooltip();
+
     // Track dragging to distinguish from clicking
     this.renderer.domElement.addEventListener("mousedown", () => {
       isDragging = false;
       mouseDownPos = new Date().getTime();
     });
 
-    this.renderer.domElement.addEventListener("mousemove", () => {
+    // Handle mouse move for both drag tracking and hover
+    this.renderer.domElement.addEventListener("mousemove", (event) => {
       isDragging = true;
+
+      // Handle hover
+      if (this.config.hover?.enabled) {
+        this.handleHover(event, raycaster, mouse, plane, planeIntersect);
+      }
+    });
+
+    // Hide tooltip when mouse leaves canvas
+    this.renderer.domElement.addEventListener("mouseleave", () => {
+      this.hideHoverTooltip();
     });
 
     // Handle Click (Zoom In)
@@ -1588,6 +1650,275 @@ export class GlobeViz implements GlobeVizAPI {
         }
       }
     });
+  }
+
+  /**
+   * Create the hover tooltip element
+   */
+  private createHoverTooltip(): void {
+    this.hoverTooltip = document.createElement("div");
+    this.hoverTooltip.className = "gralobe-hover-tooltip";
+
+    const style = this.config.hover?.style || {};
+
+    Object.assign(this.hoverTooltip.style, {
+      position: "absolute",
+      display: "none",
+      pointerEvents: "none",
+      zIndex: "1000",
+      padding: "8px 12px",
+      borderRadius: "6px",
+      fontSize: "12px",
+      fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
+      lineHeight: "1.4",
+      maxWidth: "200px",
+      backdropFilter: "blur(8px)",
+      WebkitBackdropFilter: "blur(8px)",
+      boxShadow: "0 4px 12px rgba(0, 0, 0, 0.4)",
+      transition: "opacity 0.15s ease",
+      background: style.background || "rgba(10, 20, 35, 0.95)",
+      color: style.color || "#fff",
+      border: `1px solid ${style.borderColor || "rgba(100, 150, 200, 0.3)"}`,
+    });
+
+    this.container.appendChild(this.hoverTooltip);
+  }
+
+  /**
+   * Handle hover interactions with throttling for performance
+   */
+  private handleHover(
+    event: MouseEvent,
+    raycaster: THREE.Raycaster,
+    mouse: THREE.Vector2,
+    plane: THREE.Plane,
+    planeIntersect: THREE.Vector3,
+  ): void {
+    if (!this.choropleth || !this.hoverTooltip) return;
+
+    // Throttle hover checks for performance
+    const now = performance.now();
+    if (now - this.lastHoverTime < this.HOVER_THROTTLE_MS) return;
+    this.lastHoverTime = now;
+
+    // Check zoom level (camera distance)
+    const cameraDistance = this.camera.position.length();
+    const minZoom = this.config.hover?.minZoom ?? 0;
+
+    // Map minZoom (0-1) to distance threshold (400-50)
+    // 0 = always show (distance 400), 1 = only when close (distance 50)
+    const maxDistance = 400 - minZoom * 350;
+
+    if (cameraDistance > maxDistance) {
+      this.hideHoverTooltip();
+      return;
+    }
+
+    const rect = this.renderer.domElement.getBoundingClientRect();
+    mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+    mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+    let lat: number | null = null;
+    let lon: number | null = null;
+
+    if (this.morph < 0.5) {
+      // Flat map mode - use plane intersection
+      raycaster.setFromCamera(mouse, this.camera);
+      raycaster.ray.intersectPlane(plane, planeIntersect);
+
+      if (planeIntersect) {
+        const mapLimitX = Math.PI * SPHERE_RADIUS;
+        const mapLimitY = (Math.PI * SPHERE_RADIUS) / 2;
+
+        if (Math.abs(planeIntersect.x) <= mapLimitX && Math.abs(planeIntersect.y) <= mapLimitY) {
+          // Convert map coordinates to lat/lon
+          lon = (planeIntersect.x / (Math.PI * SPHERE_RADIUS)) * 180;
+          lat = (planeIntersect.y / ((Math.PI * SPHERE_RADIUS) / 2)) * 90;
+        }
+      }
+    } else {
+      // Globe mode - raycast to sphere
+      raycaster.setFromCamera(mouse, this.camera);
+
+      if (this.globe) {
+        const intersects = raycaster.intersectObject(this.globe);
+
+        if (intersects.length > 0) {
+          const point = intersects[0].point;
+
+          // Apply inverse globe rotation to get correct world coordinates
+          const inverseRotation = new THREE.Quaternion();
+          this.globe.getWorldQuaternion(inverseRotation);
+          inverseRotation.invert();
+
+          const rotatedPoint = point.clone().applyQuaternion(inverseRotation);
+
+          // Convert 3D point on sphere to lat/lon
+          const r = SPHERE_RADIUS;
+          lat = Math.asin(rotatedPoint.y / r) * (180 / Math.PI);
+          lon = Math.atan2(rotatedPoint.x, rotatedPoint.z) * (180 / Math.PI);
+        }
+      }
+    }
+
+    if (lat !== null && lon !== null) {
+      // Find feature at this lat/lon
+      const feature = this.findFeatureAtLatLon(lat, lon);
+
+      if (feature) {
+        const featureId = feature.id || feature.properties?.id;
+        const featureName = this.choropleth.getFeatureName(featureId) || featureId;
+
+        // Get value if available
+        let value: number | undefined;
+        if (this.currentValues && featureId) {
+          value = this.currentValues[featureId];
+        }
+
+        // Update tooltip
+        this.showHoverTooltip(event, featureName, value);
+
+        // Track current hovered feature
+        if (this.currentHoveredFeature !== featureId) {
+          this.currentHoveredFeature = featureId;
+          this.config.onHover?.(featureId, featureName, value);
+        }
+      } else {
+        this.hideHoverTooltip();
+        if (this.currentHoveredFeature !== null) {
+          this.currentHoveredFeature = null;
+          this.config.onHover?.(null, null);
+        }
+      }
+    } else {
+      this.hideHoverTooltip();
+      if (this.currentHoveredFeature !== null) {
+        this.currentHoveredFeature = null;
+        this.config.onHover?.(null, null);
+      }
+    }
+  }
+
+  /**
+   * Find feature at given lat/lon using point-in-polygon test
+   */
+  private findFeatureAtLatLon(lat: number, lon: number): any | null {
+    if (!this.choropleth) return null;
+
+    const features = this.choropleth.getFeatures();
+    if (!features || features.length === 0) return null;
+
+    for (const feature of features) {
+      if (this.isPointInFeature(lon, lat, feature)) {
+        return feature;
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * Check if a point is inside a feature geometry
+   */
+  private isPointInFeature(lon: number, lat: number, feature: any): boolean {
+    const geometry = feature.geometry;
+    if (!geometry) return false;
+
+    if (geometry.type === "Polygon") {
+      return this.isPointInPolygon(lon, lat, geometry.coordinates);
+    } else if (geometry.type === "MultiPolygon") {
+      return geometry.coordinates.some((polygon: number[][][]) =>
+        this.isPointInPolygon(lon, lat, polygon),
+      );
+    } else if (geometry.type === "Point") {
+      // For point features, check if within a small radius
+      const [pLon, pLat] = geometry.coordinates;
+      const dist = Math.sqrt((lon - pLon) ** 2 + (lat - pLat) ** 2);
+      return dist < 2; // 2 degrees tolerance
+    }
+
+    return false;
+  }
+
+  /**
+   * Ray casting algorithm for point-in-polygon test
+   */
+  private isPointInPolygon(lon: number, lat: number, rings: number[][][]): boolean {
+    // Use the outer ring (first ring) for the test
+    const ring = rings[0];
+    if (!ring || ring.length < 3) return false;
+
+    let inside = false;
+    for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+      const xi = ring[i][0],
+        yi = ring[i][1];
+      const xj = ring[j][0],
+        yj = ring[j][1];
+
+      if (yi > lat !== yj > lat && lon < ((xj - xi) * (lat - yi)) / (yj - yi) + xi) {
+        inside = !inside;
+      }
+    }
+
+    return inside;
+  }
+
+  /**
+   * Show hover tooltip at mouse position
+   */
+  private showHoverTooltip(event: MouseEvent, name: string, value?: number): void {
+    if (!this.hoverTooltip) return;
+
+    // Build tooltip content
+    let content = `<strong>${name}</strong>`;
+
+    if (this.config.hover?.showValue !== false && value !== undefined) {
+      // Get current statistic for formatting
+      const statMeta = this.currentStatistic
+        ? this.getStatisticMetadata(this.currentStatistic)
+        : null;
+
+      let formattedValue: string;
+      if (statMeta?.definition.format) {
+        formattedValue = statMeta.definition.format(value);
+      } else if (statMeta?.definition.unit) {
+        formattedValue = `${value.toLocaleString()} ${statMeta.definition.unit}`;
+      } else {
+        formattedValue = value.toLocaleString();
+      }
+
+      content += `<br><span style="color: rgba(255,255,255,0.7); font-size: 11px;">${formattedValue}</span>`;
+    }
+
+    this.hoverTooltip.innerHTML = content;
+    this.hoverTooltip.style.display = "block";
+
+    // Position tooltip near cursor
+    const rect = this.container.getBoundingClientRect();
+    const tooltipRect = this.hoverTooltip.getBoundingClientRect();
+
+    let x = event.clientX - rect.left + 15;
+    let y = event.clientY - rect.top + 15;
+
+    // Keep tooltip within container bounds
+    if (x + tooltipRect.width > rect.width) {
+      x = event.clientX - rect.left - tooltipRect.width - 15;
+    }
+    if (y + tooltipRect.height > rect.height) {
+      y = event.clientY - rect.top - tooltipRect.height - 15;
+    }
+
+    this.hoverTooltip.style.left = `${x}px`;
+    this.hoverTooltip.style.top = `${y}px`;
+  }
+
+  /**
+   * Hide hover tooltip
+   */
+  private hideHoverTooltip(): void {
+    if (this.hoverTooltip) {
+      this.hoverTooltip.style.display = "none";
+    }
   }
 
   setMorph(value: number): void {
@@ -1885,6 +2216,23 @@ export class GlobeViz implements GlobeVizAPI {
     }
   }
 
+  /**
+   * Update hover configuration
+   * @param hover - Partial hover configuration to merge
+   */
+  setHover(hover: Partial<HoverConfig>): void {
+    if (!this.config.hover) {
+      this.config.hover = { enabled: true, minZoom: 0, showValue: true };
+    }
+    Object.assign(this.config.hover, hover);
+
+    // If disabling hover, hide tooltip immediately
+    if (hover.enabled === false) {
+      this.hideHoverTooltip();
+      this.currentHoveredFeature = null;
+    }
+  }
+
   setMarkers(data: MarkerData[], config?: MarkerConfig): void {
     // Create marker layer if it doesn't exist
     if (!this.markerLayer) {
@@ -2109,6 +2457,12 @@ export class GlobeViz implements GlobeVizAPI {
     this.controls?.dispose();
     this.toolbar?.dispose();
     this.dataGrid?.dispose();
+
+    // Remove hover tooltip
+    if (this.hoverTooltip && this.hoverTooltip.parentNode) {
+      this.hoverTooltip.parentNode.removeChild(this.hoverTooltip);
+      this.hoverTooltip = null;
+    }
 
     // Remove tooltips
     document.querySelectorAll(".lil-gui-tooltip").forEach((el) => el.remove());

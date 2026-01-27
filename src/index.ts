@@ -39,6 +39,7 @@ export type {
   EffectsConfig,
   ExportOptions,
   GlobeVizConfig,
+  HoverConfig,
   LabelStyle,
   MarkerConfig,
   MarkerData,

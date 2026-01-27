@@ -361,4 +361,51 @@ export interface GlobeVizConfig {
    * Callback for loading progress (0-1)
    */
   onLoadProgress?: (progress: number, status?: string) => void;
+
+  /**
+   * Callback when hovering over a feature
+   */
+  onHover?: (featureId: string | null, featureName: string | null, value?: number) => void;
+
+  /**
+   * Hover information configuration
+   */
+  hover?: HoverConfig;
+}
+
+/**
+ * Configuration for hover information display
+ */
+export interface HoverConfig {
+  /**
+   * Enable hover information tooltip
+   * @default true
+   */
+  enabled?: boolean;
+
+  /**
+   * Minimum zoom level (camera distance) for hover to activate.
+   * Value between 0 and 1, where 0 means always show and 1 means only when very close.
+   * Maps to camera distance: 0 = 400 (far), 1 = 50 (close)
+   * @default 0 (always show)
+   */
+  minZoom?: number;
+
+  /**
+   * Show the feature value in the tooltip (if available)
+   * @default true
+   */
+  showValue?: boolean;
+
+  /**
+   * Custom tooltip style
+   */
+  style?: {
+    /** Background color */
+    background?: string;
+    /** Text color */
+    color?: string;
+    /** Border color */
+    borderColor?: string;
+  };
 }

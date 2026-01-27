@@ -303,7 +303,83 @@ export const sections: DemoSection[] = [
     ],
   },
 
-  // 7. TINY WIDGETS
+  // 7. HOVER INFO
+  {
+    id: "hover-info",
+    title: "Hover Information",
+    description: "Interactive tooltips on hover with zoom-level control",
+    infoBox:
+      "Enable hover tooltips to show country/region info on mouse over. Configure minimum zoom level and whether to show data values.",
+    gridClass: "grid-2",
+    demos: [
+      {
+        id: "globe-hover-enabled",
+        title: "Hover Enabled (Default)",
+        subtitle: "hover: { enabled: true }",
+        description:
+          "Hover over any country to see its name and value. This is the default behavior.",
+        config: {
+          statistic: "lifeExpectancy",
+          labels: "minimal",
+          showControls: true,
+          hover: {
+            enabled: true,
+            minZoom: 0,
+            showValue: true,
+          },
+        },
+      },
+      {
+        id: "globe-hover-disabled",
+        title: "Hover Disabled",
+        subtitle: "hover: { enabled: false }",
+        description: "No tooltip appears on hover. Useful for presentation or embed modes.",
+        config: {
+          statistic: "gdpPerCapita",
+          labels: "minimal",
+          showControls: true,
+          hover: {
+            enabled: false,
+          },
+        },
+      },
+      {
+        id: "globe-hover-zoom-gated",
+        title: "Zoom-Gated Hover",
+        subtitle: "hover: { minZoom: 0.5 }",
+        description:
+          "Hover only works when zoomed in past 50%. Zoom in (scroll) to activate tooltips.",
+        config: {
+          statistic: "co2Emissions",
+          labels: "minimal",
+          showControls: true,
+          hover: {
+            enabled: true,
+            minZoom: 0.5,
+            showValue: true,
+          },
+        },
+      },
+      {
+        id: "globe-hover-name-only",
+        title: "Name Only (No Value)",
+        subtitle: "hover: { showValue: false }",
+        description: "Shows only the country/region name, without the data value.",
+        config: {
+          statistic: "internetUsers",
+          labels: "minimal",
+          showControls: true,
+          hover: {
+            enabled: true,
+            minZoom: 0,
+            showValue: false,
+          },
+        },
+      },
+    ],
+  },
+
+  // 8. TINY WIDGETS
   {
     id: "tiny-widgets",
     title: "Tiny Widgets",
