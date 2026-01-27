@@ -5771,9 +5771,9 @@ class so {
   camera = null;
   dataIds = /* @__PURE__ */ new Set();
   constructor(e, t) {
-    this.sphereRadius = t, this.labelRenderer = new wn();
-    const i = e.clientWidth || 800, r = e.clientHeight || 600;
-    this.labelRenderer.setSize(i, r), this.labelRenderer.domElement.style.position = "absolute", this.labelRenderer.domElement.style.top = "0", this.labelRenderer.domElement.style.left = "0", this.labelRenderer.domElement.style.pointerEvents = "none", this.labelRenderer.domElement.style.zIndex = "5", e.appendChild(this.labelRenderer.domElement), this.labelGroup = new S.Group(), this.injectStyles(), this.createLabels();
+    this.sphereRadius = t, window.getComputedStyle(e).position === "static" && (e.style.position = "relative"), this.labelRenderer = new wn();
+    const r = e.clientWidth || 800, n = e.clientHeight || 600;
+    this.labelRenderer.setSize(r, n), this.labelRenderer.domElement.style.position = "absolute", this.labelRenderer.domElement.style.top = "0", this.labelRenderer.domElement.style.left = "0", this.labelRenderer.domElement.style.pointerEvents = "none", this.labelRenderer.domElement.style.zIndex = "5", e.appendChild(this.labelRenderer.domElement), this.labelGroup = new S.Group(), this.injectStyles(), this.createLabels();
   }
   injectStyles() {
     const e = document.createElement("style");

@@ -247,6 +247,12 @@ export class CountryLabels {
   constructor(container: HTMLElement, sphereRadius: number) {
     this.sphereRadius = sphereRadius;
 
+    // Ensure container has positioning context for absolute children
+    const containerStyle = window.getComputedStyle(container);
+    if (containerStyle.position === "static") {
+      container.style.position = "relative";
+    }
+
     // Create CSS2D renderer for crisp text - use CONTAINER dimensions, not window
     this.labelRenderer = new CSS2DRenderer();
     const width = container.clientWidth || 800;
