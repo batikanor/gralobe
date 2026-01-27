@@ -1737,23 +1737,31 @@ export class GlobeViz implements GlobeVizAPI {
         }
       }
     } else {
-      // Globe mode - raycast to sphere
+      // Globe mode - use mathematical ray-sphere intersection
+      // The mesh is a PlaneGeometry morphed via shader, so we cannot use
+      // raycaster.intersectObject() - it would hit the original plane, not the sphere.
       raycaster.setFromCamera(mouse, this.camera);
 
-      if (this.globe) {
-        const intersects = raycaster.intersectObject(this.globe);
+      const sphereIntersection = this.raySphereIntersection(
+        raycaster.ray.origin,
+        raycaster.ray.direction,
+        SPHERE_RADIUS,
+      );
 
-        if (intersects.length > 0) {
-          const point = intersects[0].point;
-
-          // Apply inverse globe rotation to get correct world coordinates
+      if (sphereIntersection) {
+        // Apply inverse globe rotation to get correct world coordinates
+        // The globe may have been rotated by user interaction or auto-rotate
+        if (this.globe) {
           const inverseRotation = new THREE.Quaternion();
           this.globe.getWorldQuaternion(inverseRotation);
           inverseRotation.invert();
 
-          const rotatedPoint = point.clone().applyQuaternion(inverseRotation);
+          const rotatedPoint = sphereIntersection.clone().applyQuaternion(inverseRotation);
 
-          // Convert 3D point on sphere to lat/lon
+          // Convert 3D point on sphere to lat/lon using the shader's coordinate system:
+          // x = R * cos(lat) * sin(lon)
+          // y = R * sin(lat)
+          // z = R * cos(lat) * cos(lon)
           const r = SPHERE_RADIUS;
           lat = Math.asin(rotatedPoint.y / r) * (180 / Math.PI);
           lon = Math.atan2(rotatedPoint.x, rotatedPoint.z) * (180 / Math.PI);
@@ -1797,6 +1805,75 @@ export class GlobeViz implements GlobeVizAPI {
         this.config.onHover?.(null, null);
       }
     }
+  }
+
+  /**
+   * Mathematical ray-sphere intersection
+   * Returns the closest intersection point on the front face of the sphere,
+   * or null if the ray doesn't hit the sphere.
+   *
+   * This is necessary because the globe mesh is a PlaneGeometry that's morphed
+   * to a sphere via GPU shaders - raycasting against the mesh would hit the
+   * original plane geometry, not the visual sphere.
+   *
+   * @param rayOrigin - Ray origin point
+   * @param rayDirection - Normalized ray direction vector
+   * @param radius - Sphere radius (centered at origin)
+   * @returns Intersection point or null
+   */
+  private raySphereIntersection(
+    rayOrigin: THREE.Vector3,
+    rayDirection: THREE.Vector3,
+    radius: number,
+  ): THREE.Vector3 | null {
+    // Sphere is centered at origin
+    // Ray equation: P(t) = O + t*D
+    // Sphere equation: |P|² = R²
+    //
+    // Substituting: |O + t*D|² = R²
+    // (O + tD)·(O + tD) = R²
+    // O·O + 2t(O·D) + t²(D·D) = R²
+    // t²(D·D) + 2t(O·D) + (O·O - R²) = 0
+    //
+    // Quadratic formula: at² + bt + c = 0
+    // a = D·D (= 1 if normalized)
+    // b = 2(O·D)
+    // c = O·O - R²
+
+    const a = rayDirection.dot(rayDirection);
+    const b = 2.0 * rayOrigin.dot(rayDirection);
+    const c = rayOrigin.dot(rayOrigin) - radius * radius;
+
+    const discriminant = b * b - 4.0 * a * c;
+
+    if (discriminant < 0) {
+      // No intersection - ray misses the sphere
+      return null;
+    }
+
+    // Two solutions: t1 (entry point) and t2 (exit point)
+    const sqrtDisc = Math.sqrt(discriminant);
+    const t1 = (-b - sqrtDisc) / (2.0 * a); // Closer intersection (front face)
+    const t2 = (-b + sqrtDisc) / (2.0 * a); // Farther intersection (back face)
+
+    // We want the closest POSITIVE t value (in front of camera, not behind)
+    let t: number | null = null;
+
+    if (t1 > 0.001) {
+      // t1 is positive - use front face intersection
+      t = t1;
+    } else if (t2 > 0.001) {
+      // Camera is inside sphere - use exit point
+      // This shouldn't normally happen but handle it gracefully
+      t = t2;
+    }
+
+    if (t === null) {
+      return null;
+    }
+
+    // Calculate intersection point: P = O + t*D
+    return rayOrigin.clone().add(rayDirection.clone().multiplyScalar(t));
   }
 
   /**

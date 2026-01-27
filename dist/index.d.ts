@@ -215,6 +215,21 @@ export declare class GlobeViz implements GlobeVizAPI {
      */
     private handleHover;
     /**
+     * Mathematical ray-sphere intersection
+     * Returns the closest intersection point on the front face of the sphere,
+     * or null if the ray doesn't hit the sphere.
+     *
+     * This is necessary because the globe mesh is a PlaneGeometry that's morphed
+     * to a sphere via GPU shaders - raycasting against the mesh would hit the
+     * original plane geometry, not the visual sphere.
+     *
+     * @param rayOrigin - Ray origin point
+     * @param rayDirection - Normalized ray direction vector
+     * @param radius - Sphere radius (centered at origin)
+     * @returns Intersection point or null
+     */
+    private raySphereIntersection;
+    /**
      * Find feature at given lat/lon using point-in-polygon test
      */
     private findFeatureAtLatLon;

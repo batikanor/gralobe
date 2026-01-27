@@ -309,7 +309,7 @@ export const sections: DemoSection[] = [
     title: "Hover Information",
     description: "Interactive tooltips on hover with zoom-level control",
     infoBox:
-      "Enable hover tooltips to show country/region info on mouse over. Configure minimum zoom level and whether to show data values.",
+      "Enable hover tooltips to show country/region info on mouse over. Configure minimum zoom level and whether to show data values. Hover detection uses mathematical ray-sphere intersection for accurate front-face detection.",
     gridClass: "grid-2",
     demos: [
       {
@@ -320,7 +320,7 @@ export const sections: DemoSection[] = [
           "Hover over any country to see its name and value. This is the default behavior.",
         config: {
           statistic: "lifeExpectancy",
-          labels: "minimal",
+          labels: "data",
           showControls: true,
           hover: {
             enabled: true,
@@ -336,7 +336,7 @@ export const sections: DemoSection[] = [
         description: "No tooltip appears on hover. Useful for presentation or embed modes.",
         config: {
           statistic: "gdpPerCapita",
-          labels: "minimal",
+          labels: "data",
           showControls: true,
           hover: {
             enabled: false,
@@ -351,7 +351,7 @@ export const sections: DemoSection[] = [
           "Hover only works when zoomed in past 50%. Zoom in (scroll) to activate tooltips.",
         config: {
           statistic: "co2Emissions",
-          labels: "minimal",
+          labels: "data",
           showControls: true,
           hover: {
             enabled: true,
@@ -367,7 +367,7 @@ export const sections: DemoSection[] = [
         description: "Shows only the country/region name, without the data value.",
         config: {
           statistic: "internetUsers",
-          labels: "minimal",
+          labels: "data",
           showControls: true,
           hover: {
             enabled: true,
