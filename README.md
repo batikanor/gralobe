@@ -23,7 +23,7 @@ Interactive 3D globe visualization with world statistics, smooth flat map ↔ gl
 
 ## Live Demo
 
-**[🌐 Try it live at gralobe.vercel.app](https://gralobe.vercel.app)** - A fully configurable version where you can explore different datasets, textures, and visual effects!
+**[🌐 Try it live at gralobe.maptheory.org](https://gralobe.maptheory.org/)** - A fully configurable version where you can explore different datasets, textures, and visual effects!
 
 [![Gralobe Demo](https://img.youtube.com/vi/0sl-scBeB88/0.jpg)](https://youtu.be/0sl-scBeB88)
 
