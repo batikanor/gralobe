@@ -1,0 +1,50 @@
+name: Refresh World Bank data
+
+# Yearly refresh of src/demo/data/worldbank-history.json (real historical
+# data for the "Data Over Time" demo, see scripts/fetch-worldbank-data.mjs).
+# Opens a PR instead of committing directly, so a bad/partial API response
+# never lands on main unreviewed.
+on:
+  schedule:
+    # 03:00 UTC on Jan 2nd every year -- gives World Bank a day past New
+    # Year's in case of any year-boundary publishing quirks.
+    - cron: "0 3 2 1 *"
+  workflow_dispatch: {} # allows a manual "Run workflow" trigger for testing
+
+jobs:
+  refresh:
+    name: Fetch + open PR if data changed
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Fetch latest World Bank data
+        run: node scripts/fetch-worldbank-data.mjs
+
+      - name: Open PR with the refreshed data
+        uses: peter-evans/create-pull-request@v6
+        with:
+          commit-message: "chore(data): refresh World Bank historical data"
+          title: "chore(data): yearly World Bank data refresh"
+          body: |
+            Automated yearly refresh of `src/demo/data/worldbank-history.json`
+            from the [World Bank Open Data API](https://data.worldbank.org),
+            run by `scripts/fetch-worldbank-data.mjs`.
+
+            Review the diff for anything that looks off (a metric losing most
+            of its countries usually means an indicator code was retired --
+            check the affected indicator at
+            https://api.worldbank.org/v2/indicator before merging).
+          branch: chore/refresh-worldbank-data
+          # Set a "DATA_REFRESH_REVIEWER" repo variable (Settings > Secrets
+          # and variables > Actions > Variables) to your GitHub username to
+          # get a direct review-request notification when this PR opens.
+          reviewers: ${{ vars.DATA_REFRESH_REVIEWER }}
+          delete-branch: true
