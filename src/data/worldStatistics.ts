@@ -1612,6 +1612,13 @@ import type { StatisticDefinition as BaseStatisticDefinition } from "../lib/type
 export interface InternalStatisticDef extends BaseStatisticDefinition {
   /** Accessor function to extract value from CountryStatistics */
   accessor: (country: CountryStatistics) => number;
+  /**
+   * Optional accessor for this statistic's value in the prior comparison
+   * period (e.g. last year). Left undefined where no verified prior-period
+   * figure is available &mdash; the trend panel reports "no data" rather
+   * than showing a fabricated change.
+   */
+  previousAccessor?: (country: CountryStatistics) => number;
 }
 
 // Re-export the base type for backwards compatibility
@@ -1717,6 +1724,26 @@ export const STATISTICS: InternalStatisticDef[] = [
     domain: [15, 100],
     accessor: (c) => c.accessElectricity,
     format: (v) => `${v.toFixed(0)}%`,
+  },
+  {
+    id: "population",
+    name: "Population",
+    unit: "millions",
+    description: "Total population",
+    colorScale: ["#fff7bc", "#fec44f", "#d95f0e"],
+    domain: [1, 1500],
+    accessor: (c) => c.population,
+    format: (v) => `${v.toFixed(0)}M`,
+  },
+  {
+    id: "educationExpenditure",
+    name: "Education Spending",
+    unit: "% GDP",
+    description: "Government expenditure on education as percentage of GDP",
+    colorScale: ["#edf8fb", "#7bccc4", "#0868ac"],
+    domain: [1, 10],
+    accessor: (c) => c.educationExpenditure,
+    format: (v) => `${v.toFixed(1)}%`,
   },
 ];
 

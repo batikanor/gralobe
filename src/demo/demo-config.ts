@@ -277,6 +277,23 @@ export const sections: DemoSection[] = [
           showControls: true,
         },
       },
+      {
+        id: "globe-trend-help",
+        title: "Country Trend, Search & Watchlist",
+        subtitle: "showTrend + showSearch + showWatchlist + showHelp",
+        description:
+          "Click any country to see its value and download a shareable stat card, or pin it to the watchlist strip at the bottom. Use the search box (top-left) to fly straight to a country. Use the ? button in the toolbar for a quick usage manual.",
+        heightClass: "height-400",
+        config: {
+          statistic: "gdpPerCapita",
+          labels: "data",
+          showToolbar: true,
+          showTrend: true,
+          showSearch: true,
+          showWatchlist: true,
+          showHelp: true,
+        },
+      },
     ],
   },
 

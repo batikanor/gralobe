@@ -9,12 +9,17 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 
 import { ChoroplethRenderer } from "../components/ChoroplethRenderer";
 import { CountryLabels } from "../components/CountryLabels";
+import { CountryTrendPanel } from "../components/CountryTrendPanel";
 import { DataGrid } from "../components/DataGrid";
 import { Exporter } from "../components/Exporter";
+import { HelpManual } from "../components/HelpManual";
 import { Legend } from "../components/Legend";
 import { MarkerLayer } from "../components/MarkerLayer";
+import { SearchBar } from "../components/SearchBar";
 import { Toolbar } from "../components/Toolbar";
+import { WatchlistStrip } from "../components/WatchlistStrip";
 import { STATISTICS as INTERNAL_STATISTICS, WORLD_STATISTICS } from "../data/worldStatistics";
+import { createFormatter } from "./formatters";
 import {
   atmosphereFragmentShader,
   atmosphereVertexShader,
@@ -35,6 +40,7 @@ import type {
   MarkerConfig,
   MarkerData,
   StatisticData,
+  StatisticDefinition,
   TexturePreset,
   TopologyConfig,
 } from "./types";
@@ -120,6 +126,10 @@ const DEFAULT_CONFIG: Required<
   showDebug: false,
   showToolbar: false,
   showLegend: true,
+  showTrend: false,
+  showHelp: true,
+  showSearch: false,
+  showWatchlist: false,
   effects: {
     atmosphereIntensity: 0,
     atmosphere: false,
@@ -215,13 +225,20 @@ export class GlobeViz implements GlobeVizAPI {
   private markerLayer: MarkerLayer | null = null;
   private toolbar: Toolbar | null = null;
   private dataGrid: DataGrid | null = null;
+  private trendPanel: CountryTrendPanel | null = null;
+  private helpManual: HelpManual | null = null;
+  private searchBar: SearchBar | null = null;
+  private watchlistStrip: WatchlistStrip | null = null;
+  private pinnedCountries: Set<string> = new Set();
   private textureLoader: THREE.TextureLoader = new THREE.TextureLoader();
   private dataTexture: THREE.CanvasTexture | null = null;
 
   // State
   private morph = 0;
   private currentStatistic: string | null = null;
+  private currentStatisticDefinition: StatisticDefinition | null = null;
   private currentValues: Record<string, number> | null = null;
+  private currentPreviousValues: Record<string, number> | null = null;
   private animationId: number | null = null;
   private isDestroyed = false;
   private urbanPoints: { lat: number; lon: number; value: number; id?: string }[] | null = null;
@@ -324,6 +341,23 @@ export class GlobeViz implements GlobeVizAPI {
 
       if (this.config.showLegend) {
         this.legend = new Legend(this.container);
+      }
+
+      if (this.config.showTrend) {
+        this.trendPanel = new CountryTrendPanel(this.container, (featureId) => this.togglePin(featureId));
+      }
+
+      if (this.config.showSearch) {
+        this.searchBar = new SearchBar(this.container, (featureId) => this.focusOnCountry(featureId));
+        this.searchBar.setCountries(WORLD_STATISTICS.map((c) => ({ id: c.id, name: c.name })));
+      }
+
+      if (this.config.showWatchlist) {
+        this.watchlistStrip = new WatchlistStrip(
+          this.container,
+          (featureId) => this.focusOnCountry(featureId),
+          (featureId) => this.togglePin(featureId),
+        );
       }
 
       // Create globe with shaders
@@ -429,8 +463,12 @@ export class GlobeViz implements GlobeVizAPI {
           },
           onToggleFullscreen: () => this.toggleFullscreen(),
           onToggleProjection: () => this.toggleProjection(),
+          onShowHelp: this.config.showHelp ? () => this.helpManual?.show() : undefined,
         });
         this.dataGrid = new DataGrid(this.container);
+        if (this.config.showHelp) {
+          this.helpManual = new HelpManual(this.container);
+        }
 
         // Set initial icon state based on initialView
         this.toolbar.updateProjectionIcon(this.config.initialView === "globe");
@@ -1613,6 +1651,9 @@ export class GlobeViz implements GlobeVizAPI {
       mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
       mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
 
+      // Identify which country/region (if any) was clicked, in either projection
+      this.handleFeatureClick(mouse, raycaster, plane, planeIntersect);
+
       // Only handle interaction in Flat mode
       if (this.morph < 0.1) {
         raycaster.setFromCamera(mouse, this.camera);
@@ -1805,6 +1846,177 @@ export class GlobeViz implements GlobeVizAPI {
         this.config.onHover?.(null, null);
       }
     }
+  }
+
+  /**
+   * Identify the country/region clicked at the current mouse position (in
+   * either flat or globe projection) and notify onCountryClick plus the
+   * summary panel, if configured.
+   */
+  private handleFeatureClick(
+    mouse: THREE.Vector2,
+    raycaster: THREE.Raycaster,
+    plane: THREE.Plane,
+    planeIntersect: THREE.Vector3,
+  ): void {
+    if (!this.choropleth) return;
+
+    let lat: number | null = null;
+    let lon: number | null = null;
+
+    if (this.morph < 0.5) {
+      raycaster.setFromCamera(mouse, this.camera);
+      raycaster.ray.intersectPlane(plane, planeIntersect);
+
+      if (planeIntersect) {
+        const mapLimitX = Math.PI * SPHERE_RADIUS;
+        const mapLimitY = (Math.PI * SPHERE_RADIUS) / 2;
+
+        if (Math.abs(planeIntersect.x) <= mapLimitX && Math.abs(planeIntersect.y) <= mapLimitY) {
+          lon = (planeIntersect.x / (Math.PI * SPHERE_RADIUS)) * 180;
+          lat = (planeIntersect.y / ((Math.PI * SPHERE_RADIUS) / 2)) * 90;
+        }
+      }
+    } else if (this.globe) {
+      raycaster.setFromCamera(mouse, this.camera);
+
+      const sphereIntersection = this.raySphereIntersection(
+        raycaster.ray.origin,
+        raycaster.ray.direction,
+        SPHERE_RADIUS,
+      );
+
+      if (sphereIntersection) {
+        const inverseRotation = new THREE.Quaternion();
+        this.globe.getWorldQuaternion(inverseRotation);
+        inverseRotation.invert();
+
+        const rotatedPoint = sphereIntersection.clone().applyQuaternion(inverseRotation);
+        const r = SPHERE_RADIUS;
+        lat = Math.asin(rotatedPoint.y / r) * (180 / Math.PI);
+        lon = Math.atan2(rotatedPoint.x, rotatedPoint.z) * (180 / Math.PI);
+      }
+    }
+
+    if (lat === null || lon === null) return;
+
+    const feature = this.findFeatureAtLatLon(lat, lon);
+    if (!feature) return;
+
+    const featureId = feature.id || feature.properties?.id;
+    if (!featureId) return;
+
+    const featureName = this.choropleth.getFeatureName(featureId) || featureId;
+    const value = this.currentValues ? this.currentValues[featureId] : undefined;
+
+    this.config.onCountryClick?.(featureId, featureName, value);
+
+    if (this.trendPanel) {
+      const def = this.currentStatisticDefinition;
+      const previousValue = this.currentPreviousValues
+        ? this.currentPreviousValues[featureId]
+        : undefined;
+      const format = def?.format ?? createFormatter(def?.unit ?? "");
+      const colorScale = def?.colorScale ?? ["#1a2a3a", "#3a6a8a", "#4af0c0"];
+      this.trendPanel.show(
+        featureId,
+        featureName,
+        def?.name ?? "Value",
+        value,
+        previousValue,
+        format,
+        colorScale,
+        this.pinnedCountries.has(featureId),
+      );
+    }
+  }
+
+  /**
+   * Resolve a display name for a feature id, falling back to the
+   * WORLD_STATISTICS name when the country has no polygon in the loaded
+   * topology (e.g. small nations dropped at 110m border resolution) and
+   * finally to the raw id if truly unknown.
+   */
+  private resolveFeatureDisplayName(id: string): string {
+    const fromChoropleth = this.choropleth?.getFeatureName(id);
+    if (fromChoropleth) return fromChoropleth;
+    const fromWorldStats = WORLD_STATISTICS.find((c) => c.id === id)?.name;
+    return fromWorldStats || id;
+  }
+
+  /**
+   * Rotate the globe to bring a country's centroid to face the camera.
+   * Used by the search bar and the watchlist strip's "click to fly there".
+   */
+  private focusOnCountry(featureId: string): void {
+    if (!this.globe || !this.choropleth) return;
+
+    const centroid = this.choropleth.getFeatureCentroid(featureId);
+    if (!centroid) return;
+    const [lon, lat] = centroid;
+
+    // Guarantee we're looking at the globe, not the flat map, before rotating it
+    if (this.morph < 0.99) {
+      this.setMorph(1);
+      if (this.material) this.material.uniforms.uMorph.value = 1;
+      this.toolbar?.updateProjectionIcon(true);
+    }
+
+    const latRad = (lat * Math.PI) / 180;
+    const lonRad = (lon * Math.PI) / 180;
+    const target = new THREE.Vector3(
+      Math.cos(latRad) * Math.sin(lonRad),
+      Math.sin(latRad),
+      Math.cos(latRad) * Math.cos(lonRad),
+    ).normalize();
+
+    const facingCamera = new THREE.Vector3(0, 0, 1);
+    const targetQuaternion = new THREE.Quaternion().setFromUnitVectors(target, facingCamera);
+
+    gsap.to(this.globe.quaternion, {
+      x: targetQuaternion.x,
+      y: targetQuaternion.y,
+      z: targetQuaternion.z,
+      w: targetQuaternion.w,
+      duration: 1.5,
+      ease: "power2.inOut",
+      onUpdate: () => {
+        this.globe?.quaternion.normalize();
+      },
+    });
+  }
+
+  /**
+   * Pin or unpin a country on the watchlist strip, and keep the trend
+   * panel's pin icon in sync if it's currently showing that same country.
+   */
+  private togglePin(featureId: string): void {
+    if (this.pinnedCountries.has(featureId)) {
+      this.pinnedCountries.delete(featureId);
+    } else {
+      this.pinnedCountries.add(featureId);
+    }
+    this.trendPanel?.setPinned(featureId, this.pinnedCountries.has(featureId));
+    this.updateWatchlist();
+  }
+
+  /**
+   * Refresh the watchlist strip with each pinned country's value for the
+   * currently active statistic.
+   */
+  private updateWatchlist(): void {
+    if (!this.watchlistStrip) return;
+
+    const def = this.currentStatisticDefinition;
+    const format = def?.format ?? createFormatter(def?.unit ?? "");
+
+    const items = Array.from(this.pinnedCountries).map((id) => ({
+      id,
+      name: this.resolveFeatureDisplayName(id),
+      value: this.currentValues ? this.currentValues[id] : undefined,
+    }));
+
+    this.watchlistStrip.update(items, format);
   }
 
   /**
@@ -2030,10 +2242,17 @@ export class GlobeViz implements GlobeVizAPI {
     }
 
     if (customStat) {
+      this.currentStatisticDefinition = customStat.definition;
       this.currentValues =
         customStat.values instanceof Map
           ? Object.fromEntries(customStat.values)
           : customStat.values;
+
+      this.currentPreviousValues = customStat.previousValues
+        ? customStat.previousValues instanceof Map
+          ? Object.fromEntries(customStat.previousValues)
+          : customStat.previousValues
+        : null;
 
       // Update labels with new data IDs
       if (this.countryLabels && this.currentValues) {
@@ -2095,6 +2314,8 @@ export class GlobeViz implements GlobeVizAPI {
           this.legend.show(customStat.definition as any);
         }
       }
+
+      this.updateWatchlist();
     }
   }
 
@@ -2534,6 +2755,10 @@ export class GlobeViz implements GlobeVizAPI {
     this.controls?.dispose();
     this.toolbar?.dispose();
     this.dataGrid?.dispose();
+    this.trendPanel?.dispose();
+    this.helpManual?.dispose();
+    this.searchBar?.dispose();
+    this.watchlistStrip?.dispose();
 
     // Remove hover tooltip
     if (this.hoverTooltip && this.hoverTooltip.parentNode) {
@@ -2700,6 +2925,8 @@ export class GlobeViz implements GlobeVizAPI {
       const internalStat = INTERNAL_STATISTICS.find((s) => s.id === id);
       const values: Record<string, number> = {};
 
+      let previousValues: Record<string, number> | undefined;
+
       if (internalStat) {
         WORLD_STATISTICS.forEach((country) => {
           const val = internalStat.accessor(country);
@@ -2707,11 +2934,22 @@ export class GlobeViz implements GlobeVizAPI {
             values[country.id] = val;
           }
         });
+
+        if (internalStat.previousAccessor) {
+          previousValues = {};
+          WORLD_STATISTICS.forEach((country) => {
+            const val = internalStat.previousAccessor?.(country);
+            if (val !== undefined && val !== null) {
+              (previousValues as Record<string, number>)[country.id] = val;
+            }
+          });
+        }
       }
 
       return {
         definition: def,
         values,
+        previousValues,
       };
     }
 
@@ -2727,6 +2965,17 @@ export class GlobeViz implements GlobeVizAPI {
         }
       });
 
+      let previousValues: Record<string, number> | undefined;
+      if (worldStat.previousAccessor) {
+        previousValues = {};
+        WORLD_STATISTICS.forEach((country) => {
+          const val = worldStat.previousAccessor?.(country);
+          if (val !== undefined && val !== null) {
+            (previousValues as Record<string, number>)[country.id] = val;
+          }
+        });
+      }
+
       return {
         definition: {
           id: worldStat.id,
@@ -2738,6 +2987,7 @@ export class GlobeViz implements GlobeVizAPI {
           format: worldStat.format,
         },
         values,
+        previousValues,
       };
     }
 

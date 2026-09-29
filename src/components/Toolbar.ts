@@ -88,6 +88,7 @@ export interface ToolbarConfig {
   onShowData: () => void;
   onToggleFullscreen: () => void;
   onToggleProjection: () => void;
+  onShowHelp?: () => void;
 }
 
 export class Toolbar {
@@ -170,6 +171,25 @@ export class Toolbar {
     this.element.appendChild(dataBtn);
     this.element.appendChild(this.projectionBtn);
     this.element.appendChild(this.fsBtn);
+
+    // Help Button (optional)
+    if (config.onShowHelp) {
+      const helpBtn = document.createElement("button");
+      helpBtn.className = "gralobe-toolbar-btn";
+      helpBtn.title = "Help / Manual";
+      helpBtn.innerHTML = `
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+          <line x1="12" y1="17" x2="12.01" y2="17"></line>
+        </svg>
+      `;
+      helpBtn.onclick = (e) => {
+        e.stopPropagation();
+        config.onShowHelp?.();
+      };
+      this.element.appendChild(helpBtn);
+    }
 
     // Ensure parent has relative/absolute positioning
     const parentPosition = getComputedStyle(parentContainer).position;

@@ -430,6 +430,15 @@ export class ChoroplethRenderer {
   }
 
   /**
+   * Get the [lon, lat] centroid of a single feature by id, or null if not found.
+   */
+  getFeatureCentroid(id: string): [number, number] | null {
+    const feature = this.countries.find((f: any) => f.id === id || f.properties?.id === id);
+    if (!feature) return null;
+    return this.computeCentroid(feature);
+  }
+
+  /**
    * Compute centroid of a GeoJSON feature (simple average for polygons)
    */
   private computeCentroid(feature: any): [number, number] | null {
