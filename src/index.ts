@@ -46,4 +46,7 @@ export type {
   StatisticData,
   StatisticDefinition,
   TexturePreset,
+  TimelineConfig,
+  TimeSeriesData,
+  TimeSeriesOptions,
 } from "./lib/types";
