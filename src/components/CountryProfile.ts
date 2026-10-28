@@ -186,8 +186,8 @@ export interface ProfileMetric {
   rank: number | null;
   /** How many countries had data this year. */
   total: number;
-  /** Values across every year this metric has, oldest first (for the sparkline). */
-  series: number[];
+  /** Values across every year, oldest first; null preserves a missing year's gap. */
+  series: Array<number | null>;
   /**
    * Direction of change at the selected year vs. the previous data point --
    * drives the sparkline colour (green up / red down). Null when there's no
@@ -210,41 +210,57 @@ function escapeHtml(value: string): string {
  * Inline SVG sparkline, normalized to the series' own min/max so the shape of
  * each metric's trend is visible regardless of its absolute scale.
  */
-function sparklineSvg(series: number[], trend: ProfileMetric["trend"]): string {
+function sparklineSvg(series: Array<number | null>, trend: ProfileMetric["trend"]): string {
   const width = 46;
   const height = 14;
-  if (series.length < 2) {
+  const finite = series.filter((v): v is number => v !== null && Number.isFinite(v));
+  if (finite.length === 0) {
     return `<svg class="gralobe-cp-spark" width="${width}" height="${height}"></svg>`;
   }
 
-  const min = Math.min(...series);
-  const max = Math.max(...series);
+  const min = Math.min(...finite);
+  const max = Math.max(...finite);
   const span = max - min;
-  const stepX = width / (series.length - 1);
-
-  const points = series
-    .map((v, i) => {
-      const x = i * stepX;
-      // Flat series render as a centered line rather than dividing by zero.
-      const t = span === 0 ? 0.5 : (v - min) / span;
-      const y = height - 1 - t * (height - 2);
-      return `${x.toFixed(1)},${y.toFixed(1)}`;
-    })
-    .join(" ");
+  const point = (v: number, i: number): [number, number] => [
+    series.length === 1 ? width / 2 : 1 + (i / (series.length - 1)) * (width - 2),
+    height - 1 - (span === 0 ? 0.5 : (v - min) / span) * (height - 2),
+  ];
 
   // Light green when the selected year is up on the previous point, light
   // red when it's down -- matching the hover tooltip's arrow convention.
   const stroke =
-    trend === "up" ? "#7fe0a3" : trend === "down" ? "#ff9a9a" : trend === "flat" ? "#8c9bab" : "#5c7b96";
-  const lastX = width;
-  const lastT = span === 0 ? 0.5 : (series[series.length - 1] - min) / span;
-  const lastY = height - 1 - lastT * (height - 2);
+    trend === "up"
+      ? "#7fe0a3"
+      : trend === "down"
+        ? "#ff9a9a"
+        : trend === "flat"
+          ? "#8c9bab"
+          : "#5c7b96";
+  let marks = "";
+  let run: string[] = [];
+  const flush = () => {
+    if (run.length === 1) {
+      const [x, y] = run[0].split(",");
+      marks += `<circle cx="${x}" cy="${y}" r="1.2" fill="${stroke}" />`;
+    } else if (run.length > 1) {
+      marks += `<polyline points="${run.join(" ")}" fill="none" stroke="${stroke}" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round" />`;
+    }
+    run = [];
+  };
+  series.forEach((v, i) => {
+    if (v === null || !Number.isFinite(v)) flush();
+    else
+      run.push(
+        point(v, i)
+          .map((n) => n.toFixed(1))
+          .join(","),
+      );
+  });
+  flush();
 
   return (
     `<svg class="gralobe-cp-spark" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" aria-hidden="true">` +
-    `<polyline points="${points}" fill="none" stroke="${stroke}" stroke-width="1.2" ` +
-    `stroke-linejoin="round" stroke-linecap="round" />` +
-    `<circle cx="${(lastX - 1).toFixed(1)}" cy="${lastY.toFixed(1)}" r="1.5" fill="${stroke}" />` +
+    marks +
     `</svg>`
   );
 }
@@ -265,6 +281,8 @@ export class CountryProfile {
 
     this.element = document.createElement("div");
     this.element.className = "gralobe-country-profile";
+    this.element.inert = true;
+    this.element.setAttribute("aria-hidden", "true");
     this.element.setAttribute("data-testid", "country-profile");
     this.element.innerHTML = `
       <div class="gralobe-cp-header">
@@ -323,11 +341,15 @@ export class CountryProfile {
     }
 
     this.element.classList.add("visible");
+    this.element.inert = false;
+    this.element.setAttribute("aria-hidden", "false");
     this.visible = true;
   }
 
   hide(): void {
     this.element.classList.remove("visible");
+    this.element.inert = true;
+    this.element.setAttribute("aria-hidden", "true");
     this.visible = false;
   }
 

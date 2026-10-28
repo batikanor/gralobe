@@ -216,7 +216,11 @@ export interface ChartRenderData {
 export type ChartType = "line" | "bar";
 
 function esc(s: string): string {
-  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
 
 /** "Nice" axis bounds so ticks land on readable numbers. */
@@ -247,6 +251,21 @@ function shortNum(v: number): string {
   if (a >= 100) return v.toFixed(0);
   if (a >= 1) return v.toFixed(1);
   return v.toFixed(2);
+}
+
+/** Preserve elapsed time for numeric years; other frame labels use equal spacing. */
+function yearPositions(years: string[], left: number, width: number): number[] {
+  const numeric = years.map(Number);
+  const start = numeric[0];
+  const span = numeric[numeric.length - 1] - start;
+  const numericAxis = numeric.every(Number.isFinite) && span > 0;
+  return years.map(
+    (_, i) =>
+      left +
+      (years.length === 1
+        ? width / 2
+        : (numericAxis ? (numeric[i] - start) / span : i / (years.length - 1)) * width),
+  );
 }
 
 const INK_MUTED = "#8c9bab";
@@ -295,6 +314,8 @@ export class ChartPanel {
 
     this.element = document.createElement("div");
     this.element.className = "gralobe-chart-panel";
+    this.element.inert = true;
+    this.element.setAttribute("aria-hidden", "true");
     this.element.setAttribute("data-testid", "chart-panel");
     this.element.innerHTML = `
       <div class="gralobe-chart-head">
@@ -339,7 +360,9 @@ export class ChartPanel {
     this.listEl = this.element.querySelector(".gralobe-chart-list") as HTMLElement;
     this.searchEl = this.element.querySelector(".gralobe-chart-search") as HTMLInputElement;
     this.pickerBtn = this.element.querySelector(".gralobe-chart-picker-btn") as HTMLButtonElement;
-    this.metricSel = this.element.querySelector('[data-testid="chart-metric"]') as HTMLSelectElement;
+    this.metricSel = this.element.querySelector(
+      '[data-testid="chart-metric"]',
+    ) as HTMLSelectElement;
     this.yearSel = this.element.querySelector('[data-testid="chart-year"]') as HTMLSelectElement;
 
     this.metricSel.onchange = () => callbacks.onMetricChange?.(this.metricSel.value);
@@ -381,16 +404,20 @@ export class ChartPanel {
       }
     });
     // The panel sits over the globe canvas; don't let it drive the camera.
-    ["wheel", "dblclick", "mousedown"].forEach((evt) =>
-      this.element.addEventListener(evt, (e) => e.stopPropagation()),
-    );
+    ["wheel", "dblclick", "mousedown"].forEach((evt) => {
+      this.element.addEventListener(evt, (e) => e.stopPropagation());
+    });
 
     this.resizeObserver = new ResizeObserver(() => this.draw());
     this.resizeObserver.observe(this.plotEl);
   }
 
   /** Supply the full country list plus the colour assignment owned by GlobeViz. */
-  setCountries(countries: ChartCountry[], selected: string[], colorOf: (id: string) => string): void {
+  setCountries(
+    countries: ChartCountry[],
+    selected: string[],
+    colorOf: (id: string) => string,
+  ): void {
     this.countries = countries;
     this.selected = selected;
     this.colorOf = colorOf;
@@ -441,9 +468,7 @@ export class ChartPanel {
   private orderedCountries(): ChartCountry[] {
     if (!this.pinnedOrder) return this.countries;
     const rank = new Map(this.pinnedOrder.map((id, i) => [id, i]));
-    return [...this.countries].sort(
-      (a, b) => (rank.get(a.id) ?? 1e9) - (rank.get(b.id) ?? 1e9),
-    );
+    return [...this.countries].sort((a, b) => (rank.get(a.id) ?? 1e9) - (rank.get(b.id) ?? 1e9));
   }
 
   private renderList(): void {
@@ -492,7 +517,9 @@ export class ChartPanel {
     this.data = data;
     this.titleEl.innerHTML =
       `${esc(data.metricName)}` +
-      (this.chartType === "bar" ? ` <span>· ${esc(data.year)}</span>` : ` <span>· over time</span>`);
+      (this.chartType === "bar"
+        ? ` <span>· ${esc(data.year)}</span>`
+        : ` <span>· over time</span>`);
 
     // A legend is always present for >= 2 series; identity is never colour-alone.
     this.legendEl.innerHTML = data.series
@@ -508,6 +535,8 @@ export class ChartPanel {
 
   private draw(): void {
     if (!this.data) return;
+    this.tipEl.style.display = "none";
+    this.titleEl.innerHTML = `${esc(this.data.metricName)} <span>· ${this.chartType === "bar" ? esc(this.data.year) : "over time"}</span>`;
     const w = this.plotEl.clientWidth;
     const h = this.plotEl.clientHeight;
     if (w < 40 || h < 40) return;
@@ -547,12 +576,16 @@ export class ChartPanel {
     const pw = Math.max(10, w - m.l - m.r);
     const ph = Math.max(10, h - m.t - m.b);
 
-    const all = d.series.flatMap((s) => s.values.filter((v): v is number => v !== null));
-    if (all.length === 0) return `<svg viewBox="0 0 ${w} ${h}"></svg>`;
+    const all = d.series.flatMap((s) =>
+      s.values.filter((v): v is number => v !== null && Number.isFinite(v)),
+    );
+    if (all.length === 0) {
+      return `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="No data"><text x="${w / 2}" y="${h / 2}" text-anchor="middle" font-size="12" fill="${INK_MUTED}">No data for the selected countries</text></svg>`;
+    }
     const { lo, hi, ticks } = niceScale(Math.min(...all), Math.max(...all));
 
-    const x = (i: number) =>
-      m.l + (d.years.length === 1 ? pw / 2 : (i / (d.years.length - 1)) * pw);
+    const positions = yearPositions(d.years, m.l, pw);
+    const x = (i: number) => positions[i];
     const y = (v: number) => m.t + ph - ((v - lo) / (hi - lo || 1)) * ph;
 
     let g = "";
@@ -578,7 +611,7 @@ export class ChartPanel {
       const runs: string[] = [];
       let cur: string[] = [];
       s.values.forEach((v, i) => {
-        if (v === null) {
+        if (v === null || !Number.isFinite(v)) {
           if (cur.length) runs.push(cur.join(" "));
           cur = [];
         } else {
@@ -599,7 +632,7 @@ export class ChartPanel {
       if (direct) {
         let lastI = -1;
         s.values.forEach((v, i) => {
-          if (v !== null) lastI = i;
+          if (v !== null && Number.isFinite(v)) lastI = i;
         });
         if (lastI >= 0) {
           const vy = y(s.values[lastI] as number);
@@ -615,7 +648,7 @@ export class ChartPanel {
 
   private barChart(w: number, h: number): string {
     const d = this.data!;
-    const m = { t: 22, r: 14, b: 34, l: 56 };
+    const m = { t: 22, r: 14, b: 48, l: 56 };
     const pw = Math.max(10, w - m.l - m.r);
     const ph = Math.max(10, h - m.t - m.b);
 
@@ -627,7 +660,7 @@ export class ChartPanel {
     }
 
     // Bars are anchored to a zero baseline whenever the data is non-negative.
-    const { lo, hi, ticks } = niceScale(Math.min(0, ...vals), Math.max(...vals));
+    const { lo, hi, ticks } = niceScale(Math.min(0, ...vals), Math.max(0, ...vals));
     const y = (v: number) => m.t + ph - ((v - lo) / (hi - lo || 1)) * ph;
 
     let g = "";
@@ -657,13 +690,15 @@ export class ChartPanel {
         const bh = Math.max(1, Math.abs(base - vy));
         // 4px rounded data-end; the baseline end stays square.
         const r = Math.min(4, bw / 2, bh);
+        const positivePath = `M${(cx - bw / 2).toFixed(1)},${(top + bh).toFixed(1)} L${(cx - bw / 2).toFixed(1)},${(top + r).toFixed(1)} Q${(cx - bw / 2).toFixed(1)},${top.toFixed(1)} ${(cx - bw / 2 + r).toFixed(1)},${top.toFixed(1)} L${(cx + bw / 2 - r).toFixed(1)},${top.toFixed(1)} Q${(cx + bw / 2).toFixed(1)},${top.toFixed(1)} ${(cx + bw / 2).toFixed(1)},${(top + r).toFixed(1)} L${(cx + bw / 2).toFixed(1)},${(top + bh).toFixed(1)} Z`;
+        const negativePath = `M${(cx - bw / 2).toFixed(1)},${top.toFixed(1)} L${(cx - bw / 2).toFixed(1)},${(top + bh - r).toFixed(1)} Q${(cx - bw / 2).toFixed(1)},${(top + bh).toFixed(1)} ${(cx - bw / 2 + r).toFixed(1)},${(top + bh).toFixed(1)} L${(cx + bw / 2 - r).toFixed(1)},${(top + bh).toFixed(1)} Q${(cx + bw / 2).toFixed(1)},${(top + bh).toFixed(1)} ${(cx + bw / 2).toFixed(1)},${(top + bh - r).toFixed(1)} L${(cx + bw / 2).toFixed(1)},${top.toFixed(1)} Z`;
         bars +=
-          `<path d="M${(cx - bw / 2).toFixed(1)},${(top + bh).toFixed(1)} L${(cx - bw / 2).toFixed(1)},${(top + r).toFixed(1)} Q${(cx - bw / 2).toFixed(1)},${top.toFixed(1)} ${(cx - bw / 2 + r).toFixed(1)},${top.toFixed(1)} L${(cx + bw / 2 - r).toFixed(1)},${top.toFixed(1)} Q${(cx + bw / 2).toFixed(1)},${top.toFixed(1)} ${(cx + bw / 2).toFixed(1)},${(top + r).toFixed(1)} L${(cx + bw / 2).toFixed(1)},${(top + bh).toFixed(1)} Z" fill="${s.color}"/>` +
+          `<path d="${s.valueAtYear < 0 ? negativePath : positivePath}" fill="${s.color}"/>` +
           // Value label sits outside the bar end, so it can never be clipped by a short bar.
-          `<text x="${cx.toFixed(1)}" y="${(top - 6).toFixed(1)}" text-anchor="middle" font-size="10" fill="#e8eef4" style="font-variant-numeric:tabular-nums">${esc(d.format(s.valueAtYear))}</text>`;
+          `<text x="${cx.toFixed(1)}" y="${(s.valueAtYear < 0 ? top + bh + 13 : top - 6).toFixed(1)}" text-anchor="middle" font-size="10" fill="#e8eef4" style="font-variant-numeric:tabular-nums">${esc(d.format(s.valueAtYear))}</text>`;
       }
 
-      bars += `<text x="${cx.toFixed(1)}" y="${(m.t + ph + 15).toFixed(1)}" text-anchor="middle" font-size="9.5" fill="${INK_MUTED}">${esc(nameShort)}</text>`;
+      bars += `<text x="${cx.toFixed(1)}" y="${(m.t + ph + 31).toFixed(1)}" text-anchor="middle" font-size="9.5" fill="${INK_MUTED}">${esc(nameShort)}</text>`;
     });
 
     return `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${esc(d.metricName)} by country, ${esc(d.year)}">${g}${bars}</svg>`;
@@ -680,7 +715,7 @@ export class ChartPanel {
     if (!d || !svg || d.series.length === 0) return;
 
     const isLine = this.chartType === "line";
-    const m = isLine ? { t: 14, r: 74, b: 30, l: 56 } : { t: 22, r: 14, b: 34, l: 56 };
+    const m = isLine ? { t: 14, r: 74, b: 30, l: 56 } : { t: 22, r: 14, b: 48, l: 56 };
     const pw = Math.max(10, w - m.l - m.r);
     const ph = Math.max(10, h - m.t - m.b);
 
@@ -700,9 +735,13 @@ export class ChartPanel {
       let markX = 0;
 
       if (isLine) {
-        const t = d.years.length === 1 ? 0 : (px - m.l) / pw;
-        const i = Math.max(0, Math.min(d.years.length - 1, Math.round(t * (d.years.length - 1))));
-        markX = m.l + (d.years.length === 1 ? pw / 2 : (i / (d.years.length - 1)) * pw);
+        const positions = yearPositions(d.years, m.l, pw);
+        const i = positions.reduce(
+          (closest, position, index) =>
+            Math.abs(position - px) < Math.abs(positions[closest] - px) ? index : closest,
+          0,
+        );
+        markX = positions[i];
 
         svg.querySelector(".hoverline")?.remove();
         svg.insertAdjacentHTML(
@@ -713,7 +752,7 @@ export class ChartPanel {
         html = `<b>${esc(d.years[i])}</b>`;
         d.series.forEach((s) => {
           const v = s.values[i];
-          html += `<div class="r"><i style="background:${s.color}"></i>${esc(s.name)}<u>${v === null ? "—" : esc(d.format(v))}</u></div>`;
+          html += `<div class="r"><i style="background:${s.color}"></i>${esc(s.name)}<u>${v == null || !Number.isFinite(v) ? "—" : esc(d.format(v))}</u></div>`;
         });
       } else {
         const slot = pw / d.series.length;
@@ -722,7 +761,7 @@ export class ChartPanel {
         markX = m.l + slot * i + slot / 2;
         html =
           `<b>${esc(s.name)}</b>` +
-          `<div class="r"><i style="background:${s.color}"></i>${esc(d.year)}<u>${s.valueAtYear === null ? "—" : esc(d.format(s.valueAtYear))}</u></div>`;
+          `<div class="r"><i style="background:${s.color}"></i>${esc(d.year)}<u>${s.valueAtYear === null || !Number.isFinite(s.valueAtYear) ? "—" : esc(d.format(s.valueAtYear))}</u></div>`;
       }
 
       this.tipEl.innerHTML = html;
@@ -736,12 +775,16 @@ export class ChartPanel {
 
   show(): void {
     this.element.classList.add("visible");
+    this.element.inert = false;
+    this.element.setAttribute("aria-hidden", "false");
     this.visible = true;
     this.draw();
   }
 
   hide(): void {
     this.element.classList.remove("visible");
+    this.element.inert = true;
+    this.element.setAttribute("aria-hidden", "true");
     this.dropEl.classList.remove("open");
     this.visible = false;
   }

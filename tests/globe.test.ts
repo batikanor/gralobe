@@ -63,7 +63,7 @@ test.describe("GlobeViz Basic Functionality", () => {
     expect(criticalErrors).toHaveLength(0);
   });
 
-  test("loads all globes by scrolling without errors", async ({ page }) => {
+  test("keeps country globes healthy after scrolling away and back", async ({ page }) => {
     const errors: string[] = [];
     page.on("pageerror", (error) => errors.push(error.message));
     page.on("console", (msg) => {
@@ -74,22 +74,16 @@ test.describe("GlobeViz Basic Functionality", () => {
 
     await page.goto("/");
 
-    // Scroll to bottom to trigger all IntersectionObservers
-    await page.evaluate(async () => {
-      const distance = 100;
-      const delay = 50;
-      // Scroll to bottom
-      while (
-        document.scrollingElement!.scrollTop + window.innerHeight <
-        document.scrollingElement!.scrollHeight
-      ) {
-        document.scrollingElement!.scrollBy(0, distance);
-        await new Promise((resolve) => setTimeout(resolve, delay));
-      }
-    });
-
-    // Wait for a bit for globes to init
-    await page.waitForTimeout(3000);
+    for (const id of ["globe-stat-life", "globe-labels-data"]) {
+      const globe = page.locator(`#${id}`);
+      await globe.scrollIntoViewIfNeeded();
+      await expect(globe.locator(".globe-loader")).toHaveClass(/hidden/);
+      await expect(globe.locator("canvas").first()).toBeVisible();
+      await expect(globe.locator(".gralobe-legend.visible")).toBeVisible();
+    }
+    await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+    await page.locator("#globe-stat-life").scrollIntoViewIfNeeded();
+    await expect(page.locator("#globe-stat-life canvas").first()).toBeVisible();
 
     const criticalErrors = errors.filter(
       (e) => !e.includes("Failed to fetch") && !e.includes("404") && !e.includes("NetworkError"),

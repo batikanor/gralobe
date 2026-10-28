@@ -1,3 +1,4 @@
+import { normalizeCountryValues } from "../lib/countryCodes";
 import type { GlobeViz } from "../lib/GlobeViz";
 import type { GlobeVizConfig, TimeSeriesData } from "../lib/types";
 import { customStats, worldCitiesCoordinates } from "./data";
@@ -53,9 +54,9 @@ const getUsElectionData = () => {
 // Real historical data for the "Data Over Time" demo, fetched from the World
 // Bank Open Data API by scripts/fetch-worldbank-data.mjs into
 // src/demo/data/worldbank-history.json (refreshed yearly by
-// .github/workflows/refresh-worldbank-data.yml). The cache is keyed by the
-// World Bank's own alpha-2 country codes and every fetched year; here we map
-// those onto our internal numeric country ids and pick a curated subset of
+// .github/workflows/refresh-worldbank-data.yml). The cache retains alpha-2
+// fallback codes alongside numeric ISO ids; here we normalize those codes
+// onto our internal numeric country ids and pick a curated subset of
 // years so the Year dropdown stays a manageable length.
 type WorldBankHistory = Record<string, Record<string, Record<string, number>>>;
 
@@ -69,7 +70,7 @@ type HistoricalSeriesMeta = {
 
 const HISTORICAL_SERIES_META: Record<string, HistoricalSeriesMeta> = {
   gdpPerCapita: {
-    name: "GDP per Capita",
+    name: "GDP per Capita (PPP)",
     unit: "$",
     colorScale: ["#fee5d9", "#fcae91", "#cb181d"],
     domain: [300, 130000],
@@ -156,14 +157,14 @@ const getRealSeriesOptions = (): Record<string, TimeSeriesData> => {
       const yearData = metricHistory[String(year)];
       if (!yearData) return;
 
-      // Keys are already the numeric ISO ids the TopoJSON uses -- the fetch
-      // script resolves them via Natural Earth, so nothing needs remapping
-      // (and no country gets dropped) here.
+      // Older caches contain alpha-2 fallbacks for France and Norway. Use
+      // the same numeric ids in maps, profiles and charts while retaining
+      // unmapped countries for world rankings.
       const values: Record<string, number> = {};
       for (const [id, v] of Object.entries(yearData)) {
         if (typeof v === "number" && Number.isFinite(v)) values[id] = v;
       }
-      if (Object.keys(values).length > 0) frames[String(year)] = values;
+      if (Object.keys(values).length > 0) frames[String(year)] = normalizeCountryValues(values);
     });
 
     if (Object.keys(frames).length === 0) continue;
@@ -434,6 +435,23 @@ export const sections: DemoSection[] = [
           initialView: "flat",
           labels: "major",
           showControls: true,
+        },
+      },
+      {
+        id: "globe-trend-help",
+        title: "Country Trend, Search & Watchlist",
+        subtitle: "showTrend + showSearch + showWatchlist + showHelp",
+        description:
+          "Click any country to see its value and download a shareable stat card, or pin it to the watchlist strip at the bottom. Use the search box (top-left) to fly straight to a country. Use the ? button in the toolbar for a quick usage manual.",
+        heightClass: "height-400",
+        config: {
+          statistic: "gdpPerCapita",
+          labels: "data",
+          showToolbar: true,
+          showTrend: true,
+          showSearch: true,
+          showWatchlist: true,
+          showHelp: true,
         },
       },
     ],

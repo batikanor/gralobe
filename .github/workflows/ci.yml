@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: ["main"]
 
+permissions:
+  contents: read
+
 jobs:
   build:
     name: Build and Test
@@ -15,29 +18,25 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Unit tests, type check, library and demo builds
+        run: docker compose --profile test run --build --rm test
+
+      - name: Browser regression tests
+        run: docker compose --profile test run --build --rm e2e
+
+      - name: Verify production runtime health
+        run: docker compose up --build --detach --wait --wait-timeout 30 web
+
+      - name: Upload browser report
+        if: always()
+        uses: actions/upload-artifact@v4
         with:
-          node-version: 20
-          cache: "npm"
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
 
-      - name: Install dependencies
-        run: npm ci
-
-      # - name: Lint and Format
-      #   run: npm run lint
-
-      - name: Type Check
-        run: npx tsc --noEmit
-
-      - name: Build Library
-        run: npm run build:lib
-
-      - name: Build Demo
-        run: npm run build
-
-      - name: Install Playwright Browsers
-        run: npx playwright install --with-deps
-
-      - name: Run Tests
-        run: npm run test
+      - name: Stop containers
+        if: always()
+        run: docker compose down --remove-orphans

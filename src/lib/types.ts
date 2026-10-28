@@ -98,6 +98,14 @@ export interface StatisticData {
    * @example { "840": 85, "156": 68 } // USA: 85, China: 68
    */
   values: Map<string, number> | Record<string, number>;
+
+  /**
+   * Optional prior-period values (e.g. the same statistic one year earlier),
+   * keyed the same way as `values`. When provided, clicking a country shows
+   * whether its value increased, decreased, or stayed flat since then.
+   * Omit if you don't have a real baseline to compare against.
+   */
+  previousValues?: Map<string, number> | Record<string, number>;
 }
 
 /**
@@ -376,6 +384,38 @@ export interface GlobeVizConfig {
    * @default true
    */
   showLegend?: boolean;
+
+  /**
+   * Show a year-over-year trend panel docked at the top of the map.
+   * Populated when a country/region is clicked: shows the current value
+   * and, if `previousValues` was supplied for the active statistic, whether
+   * it went up, down, or stayed flat since then.
+   * @default false
+   */
+  showTrend?: boolean;
+
+  /**
+   * Show a search box (top-left) to jump straight to a country by name
+   * instead of dragging to find it.
+   * @default false
+   */
+  showSearch?: boolean;
+
+  /**
+   * Show a pinned-countries strip docked to the bottom of the map. Pin a
+   * country from its trend panel to keep it visible there, showing its
+   * value for whichever statistic is currently active.
+   * @default false
+   */
+  showWatchlist?: boolean;
+
+  /**
+   * Show a "?" help button (in the toolbar) that opens an in-app manual
+   * explaining controls, data options, and tips for best results.
+   * Only rendered when `showToolbar` (or the deprecated `showControls`) is also enabled.
+   * @default true
+   */
+  showHelp?: boolean;
 
   /**
    * Visual effects configuration

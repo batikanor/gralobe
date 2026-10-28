@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head><meta charset="UTF-8"><title>Combined feature integration fixture</title></head>
+  <body style="margin:0;background:#081020">
+    <div id="globe" style="position:relative;width:720px;height:500px"></div>
+    <script type="module">
+      import { GlobeViz } from "/src/lib/GlobeViz.ts";
+      window.countryClicks = [];
+      window.globe = new GlobeViz("#globe", {
+        texture: "satellite",
+        initialView: "globe",
+        labels: "none",
+        showToolbar: true,
+        showDebug: true,
+        showTrend: true,
+        showSearch: true,
+        showWatchlist: true,
+        showHelp: true,
+        topology: { url: "/tests/fixtures/countries.json" },
+        onCountryClick: (...args) => window.countryClicks.push(args),
+      });
+      window.integrationReady = window.globe.ready.then(() => {
+        window.globe.setTimeSeriesOptions({
+          populationHistory: {
+            definition: { id: "population", name: "Population", unit: "people", colorScale: ["#111111", "#888888", "#ffffff"], domain: [0, 100] },
+            frames: { "2000": { FR: 10, NO: 20 }, "2005": new Map([["FRA", 15], ["NOR", 25]]), "2010": { NO: 30 } },
+          },
+          internetHistory: {
+            definition: { id: "internetUsers", name: "Internet", unit: "%", colorScale: ["#111111", "#888888", "#ffffff"], domain: [0, 100] },
+            frames: { "2000": { FR: 30, NO: 40 }, "2005": { FR: 35, NO: 45 } },
+          },
+        }, "populationHistory");
+      });
+    </script>
+  </body>
+</html>

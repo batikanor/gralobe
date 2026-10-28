@@ -11,6 +11,10 @@ on:
     - cron: "0 3 2 1 *"
   workflow_dispatch: {} # allows a manual "Run workflow" trigger for testing
 
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
   refresh:
     name: Fetch + open PR if data changed
@@ -20,13 +24,11 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
       - name: Fetch latest World Bank data
-        run: node scripts/fetch-worldbank-data.mjs
+        run: >-
+          docker run --rm --user "$(id -u):$(id -g)"
+          --volume "$PWD:/app" --workdir /app
+          node:24.7.0-bookworm-slim node scripts/fetch-worldbank-data.mjs
 
       - name: Open PR with the refreshed data
         uses: peter-evans/create-pull-request@v6

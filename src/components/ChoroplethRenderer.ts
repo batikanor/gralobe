@@ -24,10 +24,6 @@ const WORKER_CODE = `
     const { url, objectName, idProperty, topojsonUrl } = e.data;
     
     try {
-      if (!self.topojson) {
-        self.postMessage({ status: "Loading dependencies..." });
-        importScripts(topojsonUrl);
-      }
       self.postMessage({ status: "Fetching data...", progress: 0.1 });
       const response = await fetch(url);
       if (!response.ok) throw new Error('Fetch failed: ' + response.statusText);
@@ -39,6 +35,10 @@ const WORKER_CODE = `
       if (data.type === 'FeatureCollection') {
         features = data.features;
       } else {
+      if (!self.topojson) {
+        self.postMessage({ status: "Loading dependencies..." });
+        importScripts(topojsonUrl);
+      }
       // Assume TopoJSON
       self.postMessage({ status: "Processing TopoJSON...", progress: 0.4 });
       const topology = data;

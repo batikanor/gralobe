@@ -6,14 +6,14 @@
  *
  * This is demo-only data (not part of the published library bundle) -- it
  * exists so the "Data Over Time" showcase can use real numbers instead of a
- * synthetic growth curve. The output is a raw cache keyed by the World
- * Bank's own alpha-2 country codes; src/demo/demo-config.ts maps those onto
- * our internal country ids and picks a curated subset of years for display.
+ * synthetic growth curve. The output uses numeric ISO country ids where
+ * available, retaining alpha-2 codes for countries absent from the map.
  *
  * Usage: node scripts/fetch-worldbank-data.mjs
  * Also runs on a schedule via .github/workflows/refresh-worldbank-data.yml.
  */
 import { mkdir, writeFile } from "node:fs/promises";
+import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const INDICATORS = {
@@ -35,9 +35,7 @@ const INDICATORS = {
 const START_YEAR = 1990;
 const END_YEAR = new Date().getFullYear();
 const PER_PAGE = 20000;
-const OUT_PATH = fileURLToPath(
-  new URL("../src/demo/data/worldbank-history.json", import.meta.url),
-);
+const OUT_PATH = fileURLToPath(new URL("../src/demo/data/worldbank-history.json", import.meta.url));
 
 const NATURAL_EARTH_COUNTRIES =
   "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_110m_admin_0_countries.geojson";
@@ -56,16 +54,61 @@ async function fetchAlpha3ToNumeric() {
   if (!res.ok) {
     throw new Error(`Natural Earth request failed: ${res.status} ${res.statusText}`);
   }
-  const geo = await res.json();
+  return buildAlpha3ToNumeric(await res.json());
+}
+
+export function buildAlpha3ToNumeric(geo) {
+  if (!Array.isArray(geo.features)) throw new Error("Unexpected Natural Earth response shape");
   const map = new Map();
-  for (const feature of geo.features ?? []) {
+  for (const feature of geo.features) {
     const p = feature.properties ?? {};
-    const a3 = p.ISO_A3;
-    const n3 = p.ISO_N3;
-    if (!a3 || a3 === "-99" || !n3 || n3 === "-99") continue;
-    map.set(a3, String(n3).padStart(3, "0"));
+    // France and Norway use -99 in the basic ISO fields; Natural Earth's
+    // alternate ISO fields retain their actual country identifiers.
+    const n3 = [p.ISO_N3, p.ISO_N3_EH, p.UN_A3].find((id) => /^\d{1,3}$/.test(String(id)));
+    if (n3 === undefined) continue;
+    for (const a3 of [p.ISO_A3, p.ISO_A3_EH, p.WB_A3]) {
+      if (typeof a3 === "string" && /^[A-Z]{3}$/.test(a3)) {
+        map.set(a3, String(n3).padStart(3, "0"));
+      }
+    }
   }
+  if (map.size === 0) throw new Error("Natural Earth returned no usable country identifiers");
   return map;
+}
+
+/** Read every API page and reject incomplete/error payloads before replacing the cache. */
+async function fetchWorldBankRows(url, label) {
+  const rows = [];
+  let pages = 1;
+  let total = 0;
+  for (let page = 1; page <= pages; page++) {
+    const pageUrl = new URL(url);
+    pageUrl.searchParams.set("page", String(page));
+    const res = await fetch(pageUrl.href);
+    if (!res.ok)
+      throw new Error(`World Bank ${label} request failed: ${res.status} ${res.statusText}`);
+    const json = await res.json();
+    const metadata = json?.[0];
+    if (
+      !Array.isArray(json?.[1]) ||
+      !Number.isInteger(Number(metadata?.pages)) ||
+      Number(metadata.pages) < 1 ||
+      !Number.isInteger(Number(metadata?.total))
+    ) {
+      throw new Error(`Unexpected response shape for ${label}`);
+    }
+    if (page === 1) {
+      pages = Number(metadata.pages);
+      total = Number(metadata.total);
+    }
+    if (Number(metadata.pages) !== pages || Number(metadata.total) !== total) {
+      throw new Error(`Pagination changed while fetching ${label}; retry the refresh`);
+    }
+    rows.push(...json[1]);
+  }
+  if (rows.length !== total)
+    throw new Error(`Incomplete response for ${label}: expected ${total} rows, got ${rows.length}`);
+  return rows;
 }
 
 /**
@@ -74,20 +117,18 @@ async function fetchAlpha3ToNumeric() {
  * pollute rankings and choropleth colouring. Aggregates are flagged by
  * `region.value === "Aggregates"`.
  */
-async function fetchRealCountryCodes() {
-  const res = await fetch("https://api.worldbank.org/v2/country?format=json&per_page=400");
-  if (!res.ok) {
-    throw new Error(`World Bank country list request failed: ${res.status} ${res.statusText}`);
-  }
-  const json = await res.json();
-  const rows = json[1];
-  if (!Array.isArray(rows)) throw new Error("Unexpected country-list response shape");
+export async function fetchRealCountryCodes() {
+  const rows = await fetchWorldBankRows(
+    "https://api.worldbank.org/v2/country?format=json&per_page=400",
+    "country list",
+  );
 
   const codes = new Set();
   for (const row of rows) {
-    if (row.region?.value === "Aggregates") continue;
+    if (row.region?.value === "Aggregates" || row.region?.id === "NA") continue;
     if (row.id) codes.add(row.id); // alpha-3, used to match countryiso3code
   }
+  if (codes.size === 0) throw new Error("World Bank returned no real countries");
   return codes;
 }
 
@@ -97,32 +138,26 @@ async function fetchRealCountryCodes() {
  * Earth has no numeric id for -- those still count toward world rankings even
  * though the map can't draw them).
  */
-async function fetchIndicator(code, realCountries, alpha3ToNumeric) {
+export async function fetchIndicator(code, realCountries, alpha3ToNumeric) {
   const url =
     `https://api.worldbank.org/v2/country/all/indicator/${code}` +
     `?date=${START_YEAR}:${END_YEAR}&format=json&per_page=${PER_PAGE}`;
 
-  const res = await fetch(url);
-  if (!res.ok) {
-    throw new Error(`World Bank API request failed for ${code}: ${res.status} ${res.statusText}`);
-  }
-
-  const json = await res.json();
-  const rows = json[1];
-  if (!Array.isArray(rows)) {
-    throw new Error(`Unexpected response shape for ${code}: ${JSON.stringify(json).slice(0, 200)}`);
-  }
+  const rows = await fetchWorldBankRows(url, code);
 
   const byYear = {};
   for (const row of rows) {
-    if (row.value === null || row.value === undefined) continue;
+    if (typeof row.value !== "number" || !Number.isFinite(row.value)) continue;
     // Skip aggregate regions -- only real countries belong in the rankings.
     if (!realCountries.has(row.countryiso3code)) continue;
     const year = row.date;
+    if (!/^\d{4}$/.test(year) || Number(year) < START_YEAR || Number(year) > END_YEAR) continue;
     const key = alpha3ToNumeric.get(row.countryiso3code) ?? row.country?.id;
     if (!key) continue;
-    (byYear[year] ??= {})[key] = row.value;
+    byYear[year] ??= {};
+    byYear[year][key] = row.value;
   }
+  if (Object.keys(byYear).length === 0) throw new Error(`No usable country data for ${code}`);
   return byYear;
 }
 
@@ -148,7 +183,9 @@ async function main() {
   console.log(`Wrote ${OUT_PATH}`);
 }
 
-main().catch((err) => {
-  console.error(err);
-  process.exitCode = 1;
-});
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  main().catch((err) => {
+    console.error(err);
+    process.exitCode = 1;
+  });
+}

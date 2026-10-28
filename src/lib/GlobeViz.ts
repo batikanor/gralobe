@@ -10,18 +10,24 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import {
   CHART_SERIES_COLORS,
   ChartPanel,
-  MAX_CHART_SERIES,
   type ChartSeries,
+  MAX_CHART_SERIES,
 } from "../components/ChartPanel";
 import { ChoroplethRenderer } from "../components/ChoroplethRenderer";
 import { CountryLabels } from "../components/CountryLabels";
 import { CountryProfile, type ProfileMetric } from "../components/CountryProfile";
+import { CountryTrendPanel } from "../components/CountryTrendPanel";
 import { DataGrid } from "../components/DataGrid";
 import { Exporter } from "../components/Exporter";
+import { HelpManual } from "../components/HelpManual";
 import { Legend } from "../components/Legend";
 import { MarkerLayer } from "../components/MarkerLayer";
+import { SearchBar } from "../components/SearchBar";
 import { Toolbar } from "../components/Toolbar";
+import { WatchlistStrip } from "../components/WatchlistStrip";
 import { STATISTICS as INTERNAL_STATISTICS, WORLD_STATISTICS } from "../data/worldStatistics";
+import { normalizeCountryValues } from "./countryCodes";
+import { createFormatter } from "./formatters";
 import {
   atmosphereFragmentShader,
   atmosphereVertexShader,
@@ -32,6 +38,7 @@ import {
   vertexShader,
 } from "./shaders";
 import { BUILT_IN_STATISTICS } from "./statistics";
+import { TEXTURE_PRESETS, TEXTURE_SOURCES, type TextureSource } from "./textures";
 import type {
   CountryData,
   EffectsConfig,
@@ -49,7 +56,6 @@ import type {
   TimeSeriesOptions,
   TopologyConfig,
 } from "./types";
-import { TEXTURE_PRESETS, TEXTURE_SOURCES, type TextureSource } from "./textures";
 import { UrbanMapper } from "./UrbanMapper";
 
 /**
@@ -137,7 +143,14 @@ export interface GlobeVizAPI {
 const DEFAULT_CONFIG: Required<
   Omit<
     GlobeVizConfig,
-    "data" | "onCountryClick" | "onViewChange" | "onLoadProgress" | "onHover" | "width" | "height" | "topology"
+    | "data"
+    | "onCountryClick"
+    | "onViewChange"
+    | "onLoadProgress"
+    | "onHover"
+    | "width"
+    | "height"
+    | "topology"
   >
 > = {
   texture: "satellite",
@@ -149,6 +162,10 @@ const DEFAULT_CONFIG: Required<
   showDebug: false,
   showToolbar: false,
   showLegend: true,
+  showTrend: false,
+  showHelp: true,
+  showSearch: false,
+  showWatchlist: false,
   effects: {
     atmosphereIntensity: 0,
     atmosphere: false,
@@ -253,6 +270,11 @@ export class GlobeViz implements GlobeVizAPI {
    */
   private chartColorSlots = new Map<string, number>();
   private chartSelection: string[] = [];
+  private trendPanel: CountryTrendPanel | null = null;
+  private helpManual: HelpManual | null = null;
+  private searchBar: SearchBar | null = null;
+  private watchlistStrip: WatchlistStrip | null = null;
+  private pinnedCountries: Set<string> = new Set();
   private textureLoader: THREE.TextureLoader = new THREE.TextureLoader();
   private dataTexture: THREE.CanvasTexture | null = null;
 
@@ -262,6 +284,7 @@ export class GlobeViz implements GlobeVizAPI {
   /** Definition behind the values currently painted (built-in or custom). */
   private currentDefinition: StatisticDefinition | null = null;
   private currentValues: Record<string, number> | null = null;
+  private currentPreviousValues: Record<string, number> | null = null;
   private animationId: number | null = null;
   private isDestroyed = false;
   private urbanPoints: { lat: number; lon: number; value: number; id?: string }[] | null = null;
@@ -273,7 +296,8 @@ export class GlobeViz implements GlobeVizAPI {
   private timelineSteps: string[] = [];
   private timelineIndex = 0;
   private timelinePlaying = false;
-  private timelineConfig: Required<Omit<TimelineConfig, "onStep">> & Pick<TimelineConfig, "onStep"> = {
+  private timelineConfig: Required<Omit<TimelineConfig, "onStep">> &
+    Pick<TimelineConfig, "onStep"> = {
     fps: 1,
     loop: true,
     interpolate: true,
@@ -390,8 +414,30 @@ export class GlobeViz implements GlobeVizAPI {
         this.legend = new Legend(this.container);
       }
 
+      if (this.config.showTrend) {
+        this.trendPanel = new CountryTrendPanel(this.container, (featureId) =>
+          this.togglePin(featureId),
+        );
+      }
+
+      if (this.config.showSearch) {
+        this.searchBar = new SearchBar(this.container, (featureId) =>
+          this.focusOnCountry(featureId),
+        );
+        this.searchBar.setCountries(WORLD_STATISTICS.map((c) => ({ id: c.id, name: c.name })));
+      }
+
+      if (this.config.showWatchlist) {
+        this.watchlistStrip = new WatchlistStrip(
+          this.container,
+          (featureId) => this.focusOnCountry(featureId),
+          (featureId) => this.togglePin(featureId),
+        );
+      }
+
       // Create globe with shaders
       await this.createGlobe();
+      if (this.isDestroyed) return;
       this.createStars();
       if (this.config.effects.atmosphere) {
         this.createAtmosphere();
@@ -425,6 +471,7 @@ export class GlobeViz implements GlobeVizAPI {
 
       // Wait for choropleth data
       await this.choropleth.waitForLoad();
+      if (this.isDestroyed) return;
 
       // Auto-label custom topology (e.g. for districts, counties)
       const featureLabels = this.choropleth.getFeatureLabels();
@@ -494,8 +541,12 @@ export class GlobeViz implements GlobeVizAPI {
           onToggleFullscreen: () => this.toggleFullscreen(),
           onToggleProjection: () => this.toggleProjection(),
           onShowChart: () => this.showChart(),
+          onShowHelp: this.config.showHelp ? () => this.helpManual?.show() : undefined,
         });
         this.dataGrid = new DataGrid(this.container);
+        if (this.config.showHelp) {
+          this.helpManual = new HelpManual(this.container);
+        }
 
         // Set initial icon state based on initialView
         this.toolbar.updateProjectionIcon(this.config.initialView === "globe");
@@ -541,9 +592,7 @@ export class GlobeViz implements GlobeVizAPI {
   private async createGlobe(): Promise<void> {
     // Load base earth texture
     // Load base earth texture with timeout
-    const loadTexture = this.loadTextureSource(
-      TEXTURE_SOURCES[this.config.texture],
-    );
+    const loadTexture = this.loadTextureSource(TEXTURE_SOURCES[this.config.texture]);
 
     const timeout = new Promise<never>((_, reject) =>
       setTimeout(() => reject(new Error("Texture load timed out after 10s")), 10000),
@@ -955,7 +1004,9 @@ export class GlobeViz implements GlobeVizAPI {
     `;
 
     // 1. Cleanup existing GUI/Button/Toolbar
-    this.categoryGUIs.forEach((g) => g.destroy());
+    this.categoryGUIs.forEach((g) => {
+      g.destroy();
+    });
     this.categoryGUIs = [];
 
     const oldBtn = this.container.querySelector(".gralobe-gui-toggle");
@@ -1270,8 +1321,8 @@ export class GlobeViz implements GlobeVizAPI {
         // Refresh data to apply new radius
         if (this.urbanPoints) {
           this.setUrbanData(this.urbanPoints);
-        } else if (this.currentStatistic) {
-          this.setStatistic(this.currentStatistic);
+        } else if (this.currentValues && this.currentDefinition) {
+          this.paintValues(this.currentValues, this.currentDefinition);
         }
       });
 
@@ -1305,9 +1356,7 @@ export class GlobeViz implements GlobeVizAPI {
     // 6. Hover Settings
     const hoverGUI = createCategory("hover", "Hover Info");
 
-    const hoverEnabledCtrl = hoverGUI
-      .add(this.config.hover!, "enabled")
-      .name("Enable Hover");
+    const hoverEnabledCtrl = hoverGUI.add(this.config.hover!, "enabled").name("Enable Hover");
 
     this.addTooltip(
       hoverEnabledCtrl,
@@ -1324,9 +1373,7 @@ export class GlobeViz implements GlobeVizAPI {
       "<b>Minimum Zoom Level</b><br><br>Only show hover information when zoomed in past this level.<br>• <b>0</b>: Always show<br>• <b>1</b>: Only when very close",
     );
 
-    const hoverShowValueCtrl = hoverGUI
-      .add(this.config.hover!, "showValue")
-      .name("Show Value");
+    const hoverShowValueCtrl = hoverGUI.add(this.config.hover!, "showValue").name("Show Value");
 
     this.addTooltip(
       hoverShowValueCtrl,
@@ -1386,11 +1433,21 @@ export class GlobeViz implements GlobeVizAPI {
 
   // Public API Implementation
 
-  toGlobe(): void {
+  private cancelNavigation(): void {
+    gsap.killTweensOf(this);
+    gsap.killTweensOf([this.camera.position, this.camera.up, this.controls.target]);
+    if (this.globe) gsap.killTweensOf([this.globe.rotation, this.globe.quaternion]);
+    if (this.atmosphere) gsap.killTweensOf(this.atmosphere.rotation);
+  }
+
+  toGlobe(focus?: [number, number]): void {
+    this.cancelNavigation();
     // A projection toggle supersedes any double-click country zoom.
     this.zoomedFeatureId = null;
+    this.countryProfile?.hide();
 
     // Unlock controls
+    this.controls.enabled = true;
     this.controls.enableRotate = true;
     this.controls.minAzimuthAngle = -Infinity;
     this.controls.maxAzimuthAngle = Infinity;
@@ -1431,6 +1488,9 @@ export class GlobeViz implements GlobeVizAPI {
         this.countryLabels?.setMorph(this.morph);
         this.markerLayer?.setMorph(this.morph);
         this.config.onViewChange?.("globe", this.morph);
+      },
+      onComplete: () => {
+        if (focus && !this.isDestroyed) this.fitCameraToPointGlobe(focus, 1.3);
       },
     });
 
@@ -1485,6 +1545,8 @@ export class GlobeViz implements GlobeVizAPI {
   }
 
   toFlat(): void {
+    this.cancelNavigation();
+    this.countryProfile?.hide();
     // A projection toggle supersedes any double-click country zoom (this is
     // also called by resetCountryZoom() itself, where it's already null).
     this.zoomedFeatureId = null;
@@ -1656,20 +1718,24 @@ export class GlobeViz implements GlobeVizAPI {
     const planeIntersect = new THREE.Vector3();
 
     let isDragging = false;
-    let mouseDownPos = new Date().getTime();
+    const mouseDownPosition = new THREE.Vector2();
 
     // Create hover tooltip
     this.createHoverTooltip();
 
     // Track dragging to distinguish from clicking
-    this.renderer.domElement.addEventListener("mousedown", () => {
+    this.renderer.domElement.addEventListener("mousedown", (event) => {
       isDragging = false;
-      mouseDownPos = new Date().getTime();
+      mouseDownPosition.set(event.clientX, event.clientY);
     });
 
     // Handle mouse move for both drag tracking and hover
     this.renderer.domElement.addEventListener("mousemove", (event) => {
-      isDragging = true;
+      if (
+        Math.hypot(event.clientX - mouseDownPosition.x, event.clientY - mouseDownPosition.y) > 5
+      ) {
+        isDragging = true;
+      }
 
       // Handle hover
       if (this.config.hover?.enabled) {
@@ -1684,13 +1750,17 @@ export class GlobeViz implements GlobeVizAPI {
 
     // Handle Click (Zoom In)
     this.renderer.domElement.addEventListener("click", (event) => {
+      if (gsap.getTweensOf(this).length > 0) return;
       // If drag occurred or long press, ignore
-      if (isDragging && new Date().getTime() - mouseDownPos > 200) return;
+      if (isDragging) return;
 
       // Calculate mouse position
       const rect = this.renderer.domElement.getBoundingClientRect();
       mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
       mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+      // Identify which country/region (if any) was clicked, in either projection
+      this.handleFeatureClick(mouse, raycaster, plane, planeIntersect);
 
       // Only handle interaction in Flat mode
       if (this.morph < 0.1) {
@@ -1706,6 +1776,7 @@ export class GlobeViz implements GlobeVizAPI {
 
           if (Math.abs(planeIntersect.x) <= mapLimitX && Math.abs(planeIntersect.y) <= mapLimitY) {
             // Valid Map Click: Zoom to Point
+            this.cancelNavigation();
             const targetZ = 50; // Close zoom level
 
             // Animate Target (Pan to point)
@@ -1734,6 +1805,7 @@ export class GlobeViz implements GlobeVizAPI {
     // double-click, anywhere, reverts to the default view).
     this.renderer.domElement.addEventListener("dblclick", (event) => {
       event.preventDefault();
+      if (gsap.getTweensOf(this).length > 0) return;
 
       if (this.zoomedFeatureId) {
         this.resetCountryZoom();
@@ -1824,14 +1896,14 @@ export class GlobeViz implements GlobeVizAPI {
    * so the panel still says something useful in plain-statistic mode.
    */
   private buildProfileMetrics(featureId: string): ProfileMetric[] {
-    const seriesMap =
-      this.timelineSeriesOptions ??
-      (this.timelineData ? { [this.timelineData.definition.id]: this.timelineData } : null);
+    const seriesMap = this.timelineData
+      ? (this.timelineSeriesOptions ?? { [this.timelineData.definition.id]: this.timelineData })
+      : null;
 
     if (!seriesMap) {
       // Plain statistic mode: no history to chart, but still show the value.
       if (!this.currentValues || !this.currentStatistic) return [];
-      const definition = this.getStatisticMetadata(this.currentStatistic)?.definition;
+      const definition = this.currentDefinition;
       const value = this.currentValues[featureId];
       const entries = Object.values(this.currentValues).filter((v) => Number.isFinite(v));
       return [
@@ -1864,10 +1936,10 @@ export class GlobeViz implements GlobeVizAPI {
       };
 
       // Trend across every year this metric has data for.
-      const series: number[] = [];
+      const series: Array<number | null> = [];
       years.forEach((year) => {
         const v = frameValues(year)[featureId];
-        if (v !== undefined && Number.isFinite(v)) series.push(v);
+        series.push(v !== undefined && Number.isFinite(v) ? v : null);
       });
 
       // Value + rank at the year currently selected. Metrics whose year
@@ -1998,14 +2070,19 @@ export class GlobeViz implements GlobeVizAPI {
     };
     setHidden(this.container.querySelector<HTMLElement>(".gralobe-gui-toggle"));
     setHidden(this.container.querySelector<HTMLElement>(".gralobe-category-bar"));
+    this.container
+      .querySelectorAll<HTMLElement>(".gralobe-trend, .gralobe-search, .gralobe-watchlist")
+      .forEach(setHidden);
 
     if (!visible) {
       // The lil-gui panels are shown via an `!important` rule, so an inline
       // style can't hide them -- drop the class the rule keys off instead.
-      this.categoryGUIs.forEach((g) => g.domElement.classList.remove("active-panel"));
-      this.container
-        .querySelectorAll(".gralobe-category-btn")
-        .forEach((b) => b.classList.remove("active"));
+      this.categoryGUIs.forEach((g) => {
+        g.domElement.classList.remove("active-panel");
+      });
+      this.container.querySelectorAll(".gralobe-category-btn").forEach((b) => {
+        b.classList.remove("active");
+      });
     }
 
     this.toolbar?.setVisible(visible);
@@ -2043,10 +2120,14 @@ export class GlobeViz implements GlobeVizAPI {
       for (const year of this.timelineSteps) {
         const raw = this.timelineData.frames[year];
         const values = raw instanceof Map ? Object.fromEntries(raw) : (raw ?? {});
-        Object.keys(values).forEach((id) => ids.add(id));
+        Object.keys(values).forEach((id) => {
+          ids.add(id);
+        });
       }
     } else if (this.currentValues) {
-      Object.keys(this.currentValues).forEach((id) => ids.add(id));
+      Object.keys(this.currentValues).forEach((id) => {
+        ids.add(id);
+      });
     }
 
     // Only offer countries the loaded topology can actually name. The data
@@ -2068,7 +2149,10 @@ export class GlobeViz implements GlobeVizAPI {
     // The globe's Data panel is hidden behind the chart overlay, so the chart
     // carries its own metric + year pickers driving the same state.
     const metricList = this.timelineSeriesOptions
-      ? Object.entries(this.timelineSeriesOptions).map(([id, d]) => ({ id, name: d.definition.name }))
+      ? Object.entries(this.timelineSeriesOptions).map(([id, d]) => ({
+          id,
+          name: d.definition.name,
+        }))
       : Object.keys(BUILT_IN_STATISTICS).map((id) => ({ id, name: id }));
     this.chartPanel.setMetrics(metricList, this.currentStatistic ?? metricList[0]?.id ?? "");
     this.chartPanel.setYears([...this.timelineSteps], this.timelineIndex);
@@ -2097,7 +2181,9 @@ export class GlobeViz implements GlobeVizAPI {
         valueAtYear:
           years.length > 0
             ? (values[this.timelineIndex] ?? null)
-            : (fallback !== undefined && Number.isFinite(fallback) ? fallback : null),
+            : fallback !== undefined && Number.isFinite(fallback)
+              ? fallback
+              : null,
       };
     });
 
@@ -2127,6 +2213,7 @@ export class GlobeViz implements GlobeVizAPI {
     bounds: [number, number, number, number],
     durationSec: number,
   ): void {
+    this.cancelNavigation();
     const [minLon, minLat, maxLon, maxLat] = bounds;
     const worldWidth = Math.PI * 2 * SPHERE_RADIUS;
     const worldHeight = Math.PI * SPHERE_RADIUS;
@@ -2172,6 +2259,7 @@ export class GlobeViz implements GlobeVizAPI {
    */
   private fitCameraToPointGlobe(centroid: [number, number], durationSec: number): void {
     if (!this.globe) return;
+    this.cancelNavigation();
     const [lon, lat] = centroid;
     const latRad = lat * (Math.PI / 180);
     const lonRad = lon * (Math.PI / 180);
@@ -2191,7 +2279,13 @@ export class GlobeViz implements GlobeVizAPI {
       duration: durationSec,
       ease: "power2.inOut",
     });
-    gsap.to(this.controls.target, { x: 0, y: 0, z: 0, duration: durationSec, ease: "power2.inOut" });
+    gsap.to(this.controls.target, {
+      x: 0,
+      y: 0,
+      z: 0,
+      duration: durationSec,
+      ease: "power2.inOut",
+    });
   }
 
   /**
@@ -2245,9 +2339,9 @@ export class GlobeViz implements GlobeVizAPI {
     if (this.morph < 0.5) {
       // Flat map mode - use plane intersection
       raycaster.setFromCamera(mouse, this.camera);
-      raycaster.ray.intersectPlane(plane, planeIntersect);
+      const intersection = raycaster.ray.intersectPlane(plane, planeIntersect);
 
-      if (planeIntersect) {
+      if (intersection) {
         const mapLimitX = Math.PI * SPHERE_RADIUS;
         const mapLimitY = (Math.PI * SPHERE_RADIUS) / 2;
 
@@ -2368,6 +2462,153 @@ export class GlobeViz implements GlobeVizAPI {
         this.config.onHover?.(null, null);
       }
     }
+  }
+
+  /**
+   * Identify the country/region clicked at the current mouse position (in
+   * either flat or globe projection) and notify onCountryClick plus the
+   * summary panel, if configured.
+   */
+  private handleFeatureClick(
+    mouse: THREE.Vector2,
+    raycaster: THREE.Raycaster,
+    plane: THREE.Plane,
+    planeIntersect: THREE.Vector3,
+  ): void {
+    if (!this.choropleth) return;
+
+    let lat: number | null = null;
+    let lon: number | null = null;
+
+    if (this.morph < 0.5) {
+      raycaster.setFromCamera(mouse, this.camera);
+      raycaster.ray.intersectPlane(plane, planeIntersect);
+
+      if (planeIntersect) {
+        const mapLimitX = Math.PI * SPHERE_RADIUS;
+        const mapLimitY = (Math.PI * SPHERE_RADIUS) / 2;
+
+        if (Math.abs(planeIntersect.x) <= mapLimitX && Math.abs(planeIntersect.y) <= mapLimitY) {
+          lon = (planeIntersect.x / (Math.PI * SPHERE_RADIUS)) * 180;
+          lat = (planeIntersect.y / ((Math.PI * SPHERE_RADIUS) / 2)) * 90;
+        }
+      }
+    } else if (this.globe) {
+      raycaster.setFromCamera(mouse, this.camera);
+
+      const sphereIntersection = this.raySphereIntersection(
+        raycaster.ray.origin,
+        raycaster.ray.direction,
+        SPHERE_RADIUS,
+      );
+
+      if (sphereIntersection) {
+        const inverseRotation = new THREE.Quaternion();
+        this.globe.getWorldQuaternion(inverseRotation);
+        inverseRotation.invert();
+
+        const rotatedPoint = sphereIntersection.clone().applyQuaternion(inverseRotation);
+        const r = SPHERE_RADIUS;
+        lat = Math.asin(rotatedPoint.y / r) * (180 / Math.PI);
+        lon = Math.atan2(rotatedPoint.x, rotatedPoint.z) * (180 / Math.PI);
+      }
+    }
+
+    if (lat === null || lon === null) return;
+
+    const feature = this.findFeatureAtLatLon(lat, lon);
+    if (!feature) return;
+
+    const featureId = feature.id || feature.properties?.id;
+    if (!featureId) return;
+
+    const featureName = this.choropleth.getFeatureName(featureId) || featureId;
+    const value = this.currentValues ? this.currentValues[featureId] : undefined;
+
+    this.config.onCountryClick?.(featureId, featureName, value);
+
+    if (this.trendPanel) {
+      const def = this.currentDefinition;
+      const previousValue = this.currentPreviousValues
+        ? this.currentPreviousValues[featureId]
+        : undefined;
+      const format = def?.format ?? createFormatter(def?.unit ?? "");
+      const colorScale = def?.colorScale ?? ["#1a2a3a", "#3a6a8a", "#4af0c0"];
+      this.trendPanel.show(
+        featureId,
+        featureName,
+        def?.name ?? "Value",
+        value,
+        previousValue,
+        format,
+        colorScale,
+        this.pinnedCountries.has(featureId),
+        def?.unit,
+      );
+    }
+  }
+
+  /**
+   * Resolve a display name for a feature id, falling back to the
+   * WORLD_STATISTICS name when the country has no polygon in the loaded
+   * topology (e.g. small nations dropped at 110m border resolution) and
+   * finally to the raw id if truly unknown.
+   */
+  private resolveFeatureDisplayName(id: string): string {
+    const fromChoropleth = this.choropleth?.getFeatureName(id);
+    if (fromChoropleth) return fromChoropleth;
+    const fromWorldStats = WORLD_STATISTICS.find((c) => c.id === id)?.name;
+    return fromWorldStats || id;
+  }
+
+  /**
+   * Rotate the globe to bring a country's centroid to face the camera.
+   * Used by the search bar and the watchlist strip's "click to fly there".
+   */
+  private focusOnCountry(featureId: string): void {
+    if (!this.globe || !this.choropleth) return;
+
+    const centroid = this.choropleth.getFeatureCentroid(featureId);
+    if (!centroid) return;
+    this.zoomedFeatureId = null;
+    this.countryProfile?.hide();
+    // Use the projection transition so orbit controls, atmosphere and labels
+    // stay aligned, then move the camera to the country in world space.
+    if (this.morph < 0.99) this.toGlobe(centroid);
+    else this.fitCameraToPointGlobe(centroid, 1.3);
+  }
+
+  /**
+   * Pin or unpin a country on the watchlist strip, and keep the trend
+   * panel's pin icon in sync if it's currently showing that same country.
+   */
+  private togglePin(featureId: string): void {
+    if (this.pinnedCountries.has(featureId)) {
+      this.pinnedCountries.delete(featureId);
+    } else {
+      this.pinnedCountries.add(featureId);
+    }
+    this.trendPanel?.setPinned(featureId, this.pinnedCountries.has(featureId));
+    this.updateWatchlist();
+  }
+
+  /**
+   * Refresh the watchlist strip with each pinned country's value for the
+   * currently active statistic.
+   */
+  private updateWatchlist(): void {
+    if (!this.watchlistStrip) return;
+
+    const def = this.currentDefinition;
+    const format = def?.format ?? createFormatter(def?.unit ?? "");
+
+    const items = Array.from(this.pinnedCountries).map((id) => ({
+      id,
+      name: this.resolveFeatureDisplayName(id),
+      value: this.currentValues ? this.currentValues[id] : undefined,
+    }));
+
+    this.watchlistStrip.update(items, format);
   }
 
   /**
@@ -2515,14 +2756,17 @@ export class GlobeViz implements GlobeVizAPI {
     if (!this.hoverTooltip) return;
 
     // Build tooltip content
-    let content = `<strong>${name}</strong>`;
+    const escapeText = (value: string): string =>
+      value.replace(
+        /[&<>"']/g,
+        (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]!,
+      );
+    let content = `<strong>${escapeText(name)}</strong>`;
 
     if (this.config.hover?.showValue !== false && value !== undefined) {
       // Prefer the active time series' definition (for formatting) since it
       // may be a custom stat `getStatisticMetadata` doesn't know about.
-      const definition =
-        this.timelineData?.definition ??
-        (this.currentStatistic ? this.getStatisticMetadata(this.currentStatistic)?.definition : null);
+      const definition = this.currentDefinition;
 
       const formatValue = (v: number): string => {
         if (definition?.format) return definition.format(v);
@@ -2530,7 +2774,7 @@ export class GlobeViz implements GlobeVizAPI {
         return v.toLocaleString();
       };
 
-      content += `<br><span style="color: rgba(255,255,255,0.7); font-size: 11px;">${formatValue(value)}</span>`;
+      content += `<br><span style="color: rgba(255,255,255,0.7); font-size: 11px;">${escapeText(formatValue(value))}</span>`;
 
       // Delta vs. the previous timeline step, when a time series is active.
       if (this.timelineData && featureId && this.timelineIndex > 0) {
@@ -2540,7 +2784,7 @@ export class GlobeViz implements GlobeVizAPI {
           const previousStep = this.timelineSteps[this.timelineIndex - 1];
 
           if (Math.abs(delta) < 1e-9) {
-            content += `<br><span style="color: #888; font-size: 10px;">— no change vs ${previousStep}</span>`;
+            content += `<br><span style="color: #888; font-size: 10px;">— no change vs ${escapeText(previousStep)}</span>`;
           } else {
             const arrow = delta > 0 ? "▲" : "▼";
             const color = delta > 0 ? "#5fd88f" : "#ff6b6b";
@@ -2563,7 +2807,7 @@ export class GlobeViz implements GlobeVizAPI {
 
             content +=
               `<br><span style="color: ${color}; font-size: 10px;">` +
-              `${arrow} ${changeText} vs ${previousStep}</span>`;
+              `${arrow} ${escapeText(changeText)} vs ${escapeText(previousStep)}</span>`;
           }
         }
       }
@@ -2620,6 +2864,8 @@ export class GlobeViz implements GlobeVizAPI {
     // Exit time-series mode -- this may be a plain, one-off statistic switch.
     this.pauseTimeline();
     this.timelineData = null;
+    this.timelineSteps = [];
+    this.timelineIndex = 0;
 
     let customStat: StatisticData | undefined;
 
@@ -2636,10 +2882,10 @@ export class GlobeViz implements GlobeVizAPI {
     }
 
     if (customStat) {
-      const values =
-        customStat.values instanceof Map
-          ? Object.fromEntries(customStat.values)
-          : customStat.values;
+      const values = this.normalizeValues(customStat.values);
+      this.currentPreviousValues = customStat.previousValues
+        ? this.normalizeValues(customStat.previousValues)
+        : null;
       this.paintValues(values, customStat.definition);
     }
 
@@ -2654,6 +2900,16 @@ export class GlobeViz implements GlobeVizAPI {
    * set of country values. Shared by `setStatistic` and timeline playback
    * (which calls this repeatedly with blended values between two steps).
    */
+  private normalizeValues(
+    values: Record<string, number> | Map<string, number>,
+  ): Record<string, number> {
+    return this.config.topology?.disableNormalization
+      ? values instanceof Map
+        ? Object.fromEntries(values)
+        : values
+      : normalizeCountryValues(values);
+  }
+
   private paintValues(values: Record<string, number>, definition: StatisticDefinition): void {
     this.currentValues = values;
     this.currentDefinition = definition;
@@ -2724,6 +2980,22 @@ export class GlobeViz implements GlobeVizAPI {
         this.legend.show(definition as any);
       }
     }
+    this.updateWatchlist();
+    const featureId = this.trendPanel?.getFeatureId();
+    if (featureId && this.trendPanel?.isVisible()) {
+      const format = definition.format ?? createFormatter(definition.unit ?? "");
+      this.trendPanel.show(
+        featureId,
+        this.resolveFeatureDisplayName(featureId),
+        definition.name,
+        values[featureId],
+        this.currentPreviousValues?.[featureId],
+        format,
+        definition.colorScale,
+        this.pinnedCountries.has(featureId),
+        definition.unit,
+      );
+    }
   }
 
   // --- Timeline: year + data selectors live in the "Data" GUI panel -------
@@ -2737,7 +3009,7 @@ export class GlobeViz implements GlobeVizAPI {
   setTimeSeries(data: TimeSeriesData): void {
     if (this.isDestroyed) return;
     this.timelineSeriesOptions = null;
-    this.applyTimeSeries(data);
+    this.applyTimeSeries(this.normalizeTimeSeries(data));
   }
 
   /**
@@ -2752,22 +3024,33 @@ export class GlobeViz implements GlobeVizAPI {
     const keys = Object.keys(options);
     if (keys.length === 0) return;
 
-    this.timelineSeriesOptions = options;
+    this.timelineSeriesOptions = Object.fromEntries(
+      Object.entries(options).map(([id, data]) => [id, this.normalizeTimeSeries(data)]),
+    );
     const key = initialKey && options[initialKey] ? initialKey : keys[0];
-    this.applyTimeSeries(options[key]);
+    this.applyTimeSeries(this.timelineSeriesOptions[key], key);
+  }
+
+  private normalizeTimeSeries(data: TimeSeriesData): TimeSeriesData {
+    return {
+      definition: data.definition,
+      frames: Object.fromEntries(
+        Object.entries(data.frames).map(([year, values]) => [year, this.normalizeValues(values)]),
+      ),
+    };
   }
 
   /** Metric dropdown handler: route to time-series mode if this id has one, plain stat otherwise. */
   private selectMetric(id: string): void {
     const series = this.timelineSeriesOptions?.[id];
     if (series) {
-      this.applyTimeSeries(series);
+      this.applyTimeSeries(series, id);
     } else {
       this.setStatistic(id);
     }
   }
 
-  private applyTimeSeries(data: TimeSeriesData): void {
+  private applyTimeSeries(data: TimeSeriesData, selectionKey = data.definition.id): void {
     this.pauseTimeline();
     this.timelineData = data;
     this.timelineSteps = Object.keys(data.frames).sort((a, b) => {
@@ -2777,8 +3060,15 @@ export class GlobeViz implements GlobeVizAPI {
       return a.localeCompare(b);
     });
     this.timelineIndex = 0;
-    this.currentStatistic = data.definition.id;
+    this.currentStatistic = selectionKey;
 
+    // Empty histories must clear the old metric rather than retain its values.
+    if (this.timelineSteps.length === 0) {
+      this.currentPreviousValues = null;
+      this.paintValues({}, data.definition);
+      this.refreshCountryProfile();
+      this.refreshChart();
+    }
     this.applyTimelineStep(0, false);
     this.syncStatsGUI();
   }
@@ -2786,17 +3076,19 @@ export class GlobeViz implements GlobeVizAPI {
   private getTimelineFrameValues(index: number): Record<string, number> {
     if (!this.timelineData) return {};
     const raw = this.timelineData.frames[this.timelineSteps[index]];
-    return raw instanceof Map ? Object.fromEntries(raw) : (raw ?? {});
+    return this.normalizeValues(raw ?? {});
   }
 
   private applyTimelineStep(index: number, animate: boolean): void {
     if (!this.timelineData || this.timelineSteps.length === 0) return;
-    const clamped = Math.max(0, Math.min(this.timelineSteps.length - 1, index));
+    if (!Number.isFinite(index)) return;
+    const clamped = Math.max(0, Math.min(this.timelineSteps.length - 1, Math.trunc(index)));
     const fromValues = this.getTimelineFrameValues(this.timelineIndex);
     const toValues = this.getTimelineFrameValues(clamped);
     const definition = this.timelineData.definition;
 
     this.timelineIndex = clamped;
+    this.currentPreviousValues = clamped > 0 ? this.getTimelineFrameValues(clamped - 1) : null;
     this.timelineConfig.onStep?.(this.timelineSteps[clamped], clamped);
     // Keep an open country profile / chart in sync with the newly selected year.
     this.refreshCountryProfile();
@@ -2832,6 +3124,7 @@ export class GlobeViz implements GlobeVizAPI {
         });
         this.paintValues(blended, definition);
       },
+      onComplete: () => this.paintValues(toValues, definition),
     });
   }
 
@@ -2856,6 +3149,7 @@ export class GlobeViz implements GlobeVizAPI {
   playTimeline(config: TimelineConfig = {}): void {
     if (this.isDestroyed || !this.timelineData) return;
 
+    this.pauseTimeline();
     this.timelineConfig = { ...this.timelineConfig, ...config };
     this.timelinePlaying = true;
     this.advanceTimeline();
@@ -2863,6 +3157,15 @@ export class GlobeViz implements GlobeVizAPI {
 
   pauseTimeline(): void {
     this.timelinePlaying = false;
+    const wasInterpolating = this.timelineTween !== null;
+    this.timelineTween?.kill();
+    this.timelineTween = null;
+    if (wasInterpolating && this.timelineData && !this.isDestroyed) {
+      this.paintValues(
+        this.getTimelineFrameValues(this.timelineIndex),
+        this.timelineData.definition,
+      );
+    }
     if (this.timelineStepHandle) {
       clearTimeout(this.timelineStepHandle);
       this.timelineStepHandle = null;
@@ -2897,10 +3200,21 @@ export class GlobeViz implements GlobeVizAPI {
   private syncStatsGUI(): void {
     if (!this.metricCtrl) return;
 
-    if (this.currentStatistic && this.metricState.stat !== this.currentStatistic) {
-      this.metricState.stat = this.currentStatistic;
-      this.metricCtrl.updateDisplay();
+    this.metricCtrl.destroy();
+    const options: Record<string, string> = Object.fromEntries(
+      Object.keys(BUILT_IN_STATISTICS).map((id) => [id, id]),
+    );
+    Object.entries(this.timelineSeriesOptions ?? {}).forEach(([key, series]) => {
+      options[series.definition.name] = key;
+    });
+    if (this.currentStatistic && !Object.values(options).includes(this.currentStatistic)) {
+      options[this.currentDefinition?.name ?? this.currentStatistic] = this.currentStatistic;
     }
+    this.metricState.stat = this.currentStatistic ?? "lifeExpectancy";
+    this.metricCtrl = this.statsGUIFolder
+      .add(this.metricState, "stat", options)
+      .name("Metric")
+      .onChange((id: string) => this.selectMetric(id));
 
     this.rebuildYearControl();
   }
@@ -2994,11 +3308,7 @@ export class GlobeViz implements GlobeVizAPI {
     return this.textureLoader.loadAsync(source.url);
   }
 
-  private async loadSvgTexture(
-    url: string,
-    width: number,
-    height: number,
-  ): Promise<THREE.Texture> {
+  private async loadSvgTexture(url: string, width: number, height: number): Promise<THREE.Texture> {
     const response = await fetch(url);
     if (!response.ok) {
       throw new Error(`Failed to fetch SVG texture (${response.status})`);
@@ -3022,13 +3332,13 @@ export class GlobeViz implements GlobeVizAPI {
     if (updatedSvg.includes("width=")) {
       updatedSvg = updatedSvg.replace(/\bwidth="[^"]*"/i, `width="${width}"`);
     } else {
-      updatedSvg = updatedSvg.replace("<svg", `<svg width=\"${width}\"`);
+      updatedSvg = updatedSvg.replace("<svg", `<svg width="${width}"`);
     }
 
     if (updatedSvg.includes("height=")) {
       updatedSvg = updatedSvg.replace(/\bheight="[^"]*"/i, `height="${height}"`);
     } else {
-      updatedSvg = updatedSvg.replace("<svg", `<svg height=\"${height}\"`);
+      updatedSvg = updatedSvg.replace("<svg", `<svg height="${height}"`);
     }
 
     if (updatedSvg.includes("preserveAspectRatio=")) {
@@ -3037,10 +3347,7 @@ export class GlobeViz implements GlobeVizAPI {
         'preserveAspectRatio="none"',
       );
     } else {
-      updatedSvg = updatedSvg.replace(
-        "<svg",
-        '<svg preserveAspectRatio="none"',
-      );
+      updatedSvg = updatedSvg.replace("<svg", '<svg preserveAspectRatio="none"');
     }
 
     return updatedSvg;
@@ -3351,6 +3658,10 @@ export class GlobeViz implements GlobeVizAPI {
 
     this.pauseTimeline();
     this.timelineTween?.kill();
+    gsap.killTweensOf(this);
+    if (this.camera) gsap.killTweensOf([this.camera.position, this.camera.up]);
+    if (this.controls) gsap.killTweensOf(this.controls.target);
+    if (this.globe) gsap.killTweensOf([this.globe.rotation, this.globe.quaternion]);
 
     window.removeEventListener("resize", this.handleResize);
     window.removeEventListener("keydown", this.handleKeydown);
@@ -3363,7 +3674,9 @@ export class GlobeViz implements GlobeVizAPI {
     }
 
     // Dispose helper components
-    this.categoryGUIs.forEach((g) => g.destroy());
+    this.categoryGUIs.forEach((g) => {
+      g.destroy();
+    });
     this.categoryGUIs = [];
     this.legend?.dispose();
     this.countryProfile?.dispose();
@@ -3375,6 +3688,10 @@ export class GlobeViz implements GlobeVizAPI {
     this.controls?.dispose();
     this.toolbar?.dispose();
     this.dataGrid?.dispose();
+    this.trendPanel?.dispose();
+    this.helpManual?.dispose();
+    this.searchBar?.dispose();
+    this.watchlistStrip?.dispose();
 
     // Remove hover tooltip
     if (this.hoverTooltip && this.hoverTooltip.parentNode) {
@@ -3383,7 +3700,9 @@ export class GlobeViz implements GlobeVizAPI {
     }
 
     // Remove tooltips
-    document.querySelectorAll(".lil-gui-tooltip").forEach((el) => el.remove());
+    document.querySelectorAll(".lil-gui-tooltip").forEach((el) => {
+      el.remove();
+    });
 
     // Dispose Three.js objects
     this.globe?.geometry.dispose();
@@ -3392,6 +3711,8 @@ export class GlobeViz implements GlobeVizAPI {
     (this.atmosphere?.material as THREE.Material)?.dispose();
     this.stars?.geometry.dispose();
     (this.stars?.material as THREE.Material)?.dispose();
+    const activeDataTexture = this.material?.uniforms.uDataTexture.value as THREE.Texture | null;
+    if (activeDataTexture && activeDataTexture !== this.dataTexture) activeDataTexture.dispose();
     this.dataTexture?.dispose();
 
     // Clear scene to ensure all meshes are detached
@@ -3541,6 +3862,8 @@ export class GlobeViz implements GlobeVizAPI {
       const internalStat = INTERNAL_STATISTICS.find((s) => s.id === id);
       const values: Record<string, number> = {};
 
+      let previousValues: Record<string, number> | undefined;
+
       if (internalStat) {
         WORLD_STATISTICS.forEach((country) => {
           const val = internalStat.accessor(country);
@@ -3548,11 +3871,22 @@ export class GlobeViz implements GlobeVizAPI {
             values[country.id] = val;
           }
         });
+
+        if (internalStat.previousAccessor) {
+          previousValues = {};
+          WORLD_STATISTICS.forEach((country) => {
+            const val = internalStat.previousAccessor?.(country);
+            if (val !== undefined && val !== null) {
+              (previousValues as Record<string, number>)[country.id] = val;
+            }
+          });
+        }
       }
 
       return {
         definition: def,
         values,
+        previousValues,
       };
     }
 
@@ -3568,6 +3902,17 @@ export class GlobeViz implements GlobeVizAPI {
         }
       });
 
+      let previousValues: Record<string, number> | undefined;
+      if (worldStat.previousAccessor) {
+        previousValues = {};
+        WORLD_STATISTICS.forEach((country) => {
+          const val = worldStat.previousAccessor?.(country);
+          if (val !== undefined && val !== null) {
+            (previousValues as Record<string, number>)[country.id] = val;
+          }
+        });
+      }
+
       return {
         definition: {
           id: worldStat.id,
@@ -3579,6 +3924,7 @@ export class GlobeViz implements GlobeVizAPI {
           format: worldStat.format,
         },
         values,
+        previousValues,
       };
     }
 
