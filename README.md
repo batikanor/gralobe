@@ -91,6 +91,12 @@ behind the existing TLS reverse proxy. Deploy an immutable image or commit and
 retain the previous image for rollback. No DNS or live deployment is changed by
 the development and test commands above.
 
+The production demo vendors its texture, geographic and worker assets in
+`public/vendor`; the build verifies their committed checksums. Asset attribution
+is available through the demo footer. Library builds retain their existing asset
+defaults. See [the Hetzner deployment runbook](docs/HETZNER_DEPLOYMENT.md) for
+image identity, the shared proxy, public verification and rollback commands.
+
 ## Live Demo
 
 **[🌐 Try it live at gralobe.maptheory.org](https://gralobe.maptheory.org/)** - A fully configurable version where you can explore different datasets, textures, and visual effects!

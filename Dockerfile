@@ -23,9 +23,14 @@ ENV CI=true
 CMD ["npm", "run", "test:e2e"]
 
 FROM development AS builder
-RUN npm run build
+ARG GRALOBE_REVISION=local
+RUN node scripts/vendor-demo-assets.mjs && npm run build \
+    && printf '{"revision":"%s"}\n' "$GRALOBE_REVISION" > dist/release.json
 
 FROM ${NGINX_IMAGE} AS runtime
+ARG GRALOBE_REVISION=local
+LABEL org.opencontainers.image.source="https://github.com/batikanor/gralobe" \
+      org.opencontainers.image.revision="${GRALOBE_REVISION}"
 COPY deploy/nginx.conf /etc/nginx/nginx.conf
 RUN rm -f /etc/nginx/conf.d/default.conf
 COPY --from=builder --chown=101:101 /app/dist/ /usr/share/nginx/html/

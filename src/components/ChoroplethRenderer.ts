@@ -286,8 +286,12 @@ export class ChoroplethRenderer {
       // Resolve URL to absolute to ensure worker can fetch it (needed for relative public/ paths)
       const absoluteUrl = new URL(url, window.location.href).href;
       // Also resolve the topojson client library relative to the window
-      // Use CDN for topojson-client so it works in all consuming applications
-      const topojsonLibUrl = "https://unpkg.com/topojson-client@3/dist/topojson-client.min.js";
+      // Blob workers need an absolute URL, including when the demo build
+      // rewrites this dependency to a same-origin vendor path.
+      const topojsonLibUrl = new URL(
+        "https://unpkg.com/topojson-client@3/dist/topojson-client.min.js",
+        window.location.href,
+      ).href;
 
       worker.postMessage({
         url: absoluteUrl,
