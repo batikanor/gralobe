@@ -2,29 +2,27 @@ import { expect, test } from "@playwright/test";
 
 test.describe("Keyboard Shortcuts", () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto("http://localhost:5173/");
-    await page.waitForSelector("canvas");
+    await page.goto("/");
+    await expect(page.locator("#globe-stat-life .globe-loader")).toHaveClass(/hidden/);
   });
 
   test("G key toggles projection", async ({ page }) => {
-    // Focus canvas
-    await page.click("canvas");
-
-    // Default is globe, pressing G should switch to map
+    const globe = page.locator("#globe-stat-life");
+    const projectionBtn = globe.locator('.gralobe-toolbar-btn[data-shortcut="G"]');
+    await expect(projectionBtn).toHaveAttribute("title", "View as Flat Map (G)");
+    await globe.locator("canvas").first().focus();
     await page.keyboard.press("g");
-
-    // Wait for projection change (icon update is a good proxy)
-    const projectionBtn = page.locator('.gralobe-toolbar-btn[title*="Toggle Projection"]');
-    await expect(projectionBtn).toHaveAttribute("title", /Toggle Projection/);
-
-    // Since we don't have easy access to internal state, we can check the button icon or title
-    // But checking if "F" key works is also good.
+    await expect(projectionBtn).toHaveAttribute("title", "View as Globe (G)");
+    // A second key reverses the requested projection while it is animating.
+    await page.keyboard.press("g");
+    await expect(projectionBtn).toHaveAttribute("title", "View as Flat Map (G)");
   });
 
   test("Visual indicators appear when enabled", async ({ page }) => {
     // Check if data-shortcut attributes exist
-    const projBtn = page.locator('.gralobe-toolbar-btn[data-shortcut="G"]');
-    const fsBtn = page.locator('.gralobe-toolbar-btn[data-shortcut="F"]');
+    const globe = page.locator("#globe-stat-life");
+    const projBtn = globe.locator('.gralobe-toolbar-btn[data-shortcut="G"]');
+    const fsBtn = globe.locator('.gralobe-toolbar-btn[data-shortcut="F"]');
 
     await expect(projBtn).toBeVisible();
     await expect(fsBtn).toBeVisible();
@@ -35,31 +33,26 @@ test.describe("Keyboard Shortcuts", () => {
   });
 
   test("Disabling shortcuts via GUI removes indicators and disables keys", async ({ page }) => {
-    // Focus canvas
-    await page.click("canvas");
+    const globe = page.locator("#globe-stat-life");
+    await globe.locator(".gralobe-gui-toggle").click();
+    await globe
+      .locator(".gralobe-category-bar")
+      .getByRole("button", { name: "Settings", exact: true })
+      .click();
 
-    // Open controls
-    const settingsBtn = page.locator(".gralobe-settings-toggle");
-    if (await settingsBtn.isVisible()) {
-      await settingsBtn.click();
-    }
-
-    // Find the checkbox for "Keyboard Shortcuts"
-    // lil-gui uses specific structure. We look for the label.
-    const shortcutToggle = page
-      .getByText("Keyboard Shortcuts")
-      .locator("..")
-      .locator('input[type="checkbox"]');
+    const shortcutToggle = globe.getByRole("checkbox", { name: "Keyboard Shortcuts" });
 
     // Uncheck it
-    await shortcutToggle.click();
+    await shortcutToggle.uncheck();
 
     // Verify indicators are gone
-    const projBtn = page.locator('.gralobe-toolbar-btn[data-shortcut="G"]');
+    const projBtn = globe.locator('.gralobe-toolbar-btn[data-shortcut="G"]');
     await expect(projBtn).not.toHaveClass(/show-shortcut/);
-
-    // Verify key press does nothing (hard to test "does nothing" without state,
-    // but we can ensure no error or no change if we could observe state.
-    // For now, indicators missing is strong evidence logic ran).
+    await expect(projBtn).toHaveAttribute("title", "View as Flat Map");
+    await globe.locator(".gralobe-gui-toggle").click();
+    await globe.locator("canvas").first().focus();
+    await page.keyboard.press("g");
+    await page.waitForTimeout(1200);
+    await expect(projBtn).toHaveAttribute("title", "View as Flat Map");
   });
 });

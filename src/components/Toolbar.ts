@@ -85,9 +85,13 @@ function injectGlobalStyles(): void {
 }
 
 export interface ToolbarConfig {
-  onShowData: () => void;
+  /** Retained for API compatibility; the raw-data button was removed from the toolbar. */
+  onShowData?: () => void;
   onToggleFullscreen: () => void;
   onToggleProjection: () => void;
+  /** Optional: when provided, a chart-view button is added to the toolbar. */
+  onShowChart?: () => void;
+  onShowHelp?: () => void;
 }
 
 export class Toolbar {
@@ -122,25 +126,6 @@ export class Toolbar {
     this.element = document.createElement("div");
     this.element.className = "gralobe-toolbar";
 
-    // View Data Button
-    const dataBtn = document.createElement("button");
-    dataBtn.className = "gralobe-toolbar-btn";
-    dataBtn.title = "View Raw Data";
-    dataBtn.innerHTML = `
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <line x1="8" y1="6" x2="21" y2="6"></line>
-        <line x1="8" y1="12" x2="21" y2="12"></line>
-        <line x1="8" y1="18" x2="21" y2="18"></line>
-        <line x1="3" y1="6" x2="3.01" y2="6"></line>
-        <line x1="3" y1="12" x2="3.01" y2="12"></line>
-        <line x1="3" y1="18" x2="3.01" y2="18"></line>
-      </svg>
-    `;
-    dataBtn.onclick = (e) => {
-      e.stopPropagation();
-      config.onShowData();
-    };
-
     // Projection Toggle Button (Globe/Flat Map)
     this.projectionBtn = document.createElement("button");
     this.projectionBtn.className = "gralobe-toolbar-btn";
@@ -167,9 +152,48 @@ export class Toolbar {
       config.onToggleFullscreen();
     };
 
-    this.element.appendChild(dataBtn);
+    // Chart View Button (only when the host wires up a handler)
+    if (config.onShowChart) {
+      const chartBtn = document.createElement("button");
+      chartBtn.className = "gralobe-toolbar-btn";
+      chartBtn.title = "Compare countries in a chart";
+      chartBtn.setAttribute("data-testid", "toolbar-chart");
+      chartBtn.innerHTML = `
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="3" y1="21" x2="21" y2="21"></line>
+          <rect x="5" y="11" width="3.5" height="8"></rect>
+          <rect x="10.25" y="6" width="3.5" height="13"></rect>
+          <rect x="15.5" y="14" width="3.5" height="5"></rect>
+        </svg>
+      `;
+      chartBtn.onclick = (e) => {
+        e.stopPropagation();
+        config.onShowChart?.();
+      };
+      this.element.appendChild(chartBtn);
+    }
+
     this.element.appendChild(this.projectionBtn);
     this.element.appendChild(this.fsBtn);
+
+    // Help Button (optional)
+    if (config.onShowHelp) {
+      const helpBtn = document.createElement("button");
+      helpBtn.className = "gralobe-toolbar-btn";
+      helpBtn.title = "Help / Manual";
+      helpBtn.innerHTML = `
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+          <line x1="12" y1="17" x2="12.01" y2="17"></line>
+        </svg>
+      `;
+      helpBtn.onclick = (e) => {
+        e.stopPropagation();
+        config.onShowHelp?.();
+      };
+      this.element.appendChild(helpBtn);
+    }
 
     // Ensure parent has relative/absolute positioning
     const parentPosition = getComputedStyle(parentContainer).position;
@@ -213,6 +237,11 @@ export class Toolbar {
     // Refresh titles to show/hide shortcut hint using stored state
     this.updateProjectionIcon(this.isGlobeView);
     this.fsBtn.title = `Toggle Fullscreen${enabled ? " (F)" : ""}`;
+  }
+
+  /** Hide/show the whole toolbar (used while the chart overlay is open). */
+  setVisible(visible: boolean): void {
+    this.element.style.display = visible ? "" : "none";
   }
 
   dispose(): void {

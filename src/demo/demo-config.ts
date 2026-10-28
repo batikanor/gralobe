@@ -1,6 +1,8 @@
+import { normalizeCountryValues } from "../lib/countryCodes";
 import type { GlobeViz } from "../lib/GlobeViz";
-import type { GlobeVizConfig } from "../lib/types";
+import type { GlobeVizConfig, TimeSeriesData } from "../lib/types";
 import { customStats, worldCitiesCoordinates } from "./data";
+import worldBankHistory from "./data/worldbank-history.json";
 
 export interface DemoConfig {
   id: string; // Unique ID for the DOM element
@@ -49,39 +51,197 @@ const getUsElectionData = () => {
   return customStats.us_2020_election;
 };
 
+// Real historical data for the "Data Over Time" demo, fetched from the World
+// Bank Open Data API by scripts/fetch-worldbank-data.mjs into
+// src/demo/data/worldbank-history.json (refreshed yearly by
+// .github/workflows/refresh-worldbank-data.yml). The cache retains alpha-2
+// fallback codes alongside numeric ISO ids; here we normalize those codes
+// onto our internal numeric country ids and pick a curated subset of
+// years so the Year dropdown stays a manageable length.
+type WorldBankHistory = Record<string, Record<string, Record<string, number>>>;
+
+type HistoricalSeriesMeta = {
+  name: string;
+  unit: string;
+  colorScale: [string, string, string];
+  domain: [number, number];
+  format?: (v: number) => string;
+};
+
+const HISTORICAL_SERIES_META: Record<string, HistoricalSeriesMeta> = {
+  gdpPerCapita: {
+    name: "GDP per Capita (PPP)",
+    unit: "$",
+    colorScale: ["#fee5d9", "#fcae91", "#cb181d"],
+    domain: [300, 130000],
+    format: (v) => `$${Math.round(v).toLocaleString()}`,
+  },
+  co2Emissions: {
+    name: "CO2 Emissions",
+    unit: "t CO2e/capita",
+    colorScale: ["#e5f5e0", "#a1d99b", "#31a354"],
+    domain: [0, 20],
+  },
+  lifeExpectancy: {
+    name: "Life Expectancy",
+    unit: "years",
+    colorScale: ["#fee5d9", "#fcae91", "#cb181d"],
+    domain: [35, 85],
+  },
+  internetUsers: {
+    name: "Internet Penetration",
+    unit: "%",
+    colorScale: ["#eff3ff", "#9ecae1", "#3182bd"],
+    domain: [0, 100],
+  },
+  renewableEnergy: {
+    name: "Renewable Energy",
+    unit: "%",
+    colorScale: ["#f7fcf5", "#a1d99b", "#00441b"],
+    domain: [0, 100],
+  },
+  urbanPopulation: {
+    name: "Urbanization",
+    unit: "%",
+    colorScale: ["#f7fbff", "#9ecae1", "#08519c"],
+    domain: [0, 100],
+  },
+  healthExpenditure: {
+    name: "Health Spending",
+    unit: "% GDP",
+    colorScale: ["#fff5f0", "#fc9272", "#a50f15"],
+    domain: [0, 20],
+  },
+  educationExpenditure: {
+    name: "Education Spending",
+    unit: "% GDP",
+    colorScale: ["#fcfbfd", "#bcbddc", "#54278f"],
+    domain: [0, 12],
+  },
+  forestArea: {
+    name: "Forest Coverage",
+    unit: "%",
+    colorScale: ["#f7fcf5", "#74c476", "#00441b"],
+    domain: [0, 100],
+  },
+  population: {
+    name: "Population",
+    unit: "people",
+    colorScale: ["#fff7bc", "#fe9929", "#993404"],
+    domain: [1e5, 1.5e9],
+    format: (v) => (v >= 1e6 ? `${(v / 1e6).toFixed(1)}M` : v.toLocaleString()),
+  },
+  accessElectricity: {
+    name: "Electricity Access",
+    unit: "%",
+    colorScale: ["#fff5eb", "#fd8d3c", "#8c2d04"],
+    domain: [0, 100],
+  },
+};
+
+const CURATED_YEARS = [1990, 1995, 2000, 2005, 2010, 2015, 2020, 2023];
+
+let realSeriesCache: Record<string, TimeSeriesData> | null = null;
+const getRealSeriesOptions = (): Record<string, TimeSeriesData> => {
+  if (realSeriesCache) return realSeriesCache;
+
+  const history = worldBankHistory as WorldBankHistory;
+  const result: Record<string, TimeSeriesData> = {};
+
+  for (const [key, meta] of Object.entries(HISTORICAL_SERIES_META)) {
+    const metricHistory = history[key];
+    if (!metricHistory) continue;
+
+    const frames: TimeSeriesData["frames"] = {};
+    CURATED_YEARS.forEach((year) => {
+      const yearData = metricHistory[String(year)];
+      if (!yearData) return;
+
+      // Older caches contain alpha-2 fallbacks for France and Norway. Use
+      // the same numeric ids in maps, profiles and charts while retaining
+      // unmapped countries for world rankings.
+      const values: Record<string, number> = {};
+      for (const [id, v] of Object.entries(yearData)) {
+        if (typeof v === "number" && Number.isFinite(v)) values[id] = v;
+      }
+      if (Object.keys(values).length > 0) frames[String(year)] = normalizeCountryValues(values);
+    });
+
+    if (Object.keys(frames).length === 0) continue;
+
+    result[key] = {
+      definition: {
+        id: key,
+        name: meta.name,
+        unit: meta.unit,
+        description: "Source: World Bank Open Data (api.worldbank.org).",
+        colorScale: meta.colorScale,
+        domain: meta.domain,
+        format: meta.format,
+      },
+      frames,
+    };
+  }
+
+  realSeriesCache = result;
+  return realSeriesCache;
+};
+
 export const sections: DemoSection[] = [
   // 1. COUNTRY LEVEL
   {
     id: "country-level",
     title: "Country Level Maps",
-    description: "Standard choropleth maps using ISO codes (Default)",
+    description: "Standard choropleth maps using ISO codes, with real historical data",
     infoBox:
-      "The default mode loads 110m resolution country borders. Data is mapped using ISO Alpha-2, Alpha-3, or Country Names.",
+      "The default mode loads 110m resolution country borders. Data is mapped using ISO " +
+      "Alpha-2, Alpha-3, or Country Names. Both globes call " +
+      "<code>globe.setTimeSeriesOptions()</code> with real data from the " +
+      '<a href="https://data.worldbank.org" target="_blank" rel="noopener">World Bank Open ' +
+      "Data API</a>. Open the <b>Data</b> panel (top right): the <b>Metric</b> dropdown " +
+      "switches the statistic and a <b>Year</b> dropdown sits right below it. Hover a " +
+      "country for its change vs. the previous data point, double-click one to zoom in and " +
+      "open its profile, or use the chart button (bottom right) to compare countries as " +
+      "lines or bars. Data refreshes automatically once a year via a scheduled fetch.",
     gridClass: "grid-2",
     demos: [
       {
         id: "globe-stat-life",
         title: "Life Expectancy",
-        subtitle: "Built-in Statistic",
+        subtitle: "Built-in Statistic · Year dropdown + chart view",
         config: {
           statistic: "lifeExpectancy",
           labels: "data",
           showControls: true,
+          showToolbar: true, // chart-view button
           topology: {
             url: "/data/countries-110m.json", // Local fallback to prevent network issues
             objectName: "countries",
           },
         },
+        setup: async (globe: GlobeViz) => {
+          // Same real World Bank history as the "Data Over Time" demo, so this
+          // globe also gets the Year dropdown, sparkline profile and charts.
+          await globe.ready;
+          globe.setTimeSeriesOptions(getRealSeriesOptions(), "lifeExpectancy");
+        },
       },
       {
         id: "globe-labels-data",
-        title: "Coffee Consumption",
-        subtitle: "labels: 'data' (Sparse)",
+        title: "CO2 Emissions",
+        subtitle: "Built-in Statistic · Year dropdown + chart view",
         config: {
-          statistic: customStats.coffee,
+          statistic: "co2Emissions",
           labels: "data", // Show labels only for countries with data
           effects: { atmosphere: true },
           showControls: true,
+          showToolbar: true, // chart-view button
+        },
+        setup: async (globe: GlobeViz) => {
+          // Same real World Bank history as the other globe, so both have an
+          // identical feature set -- only the starting metric differs.
+          await globe.ready;
+          globe.setTimeSeriesOptions(getRealSeriesOptions(), "co2Emissions");
         },
       },
     ],
@@ -275,6 +435,23 @@ export const sections: DemoSection[] = [
           initialView: "flat",
           labels: "major",
           showControls: true,
+        },
+      },
+      {
+        id: "globe-trend-help",
+        title: "Country Trend, Search & Watchlist",
+        subtitle: "showTrend + showSearch + showWatchlist + showHelp",
+        description:
+          "Click any country to see its value and download a shareable stat card, or pin it to the watchlist strip at the bottom. Use the search box (top-left) to fly straight to a country. Use the ? button in the toolbar for a quick usage manual.",
+        heightClass: "height-400",
+        config: {
+          statistic: "gdpPerCapita",
+          labels: "data",
+          showToolbar: true,
+          showTrend: true,
+          showSearch: true,
+          showWatchlist: true,
+          showHelp: true,
         },
       },
     ],

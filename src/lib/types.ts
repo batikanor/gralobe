@@ -98,6 +98,65 @@ export interface StatisticData {
    * @example { "840": 85, "156": 68 } // USA: 85, China: 68
    */
   values: Map<string, number> | Record<string, number>;
+
+  /**
+   * Optional prior-period values (e.g. the same statistic one year earlier),
+   * keyed the same way as `values`. When provided, clicking a country shows
+   * whether its value increased, decreased, or stayed flat since then.
+   * Omit if you don't have a real baseline to compare against.
+   */
+  previousValues?: Map<string, number> | Record<string, number>;
+}
+
+/**
+ * A statistic sampled at multiple points in time (e.g. one frame per year),
+ * for time-lapse playback via `GlobeViz.setTimeSeries` / `playTimeline`.
+ *
+ * @example
+ * const co2ByDecade: TimeSeriesData = {
+ *   definition: { id: 'co2', name: 'CO2 Emissions', unit: 't/capita', ... },
+ *   frames: {
+ *     '1990': { '840': 19.3, '156': 2.1 },
+ *     '2000': { '840': 20.0, '156': 2.7 },
+ *     '2010': { '840': 17.6, '156': 6.2 },
+ *     '2020': { '840': 14.4, '156': 8.0 },
+ *   },
+ * };
+ */
+export interface TimeSeriesData {
+  /** The statistic definition shared across all frames (color scale, domain, unit, etc). */
+  definition: StatisticDefinition;
+  /**
+   * Country values for each step, keyed by step label (typically a year, but
+   * any string works — labels are sorted numerically when they parse as
+   * numbers, otherwise alphabetically). Each frame accepts a Map or plain object.
+   */
+  frames: Record<string, Map<string, number> | Record<string, number>>;
+}
+
+/**
+ * A set of alternative time series a user can switch between via a dropdown
+ * (e.g. GDP per capita / CO2 / life expectancy, each animated across the same
+ * years), for `GlobeViz.setTimeSeriesOptions`. Keyed by a stable id used only
+ * to identify the option; each value's own `definition.name` is what's shown
+ * in the dropdown.
+ */
+export type TimeSeriesOptions = Record<string, TimeSeriesData>;
+
+/**
+ * Playback configuration for `GlobeViz.playTimeline`.
+ */
+export interface TimelineConfig {
+  /** Steps advanced per second while playing. @default 1 */
+  fps?: number;
+  /** Loop back to the first step after the last. @default true */
+  loop?: boolean;
+  /** Smoothly blend country colors between steps instead of hard-cutting. @default true */
+  interpolate?: boolean;
+  /** Duration in ms of the blend between two steps, when `interpolate` is true. @default 850 */
+  transitionMs?: number;
+  /** Called each time the active step changes (including while scrubbing). */
+  onStep?: (step: string, index: number) => void;
 }
 
 /**
@@ -325,6 +384,38 @@ export interface GlobeVizConfig {
    * @default true
    */
   showLegend?: boolean;
+
+  /**
+   * Show a year-over-year trend panel docked at the top of the map.
+   * Populated when a country/region is clicked: shows the current value
+   * and, if `previousValues` was supplied for the active statistic, whether
+   * it went up, down, or stayed flat since then.
+   * @default false
+   */
+  showTrend?: boolean;
+
+  /**
+   * Show a search box (top-left) to jump straight to a country by name
+   * instead of dragging to find it.
+   * @default false
+   */
+  showSearch?: boolean;
+
+  /**
+   * Show a pinned-countries strip docked to the bottom of the map. Pin a
+   * country from its trend panel to keep it visible there, showing its
+   * value for whichever statistic is currently active.
+   * @default false
+   */
+  showWatchlist?: boolean;
+
+  /**
+   * Show a "?" help button (in the toolbar) that opens an in-app manual
+   * explaining controls, data options, and tips for best results.
+   * Only rendered when `showToolbar` (or the deprecated `showControls`) is also enabled.
+   * @default true
+   */
+  showHelp?: boolean;
 
   /**
    * Visual effects configuration

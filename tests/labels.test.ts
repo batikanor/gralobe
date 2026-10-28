@@ -38,16 +38,11 @@ test.describe("Country Labels", () => {
   });
 });
 
-test.describe("Labels Visibility (test page)", () => {
+test.describe("Labels Visibility", () => {
   test("labels exist when configured", async ({ page }) => {
-    await page.goto("/test-custom-stat.html");
-    await page.waitForSelector("canvas", { timeout: 10000 });
-    await page.waitForTimeout(3000);
-
-    // Check if any label elements exist in the DOM
-    const labelCount = await page.locator(".country-label").count();
-    // Labels should be created if the app enables them
-    // Note: The actual visibility depends on camera position
-    expect(labelCount).toBeGreaterThanOrEqual(0);
+    await page.goto("/");
+    const globe = page.locator("#globe-stat-life");
+    await expect(globe.locator(".globe-loader")).toHaveClass(/hidden/);
+    expect(await globe.locator(".country-label").count()).toBeGreaterThan(0);
   });
 });

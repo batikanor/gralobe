@@ -20,6 +20,76 @@ Interactive 3D globe visualization with world statistics, smooth flat map ↔ gl
 - Screenshot and video/GIF recording
 - Height extrusion based on data values
 - Fully typed TypeScript API
+- Historical metric and year selection, country profiles, and comparison charts
+- Country search, pinned watchlists, trend summaries, and downloadable statistic cards
+
+## Development and verification with Docker
+
+From a clean checkout with Docker and Docker Compose installed:
+
+```bash
+docker compose --profile dev up --build dev
+# Open http://localhost:5173
+docker compose --profile test run --build --rm test
+docker compose --profile test run --build --rm e2e
+docker compose down
+```
+
+The test container runs unit tests, TypeScript checks, and both the library and
+demo builds. The browser container runs Chromium with software WebGL and writes
+reports to `playwright-report/` and `test-results/`. Unit tests keep external
+texture availability checks skipped unless explicitly enabled; browser integration
+fixtures replace external textures while running the real globe and components.
+
+## Country exploration
+
+Enable `showTrend`, `showSearch`, and `showWatchlist` to show the country search,
+click summary, pin controls, and current values for pinned countries. `showHelp`
+adds a manual when `showToolbar` is enabled. A double click opens a country profile
+and zooms in; double click again to return. The toolbar chart button compares up
+to eight countries using line or bar charts.
+
+Historical data can be supplied through `setTimeSeries` or `setTimeSeriesOptions`:
+
+```typescript
+await globe.ready;
+globe.setTimeSeries({
+  definition: {
+    id: 'internetUsers', name: 'Internet use', unit: '%',
+    colorScale: ['#eff3ff', '#9ecae1', '#3182bd'], domain: [0, 100],
+  },
+  frames: {
+    '2020': { '250': 84, '578': 97 },
+    '2023': { '250': 87, '578': 99 },
+  },
+});
+globe.setTimelineStep(1);
+```
+
+The trend panel and watchlist follow the active metric and year. Percentage
+metrics show changes in percentage points. Plain statistics may provide an
+optional `previousValues` map for prior-period comparisons. Missing data stays
+missing in profiles and charts. The demo's World Bank cache is refreshed through
+a reviewed pull request rather than a direct update to the default branch.
+
+## Hosting
+
+All project hosting must use Hetzner. Vercel deployments and managed services
+require direct owner approval for the specific project, environment and service;
+automatic Git deployments are disabled by `vercel.json`. Existing recovery
+artifacts do not authorize further Vercel deployment.
+
+The Docker runtime serves the built demo through an unprivileged Nginx process:
+
+```bash
+docker compose up --build --detach web
+# http://localhost:8081 and http://localhost:8081/healthz
+```
+
+The runtime is stateless and exposes only a loopback port. On Hetzner, place it
+behind the existing TLS reverse proxy. Deploy an immutable image or commit and
+retain the previous image for rollback. No DNS or live deployment is changed by
+the development and test commands above.
 
 ## Live Demo
 

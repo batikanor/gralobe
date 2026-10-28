@@ -24,10 +24,6 @@ const WORKER_CODE = `
     const { url, objectName, idProperty, topojsonUrl } = e.data;
     
     try {
-      if (!self.topojson) {
-        self.postMessage({ status: "Loading dependencies..." });
-        importScripts(topojsonUrl);
-      }
       self.postMessage({ status: "Fetching data...", progress: 0.1 });
       const response = await fetch(url);
       if (!response.ok) throw new Error('Fetch failed: ' + response.statusText);
@@ -39,6 +35,10 @@ const WORKER_CODE = `
       if (data.type === 'FeatureCollection') {
         features = data.features;
       } else {
+      if (!self.topojson) {
+        self.postMessage({ status: "Loading dependencies..." });
+        importScripts(topojsonUrl);
+      }
       // Assume TopoJSON
       self.postMessage({ status: "Processing TopoJSON...", progress: 0.4 });
       const topology = data;
@@ -742,7 +742,37 @@ export class ChoroplethRenderer {
   }
 
   getBounds(): [number, number, number, number] | null {
-    if (this.countries.length === 0) return null;
+    return this.computeBoundsForFeatures(this.countries);
+  }
+
+  /** Find a single loaded feature by id, with the same zero-padding fallback as `getFeatureName`. */
+  private findFeatureById(id: string): CountryFeature | undefined {
+    let feature = this.countries.find((c) => c.id === id || c.properties?.id === id);
+    if (!feature && id.startsWith("0")) {
+      const numericId = String(parseInt(id, 10));
+      feature = this.countries.find((c) => c.id === numericId || c.properties?.id === numericId);
+    }
+    return feature;
+  }
+
+  /** Lon/lat bounding box of a single feature (for zooming to one country/region). */
+  getFeatureBounds(id: string): [number, number, number, number] | null {
+    const feature = this.findFeatureById(id);
+    if (!feature) return null;
+    return this.computeBoundsForFeatures([feature]);
+  }
+
+  /** Centroid `[lon, lat]` of a single feature (for centering the camera on it). */
+  getFeatureCentroid(id: string): [number, number] | null {
+    const feature = this.findFeatureById(id);
+    if (!feature) return null;
+    return this.computeCentroid(feature);
+  }
+
+  private computeBoundsForFeatures(
+    features: CountryFeature[],
+  ): [number, number, number, number] | null {
+    if (features.length === 0) return null;
 
     // Track bounds for Western (< 0) and Eastern (>= 0) hemispheres separately
     let wMinLon = Infinity,
@@ -782,7 +812,7 @@ export class ChoroplethRenderer {
     };
 
     // Iterate all features
-    this.countries.forEach((feature) => {
+    features.forEach((feature) => {
       if (feature.geometry) {
         processCoords(feature.geometry.coordinates);
       }

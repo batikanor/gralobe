@@ -1,0 +1,60 @@
+name: ${COMPOSE_PROJECT_NAME:-gralobe}
+
+services:
+  web:
+    build:
+      context: .
+      target: runtime
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${GRALOBE_HTTP_PORT:-8081}:8080"
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 256M
+    logging:
+      driver: local
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  dev:
+    build:
+      context: .
+      target: development
+    profiles: [dev]
+    init: true
+    ports:
+      - "127.0.0.1:${GRALOBE_DEV_PORT:-5173}:5173"
+    volumes:
+      - .:/app
+      - node_modules:/app/node_modules
+
+  test:
+    build:
+      context: .
+      target: test
+    profiles: [test]
+    init: true
+
+  e2e:
+    build:
+      context: .
+      target: browser
+    profiles: [test]
+    init: true
+    ipc: host
+    volumes:
+      - ./playwright-report:/app/playwright-report
+      - ./test-results:/app/test-results
+
+volumes:
+  node_modules:
