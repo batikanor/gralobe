@@ -1,0 +1,138 @@
+{
+  "version": 1,
+  "files": [
+    {
+      "path": "textures/earth_atmos_2048.jpg",
+      "sourceUrl": "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_atmos_2048.jpg",
+      "replacementUrl": "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_atmos_2048.jpg",
+      "publicUrl": "/vendor/textures/earth_atmos_2048.jpg",
+      "bytes": 512606,
+      "sha256": "2faa400d1eade3bc44caf6750d1b772bd9bbb6d87362c02bc7c3304e78fa0a9d"
+    },
+    {
+      "path": "textures/earth-blue-marble.jpg",
+      "sourceUrl": "https://unpkg.com/three-globe@2.45.0/example/img/earth-blue-marble.jpg",
+      "replacementUrl": "https://unpkg.com/three-globe@2.45.0/example/img/earth-blue-marble.jpg",
+      "publicUrl": "/vendor/textures/earth-blue-marble.jpg",
+      "bytes": 1461877,
+      "sha256": "228deba2e4b600146bdcb6cfa359b8ead6aacc2b1c13550a29cd82824cfa1c01"
+    },
+    {
+      "path": "textures/earth_lights_2048.png",
+      "sourceUrl": "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_lights_2048.png",
+      "replacementUrl": "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_lights_2048.png",
+      "publicUrl": "/vendor/textures/earth_lights_2048.png",
+      "bytes": 410160,
+      "sha256": "0564fa57f5fade2f65e56d3ad59b3c6bf5e32c44f60370a3e46fd367b0cabaee"
+    },
+    {
+      "path": "textures/2_no_clouds_4k.jpg",
+      "sourceUrl": "https://raw.githubusercontent.com/turban/webgl-earth/master/images/2_no_clouds_4k.jpg",
+      "replacementUrl": "https://raw.githubusercontent.com/turban/webgl-earth/master/images/2_no_clouds_4k.jpg",
+      "publicUrl": "/vendor/textures/2_no_clouds_4k.jpg",
+      "bytes": 1392914,
+      "sha256": "61cd3d27489d80ed025d7954539a6d90b50d4433bbdd27e8c1af8a6f15f71e86"
+    },
+    {
+      "path": "textures/earth-topology.png",
+      "sourceUrl": "https://unpkg.com/three-globe@2.45.0/example/img/earth-topology.png",
+      "replacementUrl": "https://unpkg.com/three-globe@2.45.0/example/img/earth-topology.png",
+      "publicUrl": "/vendor/textures/earth-topology.png",
+      "bytes": 378243,
+      "sha256": "839b12da2e4dd346b256cebae72e10c479a102c8980a22084c41275e4b9a0e12"
+    },
+    {
+      "path": "textures/earth_day_4096.jpg",
+      "sourceUrl": "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_day_4096.jpg",
+      "replacementUrl": "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_day_4096.jpg",
+      "publicUrl": "/vendor/textures/earth_day_4096.jpg",
+      "bytes": 473093,
+      "sha256": "cd7712d3e891425d9948ea5ac18d3bb1e7e834ea038188587897e689a7b35d0f"
+    },
+    {
+      "path": "textures/earth-water.png",
+      "sourceUrl": "https://unpkg.com/three-globe@2.45.0/example/img/earth-water.png",
+      "replacementUrl": "https://unpkg.com/three-globe@2.45.0/example/img/earth-water.png",
+      "publicUrl": "/vendor/textures/earth-water.png",
+      "bytes": 430200,
+      "sha256": "3a8132db56aac4e64e7fcbf2928ee970c075ac6a96b38798d0bb8be82836a4d3"
+    },
+    {
+      "path": "textures/BlankMap-World-Sovereign_Nations.svg",
+      "sourceUrl": "https://upload.wikimedia.org/wikipedia/commons/5/5e/BlankMap-World-Sovereign_Nations.svg",
+      "replacementUrl": "https://upload.wikimedia.org/wikipedia/commons/5/5e/BlankMap-World-Sovereign_Nations.svg",
+      "publicUrl": "/vendor/textures/BlankMap-World-Sovereign_Nations.svg",
+      "bytes": 1507281,
+      "sha256": "f7f1ecb842047aff3868e540a518b8e3f45558a4b87e2a5258a3f2619eda8614"
+    },
+    {
+      "path": "data/counties-10m.json",
+      "sourceUrl": "https://cdn.jsdelivr.net/npm/us-atlas@3.0.1/counties-10m.json",
+      "replacementUrl": "https://cdn.jsdelivr.net/npm/us-atlas@3/counties-10m.json",
+      "publicUrl": "/vendor/data/counties-10m.json",
+      "bytes": 842143,
+      "sha256": "145aaf5d1433352a6a1d8e86b5f149c7c653f9171baf14aaf75ee66575def1b0"
+    },
+    {
+      "path": "data/germany-districts.geo.json",
+      "sourceUrl": "https://raw.githubusercontent.com/isellsoap/deutschlandGeoJSON/main/4_kreise/2_hoch.geo.json",
+      "replacementUrl": "https://raw.githubusercontent.com/isellsoap/deutschlandGeoJSON/main/4_kreise/2_hoch.geo.json",
+      "publicUrl": "/vendor/data/germany-districts.geo.json",
+      "bytes": 5083376,
+      "sha256": "10455cbe6b8e7825bfeab0aa04c9b05b1edd97024c86ae1cf54c3733af395b49"
+    },
+    {
+      "path": "data/countries-110m.json",
+      "sourceUrl": "https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/countries-110m.json",
+      "input": "public/data/countries-110m.json",
+      "replacementUrl": "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json",
+      "publicUrl": "/vendor/data/countries-110m.json",
+      "bytes": 186256,
+      "sha256": "b9cd5e770956de68ea6cc1e13bb70c8cf3209df5c2ae00d6a509063ba282b7dc"
+    },
+    {
+      "path": "lib/topojson-client.min.js",
+      "sourceUrl": "https://unpkg.com/topojson-client@3.1.0/dist/topojson-client.min.js",
+      "replacementUrl": "https://unpkg.com/topojson-client@3/dist/topojson-client.min.js",
+      "publicUrl": "/vendor/lib/topojson-client.min.js",
+      "bytes": 7169,
+      "sha256": "25cd02ae486cc5063e0215a4e4cfb15de83700c87ac48bac4d57dc6aaf3ebb89"
+    },
+    {
+      "path": "licenses/topojson-client-ISC.txt",
+      "sourceUrl": "https://raw.githubusercontent.com/topojson/topojson-client/v3.1.0/LICENSE",
+      "bytes": 734,
+      "sha256": "4c4d15b635e04e691825a76db7d33f7f2033b55669a7430011694f31e6c65999"
+    },
+    {
+      "path": "licenses/world-atlas-ISC.txt",
+      "sourceUrl": "https://raw.githubusercontent.com/topojson/world-atlas/v2.0.2/LICENSE",
+      "bytes": 734,
+      "sha256": "8048290dfdb6e83fbed17e8985c8cfc4ce9da9b842642f3d3e497280790cfa31"
+    },
+    {
+      "path": "licenses/us-atlas-ISC.txt",
+      "sourceUrl": "https://raw.githubusercontent.com/topojson/us-atlas/v3.0.1/LICENSE",
+      "bytes": 734,
+      "sha256": "8048290dfdb6e83fbed17e8985c8cfc4ce9da9b842642f3d3e497280790cfa31"
+    },
+    {
+      "path": "licenses/germany-Unlicense.txt",
+      "sourceUrl": "https://raw.githubusercontent.com/isellsoap/deutschlandGeoJSON/main/LICENSE.md",
+      "bytes": 1211,
+      "sha256": "6b0382b16279f26ff69014300541967a356a666eb0b91b422f6862f6b7dad17e"
+    },
+    {
+      "path": "licenses/three-MIT.txt",
+      "sourceUrl": "https://raw.githubusercontent.com/mrdoob/three.js/r182/LICENSE",
+      "bytes": 1081,
+      "sha256": "bfe119ea4fd413f5f7ca3fcd63adb0c4a073ed39daa2fe7d3e6b769e21272601"
+    },
+    {
+      "path": "licenses/three-globe-MIT.txt",
+      "sourceUrl": "https://raw.githubusercontent.com/vasturiano/three-globe/v2.45.0/LICENSE",
+      "bytes": 1072,
+      "sha256": "c633a0da18abe4208665d9faf574f38084bbe38ce5bf743e9ecc06e50b941b59"
+    }
+  ]
+}

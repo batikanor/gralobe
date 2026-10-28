@@ -1,0 +1,30 @@
+name: ${COMPOSE_PROJECT_NAME:-gralobe-production}
+
+services:
+  web:
+    image: ${GRALOBE_IMAGE:?Set GRALOBE_IMAGE to the verified immutable release image}
+    pull_policy: ${IMAGE_PULL_POLICY:-never}
+    restart: unless-stopped
+    expose: ["8080"]
+    read_only: true
+    tmpfs: ["/tmp:size=16m,mode=1777"]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 256M
+    logging:
+      driver: local
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      edge:
+        aliases: ["${EDGE_ALIAS:-gralobe-production-web}"]
+
+networks:
+  edge:
+    external: true
+    name: ${EDGE_NETWORK:-maptheory-edge}
