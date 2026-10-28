@@ -113,8 +113,12 @@ function injectGlobalStyles(): void {
 
 export class WatchlistStrip {
   private element: HTMLElement;
+  private parentContainer: HTMLElement;
   private onSelect: (id: string) => void;
   private onUnpin: (id: string) => void;
+  private resizeObserver: ResizeObserver;
+  private mutationObserver: MutationObserver;
+  private bottomControls: HTMLElement[] = [];
 
   constructor(
     parentContainer: HTMLElement,
@@ -122,6 +126,7 @@ export class WatchlistStrip {
     onUnpin: (id: string) => void,
   ) {
     injectGlobalStyles();
+    this.parentContainer = parentContainer;
     this.onSelect = onSelect;
     this.onUnpin = onUnpin;
 
@@ -135,6 +140,51 @@ export class WatchlistStrip {
     this.element.setAttribute("role", "group");
     this.element.setAttribute("aria-label", "Pinned countries");
     parentContainer.appendChild(this.element);
+
+    this.resizeObserver = new ResizeObserver(() => this.updateDock());
+    this.resizeObserver.observe(parentContainer);
+    this.mutationObserver = new MutationObserver((records) => {
+      if (records.some((record) => record.type === "childList")) this.observeBottomControls();
+      this.updateDock();
+    });
+    this.observeBottomControls();
+    this.updateDock();
+  }
+
+  /** Controls can be created after this strip, or replaced by an embedding app. */
+  private observeBottomControls(): void {
+    for (const control of this.bottomControls) this.resizeObserver.unobserve(control);
+    this.bottomControls = Array.from(this.parentContainer.children).filter(
+      (element): element is HTMLElement =>
+        element instanceof HTMLElement && element.matches(".gralobe-legend, .gralobe-toolbar"),
+    );
+    this.mutationObserver.disconnect();
+    this.mutationObserver.observe(this.parentContainer, {
+      childList: true,
+      attributes: true,
+      attributeFilter: ["class", "style"],
+    });
+    for (const control of this.bottomControls) {
+      this.resizeObserver.observe(control);
+      this.mutationObserver.observe(control, {
+        attributes: true,
+        attributeFilter: ["class", "style"],
+      });
+    }
+  }
+
+  /** Keep the entire scrollable row above the actual bottom controls. */
+  private updateDock(): void {
+    let bottom = 12;
+    for (const control of this.bottomControls) {
+      const style = getComputedStyle(control);
+      if (style.display === "none" || style.visibility === "hidden") continue;
+      if (control.matches(".gralobe-legend") && !control.classList.contains("visible")) continue;
+      // offsetTop reserves the final layout box, independent of the legend's
+      // entry animation, so chips cannot cover it while it fades into view.
+      bottom = Math.max(bottom, this.parentContainer.clientHeight - control.offsetTop + 8);
+    }
+    this.element.style.bottom = `${bottom}px`;
   }
 
   update(items: WatchlistItem[], format: (v: number) => string): void {
@@ -175,6 +225,7 @@ export class WatchlistStrip {
       fragment.appendChild(chip);
     }
     this.element.replaceChildren(fragment);
+    this.updateDock();
 
     if (focused) {
       const buttons = Array.from(this.element.querySelectorAll<HTMLButtonElement>("button"));
@@ -188,6 +239,9 @@ export class WatchlistStrip {
   }
 
   dispose(): void {
+    this.resizeObserver.disconnect();
+    this.mutationObserver.disconnect();
+    this.bottomControls = [];
     this.element.remove();
   }
 }

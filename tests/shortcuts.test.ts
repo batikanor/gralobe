@@ -13,9 +13,7 @@ test.describe("Keyboard Shortcuts", () => {
     await globe.locator("canvas").first().focus();
     await page.keyboard.press("g");
     await expect(projectionBtn).toHaveAttribute("title", "View as Globe (G)");
-    // The title updates immediately; let the two-second morph finish before
-    // toggling back so this exercises two complete projection transitions.
-    await page.waitForTimeout(2200);
+    // A second key reverses the requested projection while it is animating.
     await page.keyboard.press("g");
     await expect(projectionBtn).toHaveAttribute("title", "View as Flat Map (G)");
   });

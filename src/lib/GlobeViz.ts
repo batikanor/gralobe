@@ -3567,7 +3567,12 @@ export class GlobeViz implements GlobeVizAPI {
   }
 
   toggleProjection(): void {
-    if (this.morph > 0.5) {
+    const pendingMorph = gsap
+      .getTweensOf(this)
+      .find((tween) => typeof tween.vars.morph === "number")?.vars.morph;
+    // Reverse the requested view even before a slow animation has reached
+    // its halfway point, so rapid keyboard/toolbar toggles remain responsive.
+    if ((pendingMorph ?? this.morph) > 0.5) {
       this.toFlat();
     } else {
       this.toGlobe();
